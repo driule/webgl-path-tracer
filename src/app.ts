@@ -1,3 +1,7 @@
+
+// entry point
+
 window.onload = function() {
-    document.body.innerHTML += "test or nop";
+    let engine = new LH.Engine();
+    engine.start();
 }
