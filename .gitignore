@@ -1,0 +1,5 @@
+# visual studio files
+/.vscode
+
+# compiled typescript files in src/
+/src/*.js
