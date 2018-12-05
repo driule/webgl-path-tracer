@@ -1,4 +1,3 @@
-
 // entry point
 
 window.onload = function() {

@@ -1,5 +1,7 @@
 {
     "compilerOptions": {
-        "target": "es5"
+        "target": "es5",
+        "out": "js/app.js",
+        "watch": true
     }
 }
