@@ -9,23 +9,43 @@ var LH;
             LH.gl.clearColor(0, 0, 0, 1);
             this.loadShaders();
             this._shader.use();
+            this.createBuffer();
             this.tick();
-        };
-        Engine.prototype.resize = function () {
-            if (this._canvas !== undefined) {
-                this._canvas.width = window.innerWidth;
-                this._canvas.height = window.innerHeight;
-            }
         };
         Engine.prototype.tick = function () {
             //this.frameCount++;
             //document.body.innerHTML = this.frameCount.toString();
             LH.gl.clear(LH.gl.COLOR_BUFFER_BIT);
+            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this._buffer);
+            LH.gl.enableVertexAttribArray(0);
+            LH.gl.drawArrays(LH.gl.TRIANGLES, 0, 3);
             requestAnimationFrame(this.tick.bind(this));
+        };
+        Engine.prototype.resize = function () {
+            if (this._canvas !== undefined) {
+                this._canvas.width = window.innerWidth;
+                this._canvas.height = window.innerHeight;
+                LH.gl.viewport(0, 0, this._canvas.width, this._canvas.height);
+            }
+        };
+        Engine.prototype.createBuffer = function () {
+            var vertices = [
+                // x, y, z
+                0, 0, 0,
+                0, 0.5, 0,
+                0.5, 0.5, 0
+            ];
+            this._buffer = LH.gl.createBuffer();
+            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this._buffer);
+            LH.gl.vertexAttribPointer(0, 3, LH.gl.FLOAT, false, 0, 0);
+            //gl.enableVertexAttribArray(0);
+            LH.gl.bufferData(LH.gl.ARRAY_BUFFER, new Float32Array(vertices), LH.gl.STATIC_DRAW);
+            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, undefined);
+            //gl.disableVertexAttribArray(0);
         };
         Engine.prototype.loadShaders = function () {
             var vertexShaderSource = "\n                attribute vec3 a_position;\n                void main() {\n                    gl_Position = vec4(a_position, 1.0);\n                }\n            ";
-            var fragmentShaderSource = "\n                precision mediump float;\n                void main() {\n                    gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);\n                }\n            ";
+            var fragmentShaderSource = "\n                precision mediump float;\n                void main() {\n                    gl_FragColor = vec4(0.5, 0.0, 0.0, 1.0);\n                }\n            ";
             this._shader = new LH.Shader("basic", vertexShaderSource, fragmentShaderSource);
         };
         return Engine;

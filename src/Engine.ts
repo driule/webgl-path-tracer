@@ -5,6 +5,7 @@ namespace LH {
         //private frameCount: number = 0;
         private _canvas: HTMLCanvasElement;
         private _shader: Shader;
+        private _buffer: WebGLBuffer;
 
         public constructor() {
             console.log("Engine created.");
@@ -17,15 +18,9 @@ namespace LH {
 
             this.loadShaders();
             this._shader.use();
+            this.createBuffer();
 
             this.tick();
-        }
-
-        public resize(): void {
-            if (this._canvas !== undefined) {
-                this._canvas.width = window.innerWidth;
-                this._canvas.height = window.innerHeight;
-            }
         }
 
         private tick(): void {
@@ -33,8 +28,39 @@ namespace LH {
             //document.body.innerHTML = this.frameCount.toString();
 
             gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
+            gl.enableVertexAttribArray(0);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
 
             requestAnimationFrame(this.tick.bind(this));
+        }
+
+        public resize(): void {
+            if (this._canvas !== undefined) {
+                this._canvas.width = window.innerWidth;
+                this._canvas.height = window.innerHeight;
+
+                gl.viewport(0, 0, this._canvas.width, this._canvas.height);
+            }
+        }
+
+        private createBuffer(): void {
+            let vertices = [
+                // x, y, z
+                0, 0, 0,
+                0, 0.5, 0,
+                0.5, 0.5, 0
+            ];
+
+            this._buffer = gl.createBuffer();
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
+            gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+            //gl.enableVertexAttribArray(0);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, undefined);
+            //gl.disableVertexAttribArray(0);
         }
 
         private loadShaders(): void {
@@ -48,7 +74,7 @@ namespace LH {
             let fragmentShaderSource = `
                 precision mediump float;
                 void main() {
-                    gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+                    gl_FragColor = vec4(0.5, 0.0, 0.0, 1.0);
                 }
             `;
 
