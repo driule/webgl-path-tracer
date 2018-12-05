@@ -1,6 +1,14 @@
+
 // entry point
 
+let engine: LH.Engine;
+
 window.onload = function() {
-    let engine = new LH.Engine();
+    engine = new LH.Engine();
     engine.start();
 }
+
+/*
+window.onresize = function() {
+    engine.resize();
+}*/
