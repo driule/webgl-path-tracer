@@ -2,10 +2,10 @@ namespace LH {
 
     export class Engine {
 
-        //private frameCount: number = 0;
+        private _frameCount: number = 0;
         private _canvas: HTMLCanvasElement;
         private _shader: Shader;
-        private _buffer: WebGLBuffer;
+        private _buffer: GLBuffer;
 
         public constructor() {
             console.log("Engine created.");
@@ -23,19 +23,6 @@ namespace LH {
             this.tick();
         }
 
-        private tick(): void {
-            //this.frameCount++;
-            //document.body.innerHTML = this.frameCount.toString();
-
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
-            gl.enableVertexAttribArray(0);
-
-            gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-            requestAnimationFrame(this.tick.bind(this));
-        }
-
         public resize(): void {
             if (this._canvas !== undefined) {
                 this._canvas.width = window.innerWidth;
@@ -45,7 +32,28 @@ namespace LH {
             }
         }
 
+        private tick(): void {
+            this._frameCount++;
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            let colorPosition = this._shader.getUniformLocation("u_color");
+            gl.uniform4f(colorPosition, 1, 0.5, 0, 1);
+
+            this._buffer.bind();
+            this._buffer.draw();
+
+            requestAnimationFrame(this.tick.bind(this));
+        }
+
         private createBuffer(): void {
+            this._buffer = new GLBuffer(3);
+            
+            let positionAttribute = new AttributeInformation();
+            positionAttribute.location = this._shader.getAttributeLocation("a_position");
+            positionAttribute.offset = 0;
+            positionAttribute.size = 3;
+            this._buffer.addAttributeLocation(positionAttribute);
+
             let vertices = [
                 // x, y, z
                 0, 0, 0,
@@ -53,14 +61,9 @@ namespace LH {
                 0.5, 0.5, 0
             ];
 
-            this._buffer = gl.createBuffer();
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
-            gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-            //gl.enableVertexAttribArray(0);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-            gl.bindBuffer(gl.ARRAY_BUFFER, undefined);
-            //gl.disableVertexAttribArray(0);
+            this._buffer.pushBackData(vertices);
+            this._buffer.upload();
+            this._buffer.unbind();
         }
 
         private loadShaders(): void {
@@ -73,8 +76,11 @@ namespace LH {
             
             let fragmentShaderSource = `
                 precision mediump float;
+
+                uniform vec4 u_color;
+
                 void main() {
-                    gl_FragColor = vec4(0.5, 0.0, 0.0, 1.0);
+                    gl_FragColor = u_color;
                 }
             `;
 
