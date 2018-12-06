@@ -77,19 +77,19 @@ var LH;
         /**
          * Creates a new GL buffer.
          * @param dataType The data type of this buffer. Default: gl.FLOAT
-         * @param targetBufferType The buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER. Default: gl.ARRAY_BUFFER
+         * @param bufferType The buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER. Default: gl.ARRAY_BUFFER
          * @param mode The drawing mode of this buffer. (i.e. gl.TRIANGLES or gl.LINES). Default: gl.TRIANGLES
          */
-        function GLBuffer(elementSize, dataType, targetBufferType, mode) {
+        function GLBuffer(elementSize, dataType, bufferType, mode) {
             if (dataType === void 0) { dataType = LH.gl.FLOAT; }
-            if (targetBufferType === void 0) { targetBufferType = LH.gl.ARRAY_BUFFER; }
+            if (bufferType === void 0) { bufferType = LH.gl.ARRAY_BUFFER; }
             if (mode === void 0) { mode = LH.gl.TRIANGLES; }
             this._hasAttributeLocation = false;
             this._data = [];
             this._attributes = [];
             this._elementSize = elementSize;
             this._dataType = dataType;
-            this._tagertBufferType = targetBufferType;
+            this._bufferType = bufferType;
             this._mode = mode;
             switch (this._dataType) {
                 case LH.gl.FLOAT:
@@ -116,7 +116,7 @@ var LH;
         };
         GLBuffer.prototype.bind = function (isNormalized) {
             if (isNormalized === void 0) { isNormalized = false; }
-            LH.gl.bindBuffer(this._tagertBufferType, this._buffer);
+            LH.gl.bindBuffer(this._bufferType, this._buffer);
             if (this._hasAttributeLocation) {
                 for (var _i = 0, _a = this._attributes; _i < _a.length; _i++) {
                     var attribute = _a[_i];
@@ -126,7 +126,7 @@ var LH;
             }
         };
         GLBuffer.prototype.unbind = function () {
-            LH.gl.bindBuffer(this._tagertBufferType, undefined);
+            LH.gl.bindBuffer(this._bufferType, undefined);
             for (var _i = 0, _a = this._attributes; _i < _a.length; _i++) {
                 var attribute = _a[_i];
                 LH.gl.disableVertexAttribArray(attribute.location);
@@ -146,7 +146,7 @@ var LH;
          * Upload buffer data to the GPU
          */
         GLBuffer.prototype.upload = function () {
-            LH.gl.bindBuffer(this._tagertBufferType, this._buffer);
+            LH.gl.bindBuffer(this._bufferType, this._buffer);
             var bufferData;
             switch (this._dataType) {
                 case LH.gl.FLOAT:
@@ -171,13 +171,13 @@ var LH;
                     bufferData = new Uint8Array(this._data);
                     break;
             }
-            LH.gl.bufferData(this._tagertBufferType, bufferData, LH.gl.STATIC_DRAW);
+            LH.gl.bufferData(this._bufferType, bufferData, LH.gl.STATIC_DRAW);
         };
         GLBuffer.prototype.draw = function () {
-            if (this._tagertBufferType == LH.gl.ARRAY_BUFFER) {
+            if (this._bufferType == LH.gl.ARRAY_BUFFER) {
                 LH.gl.drawArrays(this._mode, 0, this._data.length / this._elementSize);
             }
-            else if (this._tagertBufferType == LH.gl.ELEMENT_ARRAY_BUFFER) {
+            else if (this._bufferType == LH.gl.ELEMENT_ARRAY_BUFFER) {
                 LH.gl.drawElements(this._mode, this._data.length, this._dataType, 0);
             }
         };

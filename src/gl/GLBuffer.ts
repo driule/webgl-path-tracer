@@ -13,7 +13,7 @@ namespace LH {
         private _stride: number; // the data type of the buffer
         private _buffer: WebGLBuffer; 
 
-        private _tagertBufferType: number; // the buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER
+        private _bufferType: number; // the buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER
         private _dataType: number;
         private _dataTypeSize: number;
         private _mode: number; // the drawing mode of this buffer. (i.e. gl.TRIANGLES or gl.LINES)
@@ -24,18 +24,18 @@ namespace LH {
         /**
          * Creates a new GL buffer.
          * @param dataType The data type of this buffer. Default: gl.FLOAT
-         * @param targetBufferType The buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER. Default: gl.ARRAY_BUFFER
+         * @param bufferType The buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER. Default: gl.ARRAY_BUFFER
          * @param mode The drawing mode of this buffer. (i.e. gl.TRIANGLES or gl.LINES). Default: gl.TRIANGLES
          */
         public constructor(
             elementSize: number,
             dataType: number = gl.FLOAT,
-            targetBufferType: number = gl.ARRAY_BUFFER,
+            bufferType: number = gl.ARRAY_BUFFER,
             mode: number = gl.TRIANGLES
         ) {
             this._elementSize = elementSize;
             this._dataType = dataType;
-            this._tagertBufferType = targetBufferType;
+            this._bufferType = bufferType;
             this._mode = mode;
 
             switch (this._dataType) {
@@ -65,7 +65,7 @@ namespace LH {
         }
 
         public bind(isNormalized: boolean = false): void {
-            gl.bindBuffer(this._tagertBufferType, this._buffer);
+            gl.bindBuffer(this._bufferType, this._buffer);
 
             if (this._hasAttributeLocation) {
                 for (let attribute of this._attributes) {
@@ -83,7 +83,7 @@ namespace LH {
         }
 
         public unbind(): void {
-            gl.bindBuffer(this._tagertBufferType, undefined);
+            gl.bindBuffer(this._bufferType, undefined);
 
             for (let attribute of this._attributes) {
                 gl.disableVertexAttribArray(attribute.location);
@@ -105,7 +105,7 @@ namespace LH {
          * Upload buffer data to the GPU
          */
         public upload(): void {
-            gl.bindBuffer(this._tagertBufferType, this._buffer);
+            gl.bindBuffer(this._bufferType, this._buffer);
 
             let bufferData: ArrayBuffer;
 
@@ -133,13 +133,13 @@ namespace LH {
                     break;
             }
 
-            gl.bufferData(this._tagertBufferType, bufferData, gl.STATIC_DRAW);
+            gl.bufferData(this._bufferType, bufferData, gl.STATIC_DRAW);
         }
 
         public draw(): void {
-            if (this._tagertBufferType == gl.ARRAY_BUFFER) {
+            if (this._bufferType == gl.ARRAY_BUFFER) {
                 gl.drawArrays(this._mode, 0, this._data.length / this._elementSize);
-            } else if (this._tagertBufferType == gl.ELEMENT_ARRAY_BUFFER) {
+            } else if (this._bufferType == gl.ELEMENT_ARRAY_BUFFER) {
                 gl.drawElements(this._mode, this._data.length, this._dataType, 0);
             }
         }
