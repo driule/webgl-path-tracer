@@ -8,7 +8,6 @@ window.onload = function() {
     engine.start();
 }
 
-/*
 window.onresize = function() {
     engine.resize();
-}*/
+}
