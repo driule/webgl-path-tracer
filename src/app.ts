@@ -9,5 +9,5 @@ window.onload = function() {
 }
 
 window.onresize = function() {
-    engine.resize();
+    engine.resizeWindow();
 }

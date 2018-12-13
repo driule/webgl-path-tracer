@@ -27,7 +27,7 @@ namespace LH {
             this._sprite = new Sprite("quad");
             this._sprite.load();
 
-            this.resize();
+            this.resizeWindow();
             this.tick();
         }
 
@@ -62,7 +62,7 @@ namespace LH {
             requestAnimationFrame(this.tick.bind(this));
         }
 
-        public resize(): void {
+        public resizeWindow(): void {
             if (this._canvas !== undefined) {
                 this._canvas.width = window.innerWidth;
                 this._canvas.height = window.innerHeight;

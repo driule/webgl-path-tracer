@@ -14,7 +14,7 @@ var LH;
             this._projection = LH.Matrix4x4.orthographic(0, this._canvas.width, 0, this._canvas.height, -100.0, 100.0);
             this._sprite = new LH.Sprite("quad");
             this._sprite.load();
-            this.resize();
+            this.resizeWindow();
             this.tick();
         };
         Engine.prototype.tick = function () {
@@ -40,7 +40,7 @@ var LH;
             // run game loop
             requestAnimationFrame(this.tick.bind(this));
         };
-        Engine.prototype.resize = function () {
+        Engine.prototype.resizeWindow = function () {
             if (this._canvas !== undefined) {
                 this._canvas.width = window.innerWidth;
                 this._canvas.height = window.innerHeight;
@@ -63,7 +63,7 @@ window.onload = function () {
     engine.start();
 };
 window.onresize = function () {
-    engine.resize();
+    engine.resizeWindow();
 };
 var LH;
 (function (LH) {
