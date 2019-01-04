@@ -363,38 +363,8 @@ Vector.prototype.maxComponent = function() {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// class UI
-////////////////////////////////////////////////////////////////////////////////
-
-function UI() {
-    this.renderer = new LH.Renderer();
-    this.moving = false;
-}
-
-UI.prototype.setObjects = function(objects) {
-    this.objects = objects;
-    this.objects.splice(0, 0, new LH.Light());
-    this.renderer.setObjects(this.objects);
-};
-
-UI.prototype.update = function(timeSinceStart) {
-    this.modelview = makeLookAt(eye.elements[0], eye.elements[1], eye.elements[2], 0, 0, 0, 0, 1, 0);
-    this.projection = makePerspective(55, 1, 0.1, 100);
-    this.modelviewProjection = this.projection.multiply(this.modelview);
-    this.renderer.update(this.modelviewProjection, timeSinceStart);
-};
-
-UI.prototype.render = function() {
-    this.renderer.render();
-};
-
-////////////////////////////////////////////////////////////////////////////////
 // main program
 ////////////////////////////////////////////////////////////////////////////////
-
-var gl;
-var ui;
-var canvas;
 
 var angleX = 0;
 var angleY = 0;
@@ -414,31 +384,9 @@ var YELLOW_BLUE_CORNELL_BOX = 0;
 var RED_GREEN_CORNELL_BOX = 1;
 var environment = YELLOW_BLUE_CORNELL_BOX;
 
-function tick(timeSinceStart) {
-    eye.elements[0] = zoomZ * Math.sin(angleY) * Math.cos(angleX);
-    eye.elements[1] = zoomZ * Math.sin(angleX);
-    eye.elements[2] = zoomZ * Math.cos(angleY) * Math.cos(angleX);
-
-    ui.update(timeSinceStart);
-    ui.render();
-}
-
-function makeSphereColumn() {
-    var objects = [];
-    objects.push(new LH.Sphere(Vector.create([0, -0.25, 0]), 0.25, nextObjectId++));
-    objects.push(new LH.Sphere(Vector.create([0, -0.75, 0]), 0.25, nextObjectId++));
-
-    return objects;
-}
+let renderer: LH.Renderer;
 
 window.onload = function() {
-    canvas = LH.GLUtilities.initialize("pathTracer");
-
-    gl = LH.gl;
-
-    ui = new UI();
-    ui.setObjects(makeSphereColumn());
-
-    var start = new Date();
-    setInterval(function(){ tick((new Date() - start) * 0.001); }, 1000 / 60);
+    renderer = new LH.Renderer();
+    renderer.start();
 }
