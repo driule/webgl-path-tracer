@@ -260,28 +260,25 @@ function makeMain() {
 }
 
 function makeTracerFragmentSource(objects) {
-  return tracerFragmentSourceHeader +
-  concat(objects, function(o){ return o.getGlobalCode(); }) +
-  intersectCubeSource +
-  normalForCubeSource +
-  intersectSphereSource +
-  normalForSphereSource +
-  randomSource +
-  cosineWeightedDirectionSource +
-  uniformlyRandomDirectionSource +
-  uniformlyRandomVectorSource +
-  makeShadow(objects) +
-  makeCalculateColor(objects) +
-  makeMain();
+    return tracerFragmentSourceHeader +
+        concat(objects, function(o){ return o.getGlobalCode(); }) +
+        intersectCubeSource +
+        normalForCubeSource +
+        intersectSphereSource +
+        normalForSphereSource +
+        randomSource +
+        cosineWeightedDirectionSource +
+        uniformlyRandomDirectionSource +
+        uniformlyRandomVectorSource +
+        makeShadow(objects) +
+        makeCalculateColor(objects) +
+        makeMain()
+    ;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // utility functions
 ////////////////////////////////////////////////////////////////////////////////
-
-function getEyeRay(matrix, x, y) {
-    return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
-}
 
 function concat(objects, func) {
     var text = '';
@@ -387,12 +384,6 @@ Matrix.Translation = function (v)
 ////////////////////////////////////////////////////////////////////////////////
 // main program
 ////////////////////////////////////////////////////////////////////////////////
-
-var angleX = 0;
-var angleY = 0;
-var zoomZ = 2.5;
-var eye = Vector.create([0, 0, 0]);
-var light = Vector.create([0.4, 0.5, -0.6]);
 
 var nextObjectId = 0;
 

@@ -3,9 +3,12 @@ namespace LH {
     export class Light {
 
         private _temporaryTranslation: Vector;
+        private _position: Vector;
 
         public constructor() {
             this._temporaryTranslation = Vector.create([0, 0, 0]);
+
+            this._position = Vector.create([0.4, 0.5, -0.6]);
         }
 
         public getGlobalCode(): string {
@@ -28,8 +31,8 @@ namespace LH {
             return '';
         }
           
-        public setUniforms(renderer): void {
-            renderer.uniforms.light = light.add(this._temporaryTranslation);
+        public setUniforms(pathTracer: PathTracer): void {
+            pathTracer.uniforms.light = this._position.add(this._temporaryTranslation);
         }
           
         public clampPosition(position): void {
@@ -38,23 +41,23 @@ namespace LH {
             }
         }
           
-        public temporaryTranslate(translation) {
-            var tempLight = light.add(translation);
+        public temporaryTranslate(translation: Vector) {
+            var tempLight = this._position.add(translation);
             this.clampPosition(tempLight);
-            this._temporaryTranslation = tempLight.subtract(light);
+            this._temporaryTranslation = tempLight.subtract(this._position);
         }
           
-        public translate(translation) {
-            light = light.add(translation);
-            this.clampPosition(light);
+        public translate(translation: Vector) {
+            this._position = this._position.add(translation);
+            this.clampPosition(this._position);
         }
           
         public getMinCorner() {
-            return light.add(this._temporaryTranslation).subtract(Vector.create([lightSize, lightSize, lightSize]));
+            return this._position.add(this._temporaryTranslation).subtract(Vector.create([lightSize, lightSize, lightSize]));
         }
           
         public getMaxCorner() {
-            return light.add(this._temporaryTranslation).add(Vector.create([lightSize, lightSize, lightSize]));
+            return this._position.add(this._temporaryTranslation).add(Vector.create([lightSize, lightSize, lightSize]));
         }
           
         public intersect(origin, ray) {

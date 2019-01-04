@@ -15,7 +15,7 @@ namespace LH {
         private sampleCount: number;
 
         private objects;
-        private uniforms;
+        public uniforms;
 
         public constructor() {
             var vertices = [
@@ -70,17 +70,17 @@ namespace LH {
             gl.enableVertexAttribArray(this.tracerVertexAttribute);
         }
           
-        public update(matrix: Matrix, timeSinceStart: number): void {
+        public update(matrix: Matrix, timeSinceStart: number, eye: Vector): void {
             // calculate uniforms
             for(var i = 0; i < this.objects.length; i++) {
               this.objects[i].setUniforms(this);
             }
             this.uniforms.eye = eye;
             this.uniforms.glossiness = glossiness;
-            this.uniforms.ray00 = getEyeRay(matrix, -1, -1);
-            this.uniforms.ray01 = getEyeRay(matrix, -1, +1);
-            this.uniforms.ray10 = getEyeRay(matrix, +1, -1);
-            this.uniforms.ray11 = getEyeRay(matrix, +1, +1);
+            this.uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
+            this.uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
+            this.uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
+            this.uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
             this.uniforms.timeSinceStart = timeSinceStart;
             this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
           
@@ -110,6 +110,10 @@ namespace LH {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.vertexAttribPointer(this.renderVertexAttribute, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+
+        private getEyeRay(matrix, x, y, eye): Matrix {
+            return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
         }
     }
 }

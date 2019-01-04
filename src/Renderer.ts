@@ -5,9 +5,19 @@ namespace LH {
         private _pathTracer: PathTracer;
         private _canvas: HTMLCanvasElement;
 
+        private _angleX: number;
+        private _angleY: number;
+        private _zoomZ: number;
+        private _eye: Vector;
+
         public constructor() {
             this._canvas = GLUtilities.initialize("pathTracer");
             this._pathTracer = new PathTracer();
+
+            this._angleX = 0;
+            this._angleY = 0;
+            this._zoomZ = 2.5;
+            this._eye = Vector.create([0, 0, 0]);
         }
 
         public start(): void {
@@ -28,15 +38,15 @@ namespace LH {
         public update(modelviewProjection: Matrix, timeSinceStart: number): void {
             var jitter = Matrix.Translation(Vector.create([Math.random() * 2 - 1, Math.random() * 2 - 1, 0]).multiply(1 / 512));
             var inverse = jitter.multiply(modelviewProjection).inverse();
-            this._pathTracer.update(inverse, timeSinceStart);
+            this._pathTracer.update(inverse, timeSinceStart, this._eye);
         }
 
         public tick(timeSinceStart: number): void {
-            eye.elements[0] = zoomZ * Math.sin(angleY) * Math.cos(angleX);
-            eye.elements[1] = zoomZ * Math.sin(angleX);
-            eye.elements[2] = zoomZ * Math.cos(angleY) * Math.cos(angleX);
+            this._eye.elements[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
+            this._eye.elements[1] = this._zoomZ * Math.sin(this._angleX);
+            this._eye.elements[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
         
-            let modelview = this.makeLookAt(eye.elements[0], eye.elements[1], eye.elements[2], 0, 0, 0, 0, 1, 0);
+            let modelview = this.makeLookAt(this._eye.elements[0], this._eye.elements[1], this._eye.elements[2], 0, 0, 0, 0, 1, 0);
             let projection = this.makePerspective(55, 1, 0.1, 100);
             let modelviewProjection = projection.multiply(modelview);
             this.update(modelviewProjection, timeSinceStart);

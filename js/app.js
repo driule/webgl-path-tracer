@@ -123,17 +123,17 @@ var LH;
             this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
             LH.gl.enableVertexAttribArray(this.tracerVertexAttribute);
         };
-        PathTracer.prototype.update = function (matrix, timeSinceStart) {
+        PathTracer.prototype.update = function (matrix, timeSinceStart, eye) {
             // calculate uniforms
             for (var i = 0; i < this.objects.length; i++) {
                 this.objects[i].setUniforms(this);
             }
             this.uniforms.eye = eye;
             this.uniforms.glossiness = glossiness;
-            this.uniforms.ray00 = getEyeRay(matrix, -1, -1);
-            this.uniforms.ray01 = getEyeRay(matrix, -1, +1);
-            this.uniforms.ray10 = getEyeRay(matrix, +1, -1);
-            this.uniforms.ray11 = getEyeRay(matrix, +1, +1);
+            this.uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
+            this.uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
+            this.uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
+            this.uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
             this.uniforms.timeSinceStart = timeSinceStart;
             this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
             // set uniforms
@@ -159,6 +159,9 @@ var LH;
             LH.gl.vertexAttribPointer(this.renderVertexAttribute, 2, LH.gl.FLOAT, false, 0, 0);
             LH.gl.drawArrays(LH.gl.TRIANGLE_STRIP, 0, 4);
         };
+        PathTracer.prototype.getEyeRay = function (matrix, x, y, eye) {
+            return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
+        };
         return PathTracer;
     }());
     LH.PathTracer = PathTracer;
@@ -169,6 +172,10 @@ var LH;
         function Renderer() {
             this._canvas = LH.GLUtilities.initialize("pathTracer");
             this._pathTracer = new LH.PathTracer();
+            this._angleX = 0;
+            this._angleY = 0;
+            this._zoomZ = 2.5;
+            this._eye = Vector.create([0, 0, 0]);
         }
         Renderer.prototype.start = function () {
             LH.gl.clearColor(0, 0, 0, 1);
@@ -185,13 +192,13 @@ var LH;
         Renderer.prototype.update = function (modelviewProjection, timeSinceStart) {
             var jitter = Matrix.Translation(Vector.create([Math.random() * 2 - 1, Math.random() * 2 - 1, 0]).multiply(1 / 512));
             var inverse = jitter.multiply(modelviewProjection).inverse();
-            this._pathTracer.update(inverse, timeSinceStart);
+            this._pathTracer.update(inverse, timeSinceStart, this._eye);
         };
         Renderer.prototype.tick = function (timeSinceStart) {
-            eye.elements[0] = zoomZ * Math.sin(angleY) * Math.cos(angleX);
-            eye.elements[1] = zoomZ * Math.sin(angleX);
-            eye.elements[2] = zoomZ * Math.cos(angleY) * Math.cos(angleX);
-            var modelview = this.makeLookAt(eye.elements[0], eye.elements[1], eye.elements[2], 0, 0, 0, 0, 1, 0);
+            this._eye.elements[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
+            this._eye.elements[1] = this._zoomZ * Math.sin(this._angleX);
+            this._eye.elements[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
+            var modelview = this.makeLookAt(this._eye.elements[0], this._eye.elements[1], this._eye.elements[2], 0, 0, 0, 0, 1, 0);
             var projection = this.makePerspective(55, 1, 0.1, 100);
             var modelviewProjection = projection.multiply(modelview);
             this.update(modelviewProjection, timeSinceStart);
@@ -474,9 +481,6 @@ function makeTracerFragmentSource(objects) {
 ////////////////////////////////////////////////////////////////////////////////
 // utility functions
 ////////////////////////////////////////////////////////////////////////////////
-function getEyeRay(matrix, x, y) {
-    return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
-}
 function concat(objects, func) {
     var text = '';
     for (var i = 0; i < objects.length; i++) {
@@ -561,11 +565,6 @@ Matrix.Translation = function (v) {
 ////////////////////////////////////////////////////////////////////////////////
 // main program
 ////////////////////////////////////////////////////////////////////////////////
-var angleX = 0;
-var angleY = 0;
-var zoomZ = 2.5;
-var eye = Vector.create([0, 0, 0]);
-var light = Vector.create([0.4, 0.5, -0.6]);
 var nextObjectId = 0;
 var MATERIAL_DIFFUSE = 0;
 var MATERIAL_MIRROR = 1;
@@ -585,6 +584,7 @@ var LH;
     var Light = /** @class */ (function () {
         function Light() {
             this._temporaryTranslation = Vector.create([0, 0, 0]);
+            this._position = Vector.create([0.4, 0.5, -0.6]);
         }
         Light.prototype.getGlobalCode = function () {
             return 'uniform vec3 light;';
@@ -601,8 +601,8 @@ var LH;
         Light.prototype.getNormalCalculationCode = function () {
             return '';
         };
-        Light.prototype.setUniforms = function (renderer) {
-            renderer.uniforms.light = light.add(this._temporaryTranslation);
+        Light.prototype.setUniforms = function (pathTracer) {
+            pathTracer.uniforms.light = this._position.add(this._temporaryTranslation);
         };
         Light.prototype.clampPosition = function (position) {
             for (var i = 0; i < position.elements.length; i++) {
@@ -610,19 +610,19 @@ var LH;
             }
         };
         Light.prototype.temporaryTranslate = function (translation) {
-            var tempLight = light.add(translation);
+            var tempLight = this._position.add(translation);
             this.clampPosition(tempLight);
-            this._temporaryTranslation = tempLight.subtract(light);
+            this._temporaryTranslation = tempLight.subtract(this._position);
         };
         Light.prototype.translate = function (translation) {
-            light = light.add(translation);
-            this.clampPosition(light);
+            this._position = this._position.add(translation);
+            this.clampPosition(this._position);
         };
         Light.prototype.getMinCorner = function () {
-            return light.add(this._temporaryTranslation).subtract(Vector.create([lightSize, lightSize, lightSize]));
+            return this._position.add(this._temporaryTranslation).subtract(Vector.create([lightSize, lightSize, lightSize]));
         };
         Light.prototype.getMaxCorner = function () {
-            return light.add(this._temporaryTranslation).add(Vector.create([lightSize, lightSize, lightSize]));
+            return this._position.add(this._temporaryTranslation).add(Vector.create([lightSize, lightSize, lightSize]));
         };
         Light.prototype.intersect = function (origin, ray) {
             return Number.MAX_VALUE;
@@ -657,16 +657,14 @@ var LH;
                 ' if(' + this._intersectStr + ' < 1.0) return 0.0;';
         };
         Sphere.prototype.getMinimumIntersectCode = function () {
-            return '' +
-                ' if(' + this._intersectStr + ' < t) t = ' + this._intersectStr + ';';
+            return ' if(' + this._intersectStr + ' < t) t = ' + this._intersectStr + ';';
         };
         Sphere.prototype.getNormalCalculationCode = function () {
-            return '' +
-                ' else if(t == ' + this._intersectStr + ') normal = normalForSphere(hit, ' + this._centerStr + ', ' + this._radiusStr + ');';
+            return ' else if(t == ' + this._intersectStr + ') normal = normalForSphere(hit, ' + this._centerStr + ', ' + this._radiusStr + ');';
         };
-        Sphere.prototype.setUniforms = function (renderer) {
-            renderer.uniforms[this._centerStr] = this._center.add(this._temporaryTranslation);
-            renderer.uniforms[this._radiusStr] = this._radius;
+        Sphere.prototype.setUniforms = function (pathTracer) {
+            pathTracer.uniforms[this._centerStr] = this._center.add(this._temporaryTranslation);
+            pathTracer.uniforms[this._radiusStr] = this._radius;
         };
         Sphere.prototype.temporaryTranslate = function (translation) {
             this._temporaryTranslation = translation;
