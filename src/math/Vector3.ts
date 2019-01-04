@@ -44,5 +44,21 @@ namespace LH {
         public toFloat32Array(): Float32Array {
             return new Float32Array(this.toArray());
         }
+
+        public add(vector: this): this {
+            this._x += vector._x;
+            this._y += vector._y;
+            this._z += vector._z;
+
+            return this;
+        }
+
+        public sub(vector: this): this {
+            this._x -= vector._x;
+            this._y -= vector._y;
+            this._z -= vector._z;
+
+            return this;
+        }
     }
 }

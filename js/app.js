@@ -8,35 +8,44 @@ var LH;
         Engine.prototype.start = function () {
             this._canvas = LH.GLUtilities.initialize("pathTracer");
             LH.gl.clearColor(0, 0, 0, 1);
-            this.loadShaders();
-            this._shader.use();
+            LH.gl.clear(LH.gl.COLOR_BUFFER_BIT | LH.gl.DEPTH_BUFFER_BIT);
+            // load shaders
+            this.loadLineShader();
+            this._lineShader.use();
+            this.loadRendererShader();
+            this._rendererShader.use();
+            this.loadTracerShader();
+            this._tracerShader.use();
             // init geometry
-            this._projection = LH.Matrix4x4.orthographic(0, this._canvas.width, 0, this._canvas.height, -100.0, 100.0);
-            this._sprite = new LH.Sprite("quad");
-            this._sprite.load();
-            this.resizeWindow();
+            //this._projection = Matrix4x4.orthographic(0, this._canvas.width, 0, this._canvas.height, -100.0, 100.0);
+            //this._sprite = new Sprite("quad");
+            //this._sprite.load();
+            //this.resizeWindow();
             this.tick();
         };
         Engine.prototype.tick = function () {
             this._frameCount++;
             LH.gl.clear(LH.gl.COLOR_BUFFER_BIT);
             // set uniforms
-            var colorPosition = this._shader.getUniformLocation("u_color");
-            LH.gl.uniform4f(colorPosition, 1, 0.5, 0, 1);
-            var projectionPosition = this._shader.getUniformLocation("u_projection");
-            LH.gl.uniformMatrix4fv(projectionPosition, false, new Float32Array(this._projection.data));
-            var modelLocation = this._shader.getUniformLocation("u_model");
-            LH.gl.uniformMatrix4fv(modelLocation, false, new Float32Array(LH.Matrix4x4.translation(this._sprite.position).data));
+            /*let colorPosition = this._shader.getUniformLocation("u_color");
+            gl.uniform4f(colorPosition, 1, 0.5, 0, 1);
+
+            let projectionPosition = this._shader.getUniformLocation("u_projection");
+            gl.uniformMatrix4fv(projectionPosition, false, new Float32Array(this._projection.data));
+
+            let modelLocation = this._shader.getUniformLocation("u_model");
+            gl.uniformMatrix4fv(modelLocation, false, new Float32Array(Matrix4x4.translation(this._sprite.position).data));*/
             // render & animate
-            this._sprite.position.x++;
-            this._sprite.position.y++;
-            if (this._sprite.position.x > 200) {
+            //this._sprite.position.x++;
+            //this._sprite.position.y++;
+            /*if (this._sprite.position.x > 200) {
                 this._sprite.position.x = 0;
             }
             if (this._sprite.position.y > 50) {
                 this._sprite.position.y = 0;
             }
-            this._sprite.draw();
+
+            this._sprite.draw();*/
             // run game loop
             requestAnimationFrame(this.tick.bind(this));
         };
@@ -44,27 +53,703 @@ var LH;
             if (this._canvas !== undefined) {
                 this._canvas.width = window.innerWidth;
                 this._canvas.height = window.innerHeight;
-                LH.gl.viewport(-1, 1, 1, -1);
+                //gl.viewport(-1, 1, 1, -1);
             }
         };
-        Engine.prototype.loadShaders = function () {
-            var vertexShaderSource = "\n                attribute vec3 a_position;\n\n                uniform mat4 u_projection;\n                uniform mat4 u_model;\n\n                void main() {\n                    gl_Position = u_projection * u_model * vec4(a_position, 1.0);\n                }\n            ";
-            var fragmentShaderSource = "\n                precision mediump float;\n\n                uniform vec4 u_color;\n\n                void main() {\n                    gl_FragColor = u_color;\n                }\n            ";
-            this._shader = new LH.Shader("basic", vertexShaderSource, fragmentShaderSource);
+        Engine.prototype.loadRendererShader = function () {
+            var vertexShaderSource = "\n                attribute vec3 vertex;\n                varying vec2 texCoord;\n                \n                void main() {\n                    texCoord = vertex.xy * 0.5 + 0.5;\n                    gl_Position = vec4(vertex, 1.0);\n                }\n            ";
+            var fragmentShaderSource = "\n                precision highp float;\n                varying vec2 texCoord;\n                uniform sampler2D texture;\n                \n                void main() {\n                    gl_FragColor = texture2D(texture, texCoord);\n                }\n            ";
+            this._rendererShader = new LH.Shader("renderer", vertexShaderSource, fragmentShaderSource);
+        };
+        Engine.prototype.loadTracerShader = function () {
+            var vertexShaderSource = "\n                attribute vec3 vertex;\n                uniform vec3 eye, ray00, ray01, ray10, ray11;\n                varying vec3 initialRay;\n                \n                void main() {\n                    vec2 percent = vertex.xy * 0.5 + 0.5;\n                    initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n                    gl_Position = vec4(vertex, 1.0);\n                }\n            ";
+            var fragmentShaderSource = "\n                precision highp float;\n                uniform vec3 eye;\n                varying vec3 initialRay;\n\n                uniform float textureWeight;\n                uniform float timeSinceStart;\n                uniform sampler2D texture;\n                uniform float glossiness;\n\n                vec3 roomCubeMin = vec3(-1.0, -1.0, -1.0);\n                vec3 roomCubeMax = vec3(1.0, 1.0, 1.0);\n\n                uniform vec3 light;\n\n                uniform vec3 sphereCenter0;\n                uniform float sphereRadius0;\n                uniform vec3 sphereCenter1;\n                uniform float sphereRadius1;\n                uniform vec3 sphereCenter2;\n                uniform float sphereRadius2;\n                uniform vec3 sphereCenter3;\n                uniform float sphereRadius3;\n\n                vec2 intersectCube(vec3 origin, vec3 ray, vec3 cubeMin, vec3 cubeMax) {\n                    vec3 tMin = (cubeMin - origin) / ray;\n                    vec3 tMax = (cubeMax - origin) / ray;\n                    vec3 t1 = min(tMin, tMax);\n                    vec3 t2 = max(tMin, tMax);\n                    float tNear = max(max(t1.x, t1.y), t1.z);\n                    float tFar = min(min(t2.x, t2.y), t2.z);\n                    \n                    return vec2(tNear, tFar);\n                }\n                \n                vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax) {\n                    if (hit.x < cubeMin.x + 0.0001) return vec3(-1.0, 0.0, 0.0);\n                    else if(hit.x > cubeMax.x - 0.0001) return vec3(1.0, 0.0, 0.0);\n                    else if(hit.y < cubeMin.y + 0.0001) return vec3(0.0, -1.0, 0.0);\n                    else if(hit.y > cubeMax.y - 0.0001) return vec3(0.0, 1.0, 0.0);\n                    else if(hit.z < cubeMin.z + 0.0001) return vec3(0.0, 0.0, -1.0);\n                    else return vec3(0.0, 0.0, 1.0);\n                }\n                \n                float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {\n                    vec3 toSphere = origin - sphereCenter;\n                    float a = dot(ray, ray);\n                    float b = 2.0 * dot(toSphere, ray);\n                    float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;\n                    float discriminant = b*b - 4.0*a*c;\n                    \n                    if(discriminant > 0.0) {\n                        float t = (-b - sqrt(discriminant)) / (2.0 * a);\n                        if(t > 0.0) return t;\n                    }\n                    \n                    return 10000.0;\n                }\n                \n                vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {\n                    return (hit - sphereCenter) / sphereRadius;\n                }\n                \n                float random(vec3 scale, float seed) {\n                    return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n                }\n                \n                vec3 cosineWeightedDirection(float seed, vec3 normal) {\n                    float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n                    float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n                    float r = sqrt(u);\n                    float angle = 6.283185307179586 * v;\n                    vec3 sdir, tdir;\n                    \n                    if (abs(normal.x)<.5) {\n                        sdir = cross(normal, vec3(1,0,0));\n                    } else {\n                        sdir = cross(normal, vec3(0,1,0));\n                    }\n                    \n                    tdir = cross(normal, sdir);\n                    \n                    return r*cos(angle)*sdir + r*sin(angle)*tdir + sqrt(1.-u)*normal;\n                }\n                \n                vec3 uniformlyRandomDirection(float seed) {\n                    float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n                    float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n                    float z = 1.0 - 2.0 * u;\n                    float r = sqrt(1.0 - z * z);\n                    float angle = 6.283185307179586 * v;\n                    return vec3(r * cos(angle), r * sin(angle), z);\n                }\n                \n                vec3 uniformlyRandomVector(float seed) {\n                    return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n                }\n                \n                float shadow(vec3 origin, vec3 ray) {\n                    float tSphere0 = intersectSphere(origin, ray, sphereCenter0, sphereRadius0);\n                    if(tSphere0 < 1.0) return 0.0;\n\n                    float tSphere1 = intersectSphere(origin, ray, sphereCenter1, sphereRadius1);\n                    if(tSphere1 < 1.0) return 0.0;\n\n                    float tSphere2 = intersectSphere(origin, ray, sphereCenter2, sphereRadius2);\n                    if(tSphere2 < 1.0) return 0.0;\n\n                    float tSphere3 = intersectSphere(origin, ray, sphereCenter3, sphereRadius3);\n                    if(tSphere3 < 1.0) return 0.0;\n                    \n                    return 1.0;\n                }\n                \n                vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n                    vec3 colorMask = vec3(1.0);\n                    vec3 accumulatedColor = vec3(0.0);\n                    for(int bounce = 0; bounce < 5; bounce++) {\n                        vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);\n\n                        float tSphere0 = intersectSphere(origin, ray, sphereCenter0, sphereRadius0);\n                        float tSphere1 = intersectSphere(origin, ray, sphereCenter1, sphereRadius1);\n                        float tSphere2 = intersectSphere(origin, ray, sphereCenter2, sphereRadius2);\n                        float tSphere3 = intersectSphere(origin, ray, sphereCenter3, sphereRadius3);\n\n                        float t = 10000.0;\n                        if(tRoom.x < tRoom.y) t = tRoom.y;\n                        \n                        if(tSphere0 < t) t = tSphere0;\n                        if(tSphere1 < t) t = tSphere1;\n                        if(tSphere2 < t) t = tSphere2;\n                        if(tSphere3 < t) t = tSphere3;\n                        \n                        vec3 hit = origin + ray * t;\n                        vec3 surfaceColor = vec3(0.75);\n                        float specularHighlight = 0.0;\n                        vec3 normal;\n                        \n                        if(t == tRoom.y) {\n                            normal = -normalForCube(hit, roomCubeMin, roomCubeMax);\n                            if(hit.x < -0.9999) surfaceColor = vec3(0.1, 0.5, 1.0);\n                            else if(hit.x > 0.9999) surfaceColor = vec3(1.0, 0.9, 0.1);\n                            \n                            ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n                        } else if(t == 10000.0) {\n                            break;\n                        } else {\n                            if(false) ; else if(t == tSphere0) normal = normalForSphere(hit, sphereCenter0, sphereRadius0);\n                            else if(t == tSphere1) normal = normalForSphere(hit, sphereCenter1, sphereRadius1);\n                            else if(t == tSphere2) normal = normalForSphere(hit, sphereCenter2, sphereRadius2);\n                            else if(t == tSphere3) normal = normalForSphere(hit, sphereCenter3, sphereRadius3);\n                            ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n                        }\n                        \n                        vec3 toLight = light - hit;\n                        float diffuse = max(0.0, dot(normalize(toLight), normal));\n                        float shadowIntensity = shadow(hit + normal * 0.0001, toLight);\n                        colorMask *= surfaceColor;\n                        \n                        accumulatedColor += colorMask * (0.5 * diffuse * shadowIntensity);\n                        accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n                        \n                        origin = hit;\n                    }\n                    \n                    return accumulatedColor;\n                }\n                \n                void main() {\n                    vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * 0.1;\n                    vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n                    gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);\n                }\n            ";
+            this._tracerShader = new LH.Shader("tracer", vertexShaderSource, fragmentShaderSource);
+        };
+        Engine.prototype.loadLineShader = function () {
+            var vertexShaderSource = "\n                attribute vec3 vertex;\n                uniform vec3 cubeMin;\n                uniform vec3 cubeMax;\n                uniform mat4 modelviewProjection;\n                \n                void main() {\n                    gl_Position = modelviewProjection * vec4(mix(cubeMin, cubeMax, vertex), 1.0);\n                }\n            ";
+            var fragmentShaderSource = "\n                precision highp float;\n                \n                void main() {\n                    gl_FragColor = vec4(1.0);\n                }\n            ";
+            this._lineShader = new LH.Shader("line", vertexShaderSource, fragmentShaderSource);
         };
         return Engine;
     }());
     LH.Engine = Engine;
 })(LH || (LH = {}));
+var LH;
+(function (LH) {
+    var PathTracer = /** @class */ (function () {
+        function PathTracer() {
+            var vertices = [
+                -1, -1,
+                -1, +1,
+                +1, -1,
+                +1, +1
+            ];
+            // create vertex buffer
+            this.vertexBuffer = LH.gl.createBuffer();
+            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
+            LH.gl.bufferData(LH.gl.ARRAY_BUFFER, new Float32Array(vertices), LH.gl.STATIC_DRAW);
+            // create framebuffer
+            this.framebuffer = LH.gl.createFramebuffer();
+            // create textures
+            var type = LH.gl.getExtension('OES_texture_float') ? LH.gl.FLOAT : LH.gl.UNSIGNED_BYTE;
+            this.textures = [];
+            for (var i = 0; i < 2; i++) {
+                this.textures.push(LH.gl.createTexture());
+                LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[i]);
+                LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MAG_FILTER, LH.gl.NEAREST);
+                LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MIN_FILTER, LH.gl.NEAREST);
+                LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB, 512, 512, 0, LH.gl.RGB, type, null);
+            }
+            LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
+            // create render shader
+            this.renderProgram = compileShader(renderVertexSource, renderFragmentSource);
+            this.renderVertexAttribute = LH.gl.getAttribLocation(this.renderProgram, 'vertex');
+            LH.gl.enableVertexAttribArray(this.renderVertexAttribute);
+            // objects and shader will be filled in when setObjects() is called
+            this.objects = [];
+            this.sampleCount = 0;
+            this.tracerProgram = null;
+        }
+        PathTracer.prototype.setObjects = function (objects) {
+            this.uniforms = {};
+            this.sampleCount = 0;
+            this.objects = objects;
+            // create tracer shader
+            if (this.tracerProgram != null) {
+                LH.gl.deleteProgram(this.shaderProgram);
+            }
+            this.tracerProgram = compileShader(tracerVertexSource, makeTracerFragmentSource(objects));
+            this.tracerVertexAttribute = LH.gl.getAttribLocation(this.tracerProgram, 'vertex');
+            LH.gl.enableVertexAttribArray(this.tracerVertexAttribute);
+        };
+        PathTracer.prototype.update = function (matrix, timeSinceStart) {
+            // calculate uniforms
+            for (var i = 0; i < this.objects.length; i++) {
+                this.objects[i].setUniforms(this);
+            }
+            this.uniforms.eye = eye;
+            this.uniforms.glossiness = glossiness;
+            this.uniforms.ray00 = getEyeRay(matrix, -1, -1);
+            this.uniforms.ray01 = getEyeRay(matrix, -1, +1);
+            this.uniforms.ray10 = getEyeRay(matrix, +1, -1);
+            this.uniforms.ray11 = getEyeRay(matrix, +1, +1);
+            this.uniforms.timeSinceStart = timeSinceStart;
+            this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
+            // set uniforms
+            LH.gl.useProgram(this.tracerProgram);
+            setUniforms(this.tracerProgram, this.uniforms);
+            // render to texture
+            LH.gl.useProgram(this.tracerProgram);
+            LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
+            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
+            LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, this.framebuffer);
+            LH.gl.framebufferTexture2D(LH.gl.FRAMEBUFFER, LH.gl.COLOR_ATTACHMENT0, LH.gl.TEXTURE_2D, this.textures[1], 0);
+            LH.gl.vertexAttribPointer(this.tracerVertexAttribute, 2, LH.gl.FLOAT, false, 0, 0);
+            LH.gl.drawArrays(LH.gl.TRIANGLE_STRIP, 0, 4);
+            LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, null);
+            // ping pong textures
+            this.textures.reverse();
+            this.sampleCount++;
+        };
+        PathTracer.prototype.render = function () {
+            LH.gl.useProgram(this.renderProgram);
+            LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
+            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
+            LH.gl.vertexAttribPointer(this.renderVertexAttribute, 2, LH.gl.FLOAT, false, 0, 0);
+            LH.gl.drawArrays(LH.gl.TRIANGLE_STRIP, 0, 4);
+        };
+        return PathTracer;
+    }());
+    LH.PathTracer = PathTracer;
+})(LH || (LH = {}));
+var LH;
+(function (LH) {
+    var Renderer = /** @class */ (function () {
+        function Renderer() {
+            var vertices = [
+                0, 0, 0,
+                1, 0, 0,
+                0, 1, 0,
+                1, 1, 0,
+                0, 0, 1,
+                1, 0, 1,
+                0, 1, 1,
+                1, 1, 1
+            ];
+            var indices = [
+                0, 1, 1, 3, 3, 2, 2, 0,
+                4, 5, 5, 7, 7, 6, 6, 4,
+                0, 4, 1, 5, 2, 6, 3, 7
+            ];
+            // create vertex buffer
+            this.vertexBuffer = LH.gl.createBuffer();
+            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
+            LH.gl.bufferData(LH.gl.ARRAY_BUFFER, new Float32Array(vertices), LH.gl.STATIC_DRAW);
+            // create index buffer
+            this.indexBuffer = LH.gl.createBuffer();
+            LH.gl.bindBuffer(LH.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+            LH.gl.bufferData(LH.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), LH.gl.STATIC_DRAW);
+            // create line shader
+            this.lineProgram = compileShader(lineVertexSource, lineFragmentSource);
+            this.vertexAttribute = LH.gl.getAttribLocation(this.lineProgram, 'vertex');
+            LH.gl.enableVertexAttribArray(this.vertexAttribute);
+            this.objects = [];
+            this.selectedObject = null;
+            this.pathTracer = new LH.PathTracer();
+        }
+        Renderer.prototype.setObjects = function (objects) {
+            this.objects = objects;
+            this.selectedObject = null;
+            this.pathTracer.setObjects(objects);
+        };
+        Renderer.prototype.update = function (modelviewProjection, timeSinceStart) {
+            var jitter = Matrix.Translation(Vector.create([Math.random() * 2 - 1, Math.random() * 2 - 1, 0]).multiply(1 / 512));
+            var inverse = jitter.multiply(modelviewProjection).inverse();
+            this.modelviewProjection = modelviewProjection;
+            this.pathTracer.update(inverse, timeSinceStart);
+        };
+        Renderer.prototype.render = function () {
+            this.pathTracer.render();
+            if (this.selectedObject != null) {
+                LH.gl.useProgram(this.lineProgram);
+                LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
+                LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
+                LH.gl.bindBuffer(LH.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+                LH.gl.vertexAttribPointer(this.vertexAttribute, 3, LH.gl.FLOAT, false, 0, 0);
+                setUniforms(this.lineProgram, {
+                    cubeMin: this.selectedObject.getMinCorner(),
+                    cubeMax: this.selectedObject.getMaxCorner(),
+                    modelviewProjection: this.modelviewProjection
+                });
+                LH.gl.drawElements(LH.gl.LINES, 24, LH.gl.UNSIGNED_SHORT, 0);
+            }
+        };
+        return Renderer;
+    }());
+    LH.Renderer = Renderer;
+})(LH || (LH = {}));
 // entry point
-var engine;
-window.onload = function () {
+/*let engine: LH.Engine;
+
+window.onload = function() {
     engine = new LH.Engine();
     engine.start();
-};
-window.onresize = function () {
+}
+
+window.onresize = function() {
     engine.resizeWindow();
+}*/
+////////////////////////////////////////////////////////////////////////////////
+// shader strings
+////////////////////////////////////////////////////////////////////////////////
+// vertex shader for drawing a textured quad
+var renderVertexSource = ' attribute vec3 vertex;' +
+    ' varying vec2 texCoord;' +
+    ' void main() {' +
+    '   texCoord = vertex.xy * 0.5 + 0.5;' +
+    '   gl_Position = vec4(vertex, 1.0);' +
+    ' }';
+// fragment shader for drawing a textured quad
+var renderFragmentSource = ' precision highp float;' +
+    ' varying vec2 texCoord;' +
+    ' uniform sampler2D texture;' +
+    ' void main() {' +
+    '   gl_FragColor = texture2D(texture, texCoord);' +
+    ' }';
+// vertex shader for drawing a line
+var lineVertexSource = ' attribute vec3 vertex;' +
+    ' uniform vec3 cubeMin;' +
+    ' uniform vec3 cubeMax;' +
+    ' uniform mat4 modelviewProjection;' +
+    ' void main() {' +
+    '   gl_Position = modelviewProjection * vec4(mix(cubeMin, cubeMax, vertex), 1.0);' +
+    ' }';
+// fragment shader for drawing a line
+var lineFragmentSource = ' precision highp float;' +
+    ' void main() {' +
+    '   gl_FragColor = vec4(1.0);' +
+    ' }';
+// constants for the shaders
+var bounces = '5';
+var epsilon = '0.0001';
+var infinity = '10000.0';
+var lightSize = 0.1;
+var lightVal = 0.5;
+// vertex shader, interpolate ray per-pixel
+var tracerVertexSource = ' attribute vec3 vertex;' +
+    ' uniform vec3 eye, ray00, ray01, ray10, ray11;' +
+    ' varying vec3 initialRay;' +
+    ' void main() {' +
+    '   vec2 percent = vertex.xy * 0.5 + 0.5;' +
+    '   initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);' +
+    '   gl_Position = vec4(vertex, 1.0);' +
+    ' }';
+// start of fragment shader
+var tracerFragmentSourceHeader = ' precision highp float;' +
+    ' uniform vec3 eye;' +
+    ' varying vec3 initialRay;' +
+    ' uniform float textureWeight;' +
+    ' uniform float timeSinceStart;' +
+    ' uniform sampler2D texture;' +
+    ' uniform float glossiness;' +
+    ' vec3 roomCubeMin = vec3(-1.0, -1.0, -1.0);' +
+    ' vec3 roomCubeMax = vec3(1.0, 1.0, 1.0);';
+// compute the near and far intersections of the cube (stored in the x and y components) using the slab method
+// no intersection means vec.x > vec.y (really tNear > tFar)
+var intersectCubeSource = ' vec2 intersectCube(vec3 origin, vec3 ray, vec3 cubeMin, vec3 cubeMax) {' +
+    '   vec3 tMin = (cubeMin - origin) / ray;' +
+    '   vec3 tMax = (cubeMax - origin) / ray;' +
+    '   vec3 t1 = min(tMin, tMax);' +
+    '   vec3 t2 = max(tMin, tMax);' +
+    '   float tNear = max(max(t1.x, t1.y), t1.z);' +
+    '   float tFar = min(min(t2.x, t2.y), t2.z);' +
+    '   return vec2(tNear, tFar);' +
+    ' }';
+// given that hit is a point on the cube, what is the surface normal?
+// TODO: do this with fewer branches
+var normalForCubeSource = ' vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax)' +
+    ' {' +
+    '   if(hit.x < cubeMin.x + ' + epsilon + ') return vec3(-1.0, 0.0, 0.0);' +
+    '   else if(hit.x > cubeMax.x - ' + epsilon + ') return vec3(1.0, 0.0, 0.0);' +
+    '   else if(hit.y < cubeMin.y + ' + epsilon + ') return vec3(0.0, -1.0, 0.0);' +
+    '   else if(hit.y > cubeMax.y - ' + epsilon + ') return vec3(0.0, 1.0, 0.0);' +
+    '   else if(hit.z < cubeMin.z + ' + epsilon + ') return vec3(0.0, 0.0, -1.0);' +
+    '   else return vec3(0.0, 0.0, 1.0);' +
+    ' }';
+// compute the near intersection of a sphere
+// no intersection returns a value of +infinity
+var intersectSphereSource = ' float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {' +
+    '   vec3 toSphere = origin - sphereCenter;' +
+    '   float a = dot(ray, ray);' +
+    '   float b = 2.0 * dot(toSphere, ray);' +
+    '   float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;' +
+    '   float discriminant = b*b - 4.0*a*c;' +
+    '   if(discriminant > 0.0) {' +
+    '     float t = (-b - sqrt(discriminant)) / (2.0 * a);' +
+    '     if(t > 0.0) return t;' +
+    '   }' +
+    '   return ' + infinity + ';' +
+    ' }';
+// given that hit is a point on the sphere, what is the surface normal?
+var normalForSphereSource = ' vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {' +
+    '   return (hit - sphereCenter) / sphereRadius;' +
+    ' }';
+// use the fragment position for randomness
+var randomSource = ' float random(vec3 scale, float seed) {' +
+    '   return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);' +
+    ' }';
+// random cosine-weighted distributed vector
+// from http://www.rorydriscoll.com/2009/01/07/better-sampling/
+var cosineWeightedDirectionSource = ' vec3 cosineWeightedDirection(float seed, vec3 normal) {' +
+    '   float u = random(vec3(12.9898, 78.233, 151.7182), seed);' +
+    '   float v = random(vec3(63.7264, 10.873, 623.6736), seed);' +
+    '   float r = sqrt(u);' +
+    '   float angle = 6.283185307179586 * v;' +
+    // compute basis from normal
+    '   vec3 sdir, tdir;' +
+    '   if (abs(normal.x)<.5) {' +
+    '     sdir = cross(normal, vec3(1,0,0));' +
+    '   } else {' +
+    '     sdir = cross(normal, vec3(0,1,0));' +
+    '   }' +
+    '   tdir = cross(normal, sdir);' +
+    '   return r*cos(angle)*sdir + r*sin(angle)*tdir + sqrt(1.-u)*normal;' +
+    ' }';
+// random normalized vector
+var uniformlyRandomDirectionSource = ' vec3 uniformlyRandomDirection(float seed) {' +
+    '   float u = random(vec3(12.9898, 78.233, 151.7182), seed);' +
+    '   float v = random(vec3(63.7264, 10.873, 623.6736), seed);' +
+    '   float z = 1.0 - 2.0 * u;' +
+    '   float r = sqrt(1.0 - z * z);' +
+    '   float angle = 6.283185307179586 * v;' +
+    '   return vec3(r * cos(angle), r * sin(angle), z);' +
+    ' }';
+// random vector in the unit sphere
+// note: this is probably not statistically uniform, saw raising to 1/3 power somewhere but that looks wrong?
+var uniformlyRandomVectorSource = ' vec3 uniformlyRandomVector(float seed) {' +
+    '   return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));' +
+    ' }';
+// compute specular lighting contribution
+var specularReflection = ' vec3 reflectedLight = normalize(reflect(light - hit, normal));' +
+    ' specularHighlight = max(0.0, dot(reflectedLight, normalize(hit - origin)));';
+// update ray using normal and bounce according to a diffuse reflection
+var newDiffuseRay = ' ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);';
+// update ray using normal according to a specular reflection
+var newReflectiveRay = ' ray = reflect(ray, normal);' +
+    specularReflection +
+    ' specularHighlight = 2.0 * pow(specularHighlight, 20.0);';
+// update ray using normal and bounce according to a glossy reflection
+var newGlossyRay = ' ray = normalize(reflect(ray, normal)) + uniformlyRandomVector(timeSinceStart + float(bounce)) * glossiness;' +
+    specularReflection +
+    ' specularHighlight = pow(specularHighlight, 3.0);';
+var yellowBlueCornellBox = ' if(hit.x < -0.9999) surfaceColor = vec3(0.1, 0.5, 1.0);' + // blue
+    ' else if(hit.x > 0.9999) surfaceColor = vec3(1.0, 0.9, 0.1);'; // yellow
+var redGreenCornellBox = ' if(hit.x < -0.9999) surfaceColor = vec3(1.0, 0.3, 0.1);' + // red
+    ' else if(hit.x > 0.9999) surfaceColor = vec3(0.3, 1.0, 0.1);'; // green
+function makeShadow(objects) {
+    return '' +
+        ' float shadow(vec3 origin, vec3 ray) {' +
+        concat(objects, function (o) { return o.getShadowTestCode(); }) +
+        '   return 1.0;' +
+        ' }';
+}
+function makeCalculateColor(objects) {
+    return '' +
+        ' vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {' +
+        '   vec3 colorMask = vec3(1.0);' +
+        '   vec3 accumulatedColor = vec3(0.0);' +
+        // main raytracing loop
+        '   for(int bounce = 0; bounce < ' + bounces + '; bounce++) {' +
+        // compute the intersection with everything
+        '     vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);' +
+        concat(objects, function (o) { return o.getIntersectCode(); }) +
+        // find the closest intersection
+        '     float t = ' + infinity + ';' +
+        '     if(tRoom.x < tRoom.y) t = tRoom.y;' +
+        concat(objects, function (o) { return o.getMinimumIntersectCode(); }) +
+        // info about hit
+        '     vec3 hit = origin + ray * t;' +
+        '     vec3 surfaceColor = vec3(0.75);' +
+        '     float specularHighlight = 0.0;' +
+        '     vec3 normal;' +
+        // calculate the normal (and change wall color)
+        '     if(t == tRoom.y) {' +
+        '       normal = -normalForCube(hit, roomCubeMin, roomCubeMax);' +
+        [yellowBlueCornellBox, redGreenCornellBox][environment] +
+        newDiffuseRay +
+        '     } else if(t == ' + infinity + ') {' +
+        '       break;' +
+        '     } else {' +
+        '       if(false) ;' + // hack to discard the first 'else' in 'else if'
+        concat(objects, function (o) { return o.getNormalCalculationCode(); }) +
+        [newDiffuseRay, newReflectiveRay, newGlossyRay][material] +
+        '     }' +
+        // compute diffuse lighting contribution
+        '     vec3 toLight = light - hit;' +
+        '     float diffuse = max(0.0, dot(normalize(toLight), normal));' +
+        // trace a shadow ray to the light
+        '     float shadowIntensity = shadow(hit + normal * ' + epsilon + ', toLight);' +
+        // do light bounce
+        '     colorMask *= surfaceColor;' +
+        '     accumulatedColor += colorMask * (' + lightVal + ' * diffuse * shadowIntensity);' +
+        '     accumulatedColor += colorMask * specularHighlight * shadowIntensity;' +
+        // calculate next origin
+        '     origin = hit;' +
+        '   }' +
+        '   return accumulatedColor;' +
+        ' }';
+}
+function makeMain() {
+    return '' +
+        ' void main() {' +
+        '   vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * ' + lightSize + ';' +
+        '   vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;' +
+        '   gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);' +
+        ' }';
+}
+function makeTracerFragmentSource(objects) {
+    return tracerFragmentSourceHeader +
+        concat(objects, function (o) { return o.getGlobalCode(); }) +
+        intersectCubeSource +
+        normalForCubeSource +
+        intersectSphereSource +
+        normalForSphereSource +
+        randomSource +
+        cosineWeightedDirectionSource +
+        uniformlyRandomDirectionSource +
+        uniformlyRandomVectorSource +
+        makeShadow(objects) +
+        makeCalculateColor(objects) +
+        makeMain();
+}
+////////////////////////////////////////////////////////////////////////////////
+// utility functions
+////////////////////////////////////////////////////////////////////////////////
+function getEyeRay(matrix, x, y) {
+    return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
+}
+function setUniforms(program, uniforms) {
+    for (var name in uniforms) {
+        var value = uniforms[name];
+        var location = gl.getUniformLocation(program, name);
+        if (location == null)
+            continue;
+        if (value instanceof Vector) {
+            gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
+        }
+        else if (value instanceof Matrix) {
+            gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
+        }
+        else {
+            gl.uniform1f(location, value);
+        }
+    }
+}
+function concat(objects, func) {
+    var text = '';
+    for (var i = 0; i < objects.length; i++) {
+        text += func(objects[i]);
+    }
+    return text;
+}
+Vector.prototype.ensure3 = function () {
+    return Vector.create([this.elements[0], this.elements[1], this.elements[2]]);
 };
+Vector.prototype.ensure4 = function (w) {
+    return Vector.create([this.elements[0], this.elements[1], this.elements[2], w]);
+};
+Vector.prototype.divideByW = function () {
+    var w = this.elements[this.elements.length - 1];
+    var newElements = [];
+    for (var i = 0; i < this.elements.length; i++) {
+        newElements.push(this.elements[i] / w);
+    }
+    return Vector.create(newElements);
+};
+Vector.prototype.componentDivide = function (vector) {
+    if (this.elements.length != vector.elements.length) {
+        return null;
+    }
+    var newElements = [];
+    for (var i = 0; i < this.elements.length; i++) {
+        newElements.push(this.elements[i] / vector.elements[i]);
+    }
+    return Vector.create(newElements);
+};
+Vector.min = function (a, b) {
+    if (a.length != b.length) {
+        return null;
+    }
+    var newElements = [];
+    for (var i = 0; i < a.elements.length; i++) {
+        newElements.push(Math.min(a.elements[i], b.elements[i]));
+    }
+    return Vector.create(newElements);
+};
+Vector.max = function (a, b) {
+    if (a.length != b.length) {
+        return null;
+    }
+    var newElements = [];
+    for (var i = 0; i < a.elements.length; i++) {
+        newElements.push(Math.max(a.elements[i], b.elements[i]));
+    }
+    return Vector.create(newElements);
+};
+Vector.prototype.minComponent = function () {
+    var value = Number.MAX_VALUE;
+    for (var i = 0; i < this.elements.length; i++) {
+        value = Math.min(value, this.elements[i]);
+    }
+    return value;
+};
+Vector.prototype.maxComponent = function () {
+    var value = -Number.MAX_VALUE;
+    for (var i = 0; i < this.elements.length; i++) {
+        value = Math.max(value, this.elements[i]);
+    }
+    return value;
+};
+function compileSource(source, type) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        throw 'compile error: ' + gl.getShaderInfoLog(shader);
+    }
+    return shader;
+}
+function compileShader(vertexSource, fragmentSource) {
+    var shaderProgram = gl.createProgram();
+    gl.attachShader(shaderProgram, compileSource(vertexSource, gl.VERTEX_SHADER));
+    gl.attachShader(shaderProgram, compileSource(fragmentSource, gl.FRAGMENT_SHADER));
+    gl.linkProgram(shaderProgram);
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        throw 'link error: ' + gl.getProgramInfoLog(shaderProgram);
+    }
+    return shaderProgram;
+}
+////////////////////////////////////////////////////////////////////////////////
+// class UI
+////////////////////////////////////////////////////////////////////////////////
+function UI() {
+    this.renderer = new LH.Renderer();
+    this.moving = false;
+}
+UI.prototype.setObjects = function (objects) {
+    this.objects = objects;
+    this.objects.splice(0, 0, new LH.Light());
+    this.renderer.setObjects(this.objects);
+};
+UI.prototype.update = function (timeSinceStart) {
+    this.modelview = makeLookAt(eye.elements[0], eye.elements[1], eye.elements[2], 0, 0, 0, 0, 1, 0);
+    this.projection = makePerspective(55, 1, 0.1, 100);
+    this.modelviewProjection = this.projection.multiply(this.modelview);
+    this.renderer.update(this.modelviewProjection, timeSinceStart);
+};
+UI.prototype.render = function () {
+    this.renderer.render();
+};
+////////////////////////////////////////////////////////////////////////////////
+// main program
+////////////////////////////////////////////////////////////////////////////////
+var gl;
+var ui;
+var canvas;
+var angleX = 0;
+var angleY = 0;
+var zoomZ = 2.5;
+var eye = Vector.create([0, 0, 0]);
+var light = Vector.create([0.4, 0.5, -0.6]);
+var nextObjectId = 0;
+var MATERIAL_DIFFUSE = 0;
+var MATERIAL_MIRROR = 1;
+var MATERIAL_GLOSSY = 2;
+var material = MATERIAL_DIFFUSE;
+var glossiness = 0.6;
+var YELLOW_BLUE_CORNELL_BOX = 0;
+var RED_GREEN_CORNELL_BOX = 1;
+var environment = YELLOW_BLUE_CORNELL_BOX;
+function tick(timeSinceStart) {
+    eye.elements[0] = zoomZ * Math.sin(angleY) * Math.cos(angleX);
+    eye.elements[1] = zoomZ * Math.sin(angleX);
+    eye.elements[2] = zoomZ * Math.cos(angleY) * Math.cos(angleX);
+    ui.update(timeSinceStart);
+    ui.render();
+}
+function makeSphereColumn() {
+    var objects = [];
+    objects.push(new LH.Sphere(Vector.create([0, -0.25, 0]), 0.25, nextObjectId++));
+    objects.push(new LH.Sphere(Vector.create([0, -0.75, 0]), 0.25, nextObjectId++));
+    return objects;
+}
+window.onload = function () {
+    canvas = LH.GLUtilities.initialize("pathTracer");
+    gl = LH.gl;
+    ui = new UI();
+    ui.setObjects(makeSphereColumn());
+    var start = new Date();
+    setInterval(function () { tick((new Date() - start) * 0.001); }, 1000 / 60);
+};
+var LH;
+(function (LH) {
+    var Light = /** @class */ (function () {
+        function Light() {
+            this._temporaryTranslation = Vector.create([0, 0, 0]);
+        }
+        Light.prototype.getGlobalCode = function () {
+            return 'uniform vec3 light;';
+        };
+        Light.prototype.getIntersectCode = function () {
+            return '';
+        };
+        Light.prototype.getShadowTestCode = function () {
+            return '';
+        };
+        Light.prototype.getMinimumIntersectCode = function () {
+            return '';
+        };
+        Light.prototype.getNormalCalculationCode = function () {
+            return '';
+        };
+        Light.prototype.setUniforms = function (renderer) {
+            renderer.uniforms.light = light.add(this._temporaryTranslation);
+        };
+        Light.prototype.clampPosition = function (position) {
+            for (var i = 0; i < position.elements.length; i++) {
+                position.elements[i] = Math.max(lightSize - 1, Math.min(1 - lightSize, position.elements[i]));
+            }
+        };
+        Light.prototype.temporaryTranslate = function (translation) {
+            var tempLight = light.add(translation);
+            this.clampPosition(tempLight);
+            this._temporaryTranslation = tempLight.subtract(light);
+        };
+        Light.prototype.translate = function (translation) {
+            light = light.add(translation);
+            this.clampPosition(light);
+        };
+        Light.prototype.getMinCorner = function () {
+            return light.add(this._temporaryTranslation).subtract(Vector.create([lightSize, lightSize, lightSize]));
+        };
+        Light.prototype.getMaxCorner = function () {
+            return light.add(this._temporaryTranslation).add(Vector.create([lightSize, lightSize, lightSize]));
+        };
+        Light.prototype.intersect = function (origin, ray) {
+            return Number.MAX_VALUE;
+        };
+        return Light;
+    }());
+    LH.Light = Light;
+})(LH || (LH = {}));
+var LH;
+(function (LH) {
+    var Sphere = /** @class */ (function () {
+        function Sphere(center, radius, id) {
+            this._center = center;
+            this._radius = radius;
+            this._centerStr = 'sphereCenter' + id;
+            this._radiusStr = 'sphereRadius' + id;
+            this._intersectStr = 'tSphere' + id;
+            this._temporaryTranslation = Vector.create([0, 0, 0]);
+        }
+        Sphere.prototype.getGlobalCode = function () {
+            return '' +
+                ' uniform vec3 ' + this._centerStr + ';' +
+                ' uniform float ' + this._radiusStr + ';';
+        };
+        Sphere.prototype.getIntersectCode = function () {
+            return '' +
+                ' float ' + this._intersectStr + ' = intersectSphere(origin, ray, ' + this._centerStr + ', ' + this._radiusStr + ');';
+        };
+        Sphere.prototype.getShadowTestCode = function () {
+            return '' +
+                this.getIntersectCode() +
+                ' if(' + this._intersectStr + ' < 1.0) return 0.0;';
+        };
+        Sphere.prototype.getMinimumIntersectCode = function () {
+            return '' +
+                ' if(' + this._intersectStr + ' < t) t = ' + this._intersectStr + ';';
+        };
+        Sphere.prototype.getNormalCalculationCode = function () {
+            return '' +
+                ' else if(t == ' + this._intersectStr + ') normal = normalForSphere(hit, ' + this._centerStr + ', ' + this._radiusStr + ');';
+        };
+        Sphere.prototype.setUniforms = function (renderer) {
+            renderer.uniforms[this._centerStr] = this._center.add(this._temporaryTranslation);
+            renderer.uniforms[this._radiusStr] = this._radius;
+        };
+        Sphere.prototype.temporaryTranslate = function (translation) {
+            this._temporaryTranslation = translation;
+        };
+        Sphere.prototype.translate = function (translation) {
+            this._center = this._center.add(translation);
+        };
+        Sphere.prototype.getMinCorner = function () {
+            return this._center.add(this._temporaryTranslation).subtract(Vector.create([this._radius, this._radius, this._radius]));
+        };
+        Sphere.prototype.getMaxCorner = function () {
+            return this._center.add(this._temporaryTranslation).add(Vector.create([this._radius, this._radius, this._radius]));
+        };
+        Sphere.prototype.intersect = function (origin, ray, center, radius) {
+            var toSphere = origin.subtract(center);
+            var a = ray.dot(ray);
+            var b = 2 * toSphere.dot(ray);
+            var c = toSphere.dot(toSphere) - radius * radius;
+            var discriminant = b * b - 4 * a * c;
+            if (discriminant > 0) {
+                var t = (-b - Math.sqrt(discriminant)) / (2 * a);
+                if (t > 0) {
+                    return t;
+                }
+            }
+            return Number.MAX_VALUE;
+        };
+        return Sphere;
+    }());
+    LH.Sphere = Sphere;
+})(LH || (LH = {}));
 var LH;
 (function (LH) {
     var AttributeInformation = /** @class */ (function () {
@@ -227,6 +912,7 @@ var LH;
         });
         Shader.prototype.getAttributeLocation = function (name) {
             if (this._attributes[name] === undefined) {
+                console.log('boom');
                 throw new Error("Unable to find attribute '" + name + "' in shader '" + this._name + "'");
             }
             return this._attributes[name];
@@ -429,6 +1115,18 @@ var LH;
         };
         Vector3.prototype.toFloat32Array = function () {
             return new Float32Array(this.toArray());
+        };
+        Vector3.prototype.add = function (vector) {
+            this._x += vector._x;
+            this._y += vector._y;
+            this._z += vector._z;
+            return this;
+        };
+        Vector3.prototype.sub = function (vector) {
+            this._x -= vector._x;
+            this._y -= vector._y;
+            this._z -= vector._z;
+            return this;
         };
         return Vector3;
     }());
