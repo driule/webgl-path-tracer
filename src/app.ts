@@ -34,23 +34,6 @@ var renderFragmentSource =
 '   gl_FragColor = texture2D(texture, texCoord);' +
 ' }';
 
-// vertex shader for drawing a line
-var lineVertexSource =
-' attribute vec3 vertex;' +
-' uniform vec3 cubeMin;' +
-' uniform vec3 cubeMax;' +
-' uniform mat4 modelviewProjection;' +
-' void main() {' +
-'   gl_Position = modelviewProjection * vec4(mix(cubeMin, cubeMax, vertex), 1.0);' +
-' }';
-
-// fragment shader for drawing a line
-var lineFragmentSource =
-' precision highp float;' +
-' void main() {' +
-'   gl_FragColor = vec4(1.0);' +
-' }';
-
 // constants for the shaders
 var bounces = '5';
 var epsilon = '0.0001';
@@ -298,23 +281,6 @@ function getEyeRay(matrix, x, y) {
     return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
 }
 
-function setUniforms(program, uniforms) {
-    for(var name in uniforms) {
-        var value = uniforms[name];
-        var location = gl.getUniformLocation(program, name);
-
-        if(location == null) continue;
-
-        if (value instanceof Vector) {
-            gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
-        } else if (value instanceof Matrix) {
-            gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
-        } else {
-            gl.uniform1f(location, value);
-        }
-    }
-}
-
 function concat(objects, func) {
     var text = '';
     for(var i = 0; i < objects.length; i++) {
@@ -395,29 +361,6 @@ Vector.prototype.maxComponent = function() {
 
     return value;
 };
-
-function compileSource(source, type) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        throw 'compile error: ' + gl.getShaderInfoLog(shader);
-    }
-
-    return shader;
-}
-
-function compileShader(vertexSource, fragmentSource) {
-    var shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, compileSource(vertexSource, gl.VERTEX_SHADER));
-    gl.attachShader(shaderProgram, compileSource(fragmentSource, gl.FRAGMENT_SHADER));
-    gl.linkProgram(shaderProgram);
-    if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        throw 'link error: ' + gl.getProgramInfoLog(shaderProgram);
-    }
-
-    return shaderProgram;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // class UI

@@ -103,24 +103,24 @@ var LH;
             }
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
             // create render shader
-            this.renderProgram = compileShader(renderVertexSource, renderFragmentSource);
-            this.renderVertexAttribute = LH.gl.getAttribLocation(this.renderProgram, 'vertex');
+            this.renderShader = new LH.Shader('render', renderVertexSource, renderFragmentSource);
+            this.renderVertexAttribute = this.renderShader.getAttributeLocation('vertex');
             LH.gl.enableVertexAttribArray(this.renderVertexAttribute);
             // objects and shader will be filled in when setObjects() is called
             this.objects = [];
             this.sampleCount = 0;
-            this.tracerProgram = null;
+            this.tracerShader = null;
         }
         PathTracer.prototype.setObjects = function (objects) {
             this.uniforms = {};
             this.sampleCount = 0;
             this.objects = objects;
             // create tracer shader
-            if (this.tracerProgram != null) {
-                LH.gl.deleteProgram(this.shaderProgram);
+            if (this.tracerShader != null) {
+                this.tracerShader.delete();
             }
-            this.tracerProgram = compileShader(tracerVertexSource, makeTracerFragmentSource(objects));
-            this.tracerVertexAttribute = LH.gl.getAttribLocation(this.tracerProgram, 'vertex');
+            this.tracerShader = new LH.Shader('tracer', tracerVertexSource, makeTracerFragmentSource(objects));
+            this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
             LH.gl.enableVertexAttribArray(this.tracerVertexAttribute);
         };
         PathTracer.prototype.update = function (matrix, timeSinceStart) {
@@ -137,10 +137,10 @@ var LH;
             this.uniforms.timeSinceStart = timeSinceStart;
             this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
             // set uniforms
-            LH.gl.useProgram(this.tracerProgram);
-            setUniforms(this.tracerProgram, this.uniforms);
+            this.tracerShader.use();
+            this.tracerShader.setUniforms(this.uniforms);
             // render to texture
-            LH.gl.useProgram(this.tracerProgram);
+            this.tracerShader.use();
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
             LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
             LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, this.framebuffer);
@@ -153,7 +153,7 @@ var LH;
             this.sampleCount++;
         };
         PathTracer.prototype.render = function () {
-            LH.gl.useProgram(this.renderProgram);
+            this.renderShader.use();
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
             LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
             LH.gl.vertexAttribPointer(this.renderVertexAttribute, 2, LH.gl.FLOAT, false, 0, 0);
@@ -167,63 +167,18 @@ var LH;
 (function (LH) {
     var Renderer = /** @class */ (function () {
         function Renderer() {
-            var vertices = [
-                0, 0, 0,
-                1, 0, 0,
-                0, 1, 0,
-                1, 1, 0,
-                0, 0, 1,
-                1, 0, 1,
-                0, 1, 1,
-                1, 1, 1
-            ];
-            var indices = [
-                0, 1, 1, 3, 3, 2, 2, 0,
-                4, 5, 5, 7, 7, 6, 6, 4,
-                0, 4, 1, 5, 2, 6, 3, 7
-            ];
-            // create vertex buffer
-            this.vertexBuffer = LH.gl.createBuffer();
-            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
-            LH.gl.bufferData(LH.gl.ARRAY_BUFFER, new Float32Array(vertices), LH.gl.STATIC_DRAW);
-            // create index buffer
-            this.indexBuffer = LH.gl.createBuffer();
-            LH.gl.bindBuffer(LH.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-            LH.gl.bufferData(LH.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), LH.gl.STATIC_DRAW);
-            // create line shader
-            this.lineProgram = compileShader(lineVertexSource, lineFragmentSource);
-            this.vertexAttribute = LH.gl.getAttribLocation(this.lineProgram, 'vertex');
-            LH.gl.enableVertexAttribArray(this.vertexAttribute);
-            this.objects = [];
-            this.selectedObject = null;
             this.pathTracer = new LH.PathTracer();
         }
         Renderer.prototype.setObjects = function (objects) {
-            this.objects = objects;
-            this.selectedObject = null;
             this.pathTracer.setObjects(objects);
         };
         Renderer.prototype.update = function (modelviewProjection, timeSinceStart) {
             var jitter = Matrix.Translation(Vector.create([Math.random() * 2 - 1, Math.random() * 2 - 1, 0]).multiply(1 / 512));
             var inverse = jitter.multiply(modelviewProjection).inverse();
-            this.modelviewProjection = modelviewProjection;
             this.pathTracer.update(inverse, timeSinceStart);
         };
         Renderer.prototype.render = function () {
             this.pathTracer.render();
-            if (this.selectedObject != null) {
-                LH.gl.useProgram(this.lineProgram);
-                LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
-                LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
-                LH.gl.bindBuffer(LH.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-                LH.gl.vertexAttribPointer(this.vertexAttribute, 3, LH.gl.FLOAT, false, 0, 0);
-                setUniforms(this.lineProgram, {
-                    cubeMin: this.selectedObject.getMinCorner(),
-                    cubeMax: this.selectedObject.getMaxCorner(),
-                    modelviewProjection: this.modelviewProjection
-                });
-                LH.gl.drawElements(LH.gl.LINES, 24, LH.gl.UNSIGNED_SHORT, 0);
-            }
         };
         return Renderer;
     }());
@@ -256,19 +211,6 @@ var renderFragmentSource = ' precision highp float;' +
     ' uniform sampler2D texture;' +
     ' void main() {' +
     '   gl_FragColor = texture2D(texture, texCoord);' +
-    ' }';
-// vertex shader for drawing a line
-var lineVertexSource = ' attribute vec3 vertex;' +
-    ' uniform vec3 cubeMin;' +
-    ' uniform vec3 cubeMax;' +
-    ' uniform mat4 modelviewProjection;' +
-    ' void main() {' +
-    '   gl_Position = modelviewProjection * vec4(mix(cubeMin, cubeMax, vertex), 1.0);' +
-    ' }';
-// fragment shader for drawing a line
-var lineFragmentSource = ' precision highp float;' +
-    ' void main() {' +
-    '   gl_FragColor = vec4(1.0);' +
     ' }';
 // constants for the shaders
 var bounces = '5';
@@ -469,23 +411,6 @@ function makeTracerFragmentSource(objects) {
 function getEyeRay(matrix, x, y) {
     return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
 }
-function setUniforms(program, uniforms) {
-    for (var name in uniforms) {
-        var value = uniforms[name];
-        var location = gl.getUniformLocation(program, name);
-        if (location == null)
-            continue;
-        if (value instanceof Vector) {
-            gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
-        }
-        else if (value instanceof Matrix) {
-            gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
-        }
-        else {
-            gl.uniform1f(location, value);
-        }
-    }
-}
 function concat(objects, func) {
     var text = '';
     for (var i = 0; i < objects.length; i++) {
@@ -551,25 +476,6 @@ Vector.prototype.maxComponent = function () {
     }
     return value;
 };
-function compileSource(source, type) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        throw 'compile error: ' + gl.getShaderInfoLog(shader);
-    }
-    return shader;
-}
-function compileShader(vertexSource, fragmentSource) {
-    var shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, compileSource(vertexSource, gl.VERTEX_SHADER));
-    gl.attachShader(shaderProgram, compileSource(fragmentSource, gl.FRAGMENT_SHADER));
-    gl.linkProgram(shaderProgram);
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        throw 'link error: ' + gl.getProgramInfoLog(shaderProgram);
-    }
-    return shaderProgram;
-}
 ////////////////////////////////////////////////////////////////////////////////
 // class UI
 ////////////////////////////////////////////////////////////////////////////////
@@ -923,8 +829,28 @@ var LH;
             }
             return this._uniforms[name];
         };
+        Shader.prototype.setUniforms = function (uniforms) {
+            for (var name_1 in uniforms) {
+                var location_1 = LH.gl.getUniformLocation(this._program, name_1);
+                if (location_1 == null)
+                    continue;
+                var value = uniforms[name_1];
+                if (value instanceof Vector) {
+                    LH.gl.uniform3fv(location_1, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
+                }
+                else if (value instanceof Matrix) {
+                    LH.gl.uniformMatrix4fv(location_1, false, new Float32Array(value.flatten()));
+                }
+                else {
+                    LH.gl.uniform1f(location_1, value);
+                }
+            }
+        };
         Shader.prototype.use = function () {
             LH.gl.useProgram(this._program);
+        };
+        Shader.prototype.delete = function () {
+            LH.gl.deleteProgram(this._program);
         };
         Shader.prototype.loadShader = function (source, shaderType) {
             var shader = LH.gl.createShader(shaderType);

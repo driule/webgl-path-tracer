@@ -39,8 +39,28 @@ namespace LH {
             return this._uniforms[name];
         }
 
+        public setUniforms(uniforms): void {
+            for (let name in uniforms) {
+                let location = gl.getUniformLocation(this._program, name);
+                if (location == null) continue;
+        
+                let value = uniforms[name];
+                if (value instanceof Vector) {
+                    gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
+                } else if (value instanceof Matrix) {
+                    gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
+                } else {
+                    gl.uniform1f(location, value);
+                }
+            }
+        }
+
         public use(): void {
             gl.useProgram(this._program);
+        }
+
+        public delete(): void {
+            gl.deleteProgram(this._program);
         }
 
         private loadShader(source: string, shaderType: number): WebGLShader {

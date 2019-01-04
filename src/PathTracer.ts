@@ -2,17 +2,20 @@ namespace LH {
 
     export class PathTracer {
 
-        public vertexBuffer;
-        public framebuffer;
-        public textures;
-        public renderProgram;
-        public tracerProgram;
-        public shaderProgram;
-        public renderVertexAttribute;
-        public tracerVertexAttribute;
-        public objects;
-        public sampleCount;
-        public uniforms;
+        private vertexBuffer: WebGLBuffer;
+        private framebuffer: WebGLBuffer;
+
+        private textures: WebGLTexture[];
+
+        private renderShader: Shader;
+        private tracerShader: Shader;
+
+        private renderVertexAttribute: number;
+        private tracerVertexAttribute: number;
+        private sampleCount: number;
+
+        private objects;
+        private uniforms;
 
         public constructor() {
             var vertices = [
@@ -43,14 +46,14 @@ namespace LH {
             gl.bindTexture(gl.TEXTURE_2D, null);
         
             // create render shader
-            this.renderProgram = compileShader(renderVertexSource, renderFragmentSource);
-            this.renderVertexAttribute = gl.getAttribLocation(this.renderProgram, 'vertex');
+            this.renderShader = new Shader('render', renderVertexSource, renderFragmentSource);
+            this.renderVertexAttribute = this.renderShader.getAttributeLocation('vertex');
             gl.enableVertexAttribArray(this.renderVertexAttribute);
         
             // objects and shader will be filled in when setObjects() is called
             this.objects = [];
             this.sampleCount = 0;
-            this.tracerProgram = null;
+            this.tracerShader = null;
         }
 
         public setObjects(objects): void {
@@ -59,15 +62,15 @@ namespace LH {
             this.objects = objects;
           
             // create tracer shader
-            if(this.tracerProgram != null) {
-                gl.deleteProgram(this.shaderProgram);
+            if(this.tracerShader != null) {
+                this.tracerShader.delete();
             }
-            this.tracerProgram = compileShader(tracerVertexSource, makeTracerFragmentSource(objects));
-            this.tracerVertexAttribute = gl.getAttribLocation(this.tracerProgram, 'vertex');
+            this.tracerShader = new Shader('tracer', tracerVertexSource, makeTracerFragmentSource(objects));
+            this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
             gl.enableVertexAttribArray(this.tracerVertexAttribute);
         }
           
-        public update(matrix, timeSinceStart): void {
+        public update(matrix: Matrix, timeSinceStart: number): void {
             // calculate uniforms
             for(var i = 0; i < this.objects.length; i++) {
               this.objects[i].setUniforms(this);
@@ -82,11 +85,11 @@ namespace LH {
             this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
           
             // set uniforms
-            gl.useProgram(this.tracerProgram);
-            setUniforms(this.tracerProgram, this.uniforms);
+            this.tracerShader.use();
+            this.tracerShader.setUniforms(this.uniforms);
           
             // render to texture
-            gl.useProgram(this.tracerProgram);
+            this.tracerShader.use();
             gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
@@ -99,9 +102,10 @@ namespace LH {
             this.textures.reverse();
             this.sampleCount++;
         }
-          
+
         public render(): void {
-            gl.useProgram(this.renderProgram);
+            this.renderShader.use();
+
             gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.vertexAttribPointer(this.renderVertexAttribute, 2, gl.FLOAT, false, 0, 0);
