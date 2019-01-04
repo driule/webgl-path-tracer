@@ -16,7 +16,7 @@ namespace LH {
 
             // create scene
             let objects = this.makeSphereColumn();
-            objects.splice(0, 0, new LH.Light());
+            objects.splice(0, 0, new Light());
             this._pathTracer.setObjects(objects);
 
             var start = new Date();
@@ -109,8 +109,8 @@ namespace LH {
         private makeSphereColumn() {
             let objects = [];
 
-            objects.push(new LH.Sphere(Vector.create([0, -0.25, 0]), 0.25, nextObjectId++));
-            objects.push(new LH.Sphere(Vector.create([0, -0.75, 0]), 0.25, nextObjectId++));
+            objects.push(new Sphere(Vector.create([0, -0.25, 0]), 0.25, nextObjectId++));
+            objects.push(new Sphere(Vector.create([0, -0.75, 0]), 0.25, nextObjectId++));
         
             return objects;
         }

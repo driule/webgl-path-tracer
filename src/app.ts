@@ -1,3 +1,5 @@
+declare var Vector: any;
+declare var Matrix: any;
 
 // entry point
 
