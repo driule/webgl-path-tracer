@@ -50,37 +50,5 @@ namespace LH {
             pathTracer.uniforms[this._centerStr] = this._center.add(this._temporaryTranslation);
             pathTracer.uniforms[this._radiusStr] = this._radius;
         }
-          
-        public temporaryTranslate(translation): void {
-            this._temporaryTranslation = translation;
-        }
-          
-        public translate(translation): void {
-            this._center = this._center.add(translation);
-        }
-          
-        public getMinCorner() {
-            return this._center.add(this._temporaryTranslation).subtract(Vector.create([this._radius, this._radius, this._radius]));
-        }
-          
-        public getMaxCorner() {
-            return this._center.add(this._temporaryTranslation).add(Vector.create([this._radius, this._radius, this._radius]));
-        }
-        
-        public intersect(origin: Vector, ray: Vector, center: Vector, radius: number): number {
-            var toSphere = origin.subtract(center);
-            var a = ray.dot(ray);
-            var b = 2 * toSphere.dot(ray);
-            var c = toSphere.dot(toSphere) - radius * radius;
-            var discriminant = b * b - 4 * a * c;
-            if (discriminant > 0) {
-                var t = (-b - Math.sqrt(discriminant)) / (2 * a);
-                if (t > 0) {
-                    return t;
-                }
-            }
-
-            return Number.MAX_VALUE;
-        }
     }
 }

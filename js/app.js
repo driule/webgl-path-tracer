@@ -604,29 +604,6 @@ var LH;
         Light.prototype.setUniforms = function (pathTracer) {
             pathTracer.uniforms.light = this._position.add(this._temporaryTranslation);
         };
-        Light.prototype.clampPosition = function (position) {
-            for (var i = 0; i < position.elements.length; i++) {
-                position.elements[i] = Math.max(lightSize - 1, Math.min(1 - lightSize, position.elements[i]));
-            }
-        };
-        Light.prototype.temporaryTranslate = function (translation) {
-            var tempLight = this._position.add(translation);
-            this.clampPosition(tempLight);
-            this._temporaryTranslation = tempLight.subtract(this._position);
-        };
-        Light.prototype.translate = function (translation) {
-            this._position = this._position.add(translation);
-            this.clampPosition(this._position);
-        };
-        Light.prototype.getMinCorner = function () {
-            return this._position.add(this._temporaryTranslation).subtract(Vector.create([lightSize, lightSize, lightSize]));
-        };
-        Light.prototype.getMaxCorner = function () {
-            return this._position.add(this._temporaryTranslation).add(Vector.create([lightSize, lightSize, lightSize]));
-        };
-        Light.prototype.intersect = function (origin, ray) {
-            return Number.MAX_VALUE;
-        };
         return Light;
     }());
     LH.Light = Light;
@@ -665,32 +642,6 @@ var LH;
         Sphere.prototype.setUniforms = function (pathTracer) {
             pathTracer.uniforms[this._centerStr] = this._center.add(this._temporaryTranslation);
             pathTracer.uniforms[this._radiusStr] = this._radius;
-        };
-        Sphere.prototype.temporaryTranslate = function (translation) {
-            this._temporaryTranslation = translation;
-        };
-        Sphere.prototype.translate = function (translation) {
-            this._center = this._center.add(translation);
-        };
-        Sphere.prototype.getMinCorner = function () {
-            return this._center.add(this._temporaryTranslation).subtract(Vector.create([this._radius, this._radius, this._radius]));
-        };
-        Sphere.prototype.getMaxCorner = function () {
-            return this._center.add(this._temporaryTranslation).add(Vector.create([this._radius, this._radius, this._radius]));
-        };
-        Sphere.prototype.intersect = function (origin, ray, center, radius) {
-            var toSphere = origin.subtract(center);
-            var a = ray.dot(ray);
-            var b = 2 * toSphere.dot(ray);
-            var c = toSphere.dot(toSphere) - radius * radius;
-            var discriminant = b * b - 4 * a * c;
-            if (discriminant > 0) {
-                var t = (-b - Math.sqrt(discriminant)) / (2 * a);
-                if (t > 0) {
-                    return t;
-                }
-            }
-            return Number.MAX_VALUE;
         };
         return Sphere;
     }());
