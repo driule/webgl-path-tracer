@@ -16,7 +16,7 @@ namespace LH {
         private objects;
         public uniforms: {[name: string]: WebGLUniformLocation} = {};
 
-        public constructor() {        
+        public constructor() {
             // create framebuffer
             this.framebuffer = gl.createFramebuffer();
             //this.framebuffer = new GLBuffer(2);
@@ -62,7 +62,7 @@ namespace LH {
             this.objects = objects;
           
             // create tracer shader
-            if(this.tracerShader != null) {
+            if (this.tracerShader != null) {
                 this.tracerShader.delete();
             }
             this.tracerShader = new Shader('tracer', tracerVertexSource, makeTracerFragmentSource(objects));
