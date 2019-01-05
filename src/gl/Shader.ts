@@ -39,6 +39,7 @@ namespace LH {
             return this._uniforms[name];
         }
 
+        // TODO: this is very badly harcoded way to set uniforms
         public setUniforms(uniforms): void {
             for (let name in uniforms) {
 
@@ -46,7 +47,7 @@ namespace LH {
                 if (name.toString() === "spheres") {
                     for (let i = 0; i < uniforms.spheres.length; i++) {
                         let centerLocation = gl.getUniformLocation(this._program, "spheres[" + i + "].center");
-                        gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i]._center.elements[0], uniforms.spheres[i]._center.elements[1], uniforms.spheres[i]._center.elements[2]]));
+                        gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i]._center[0], uniforms.spheres[i]._center[1], uniforms.spheres[i]._center[2]]));
 
                         let radiusLocation = gl.getUniformLocation(this._program, "spheres[" + i + "].radius");
                         gl.uniform1f(radiusLocation, uniforms.spheres[i]._radius);
@@ -55,15 +56,33 @@ namespace LH {
 
                 let location = gl.getUniformLocation(this._program, name);
                 if (location == null) continue;
+
+                var vector3Uniforms = [
+                    "eye",
+                    "ray00",
+                    "ray01",
+                    "ray11",
+                    "ray10",
+                    "light"
+                ];
+                var matrix4Uniforms = [
+                ];
+                var intUniforms = [
+                    "totalSpheres"
+                ];
+                var floatUniforms = [
+                    "timeSinceStart",
+                    "textureWeight"
+                ];
         
                 let value = uniforms[name];
-                if (value instanceof Vector) {
-                    gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
-                } else if (value instanceof Matrix) {
+                if (vector3Uniforms.indexOf(name) > -1) {
+                    gl.uniform3fv(location, new Float32Array([value[0], value[1], value[2]]));
+                } else if (matrix4Uniforms.indexOf(name) > -1) {
                     gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
-                } else if (name === "totalSpheres") {
+                } else if (intUniforms.indexOf(name) > -1) {
                     gl.uniform1i(location, value);
-                } else {
+                } else if (floatUniforms.indexOf(name) > -1) {
                     gl.uniform1f(location, value);
                 }
             }

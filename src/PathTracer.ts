@@ -71,7 +71,7 @@ namespace LH {
             this.tracerShader = new Shader('tracer', tracerVertexSource, tracerFragmentSource);
         }
           
-        public update(matrix: Matrix, timeSinceStart: number, eye: Vector): void {
+        public update(matrix, timeSinceStart: number, eye): void {
             
             // calculate uniforms
             this.uniforms.eye = eye;
@@ -83,7 +83,7 @@ namespace LH {
             this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
 
             // light uniforms
-            this.uniforms.light = this.light._position.add(this.light._temporaryTranslation);
+            this.uniforms.light = this.light._position;
 
             // spheres uniforms
             this.uniforms.totalSpheres = this.spheres.length;
@@ -116,8 +116,11 @@ namespace LH {
             this.vertexBuffer.draw();
         }
 
-        private getEyeRay(matrix, x, y, eye): Vector {
-            return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
+        private getEyeRay(matrix, x: number, y: number, eye): any {
+            let transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
+            let scaledVector = glMatrix.vec4.scale([], transformedVector, 1 / transformedVector[3]);
+
+            return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], eye);
         }
     }
 }

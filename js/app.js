@@ -1,82 +1,5 @@
 var LH;
 (function (LH) {
-    var Engine = /** @class */ (function () {
-        function Engine() {
-            this._frameCount = 0;
-            console.log("Engine created.");
-        }
-        Engine.prototype.start = function () {
-            this._canvas = LH.GLUtilities.initialize("pathTracer");
-            LH.gl.clearColor(0, 0, 0, 1);
-            LH.gl.clear(LH.gl.COLOR_BUFFER_BIT | LH.gl.DEPTH_BUFFER_BIT);
-            // load shaders
-            this.loadLineShader();
-            this._lineShader.use();
-            this.loadRendererShader();
-            this._rendererShader.use();
-            this.loadTracerShader();
-            this._tracerShader.use();
-            // init geometry
-            //this._projection = Matrix4x4.orthographic(0, this._canvas.width, 0, this._canvas.height, -100.0, 100.0);
-            //this._sprite = new Sprite("quad");
-            //this._sprite.load();
-            //this.resizeWindow();
-            this.tick();
-        };
-        Engine.prototype.tick = function () {
-            this._frameCount++;
-            LH.gl.clear(LH.gl.COLOR_BUFFER_BIT);
-            // set uniforms
-            /*let colorPosition = this._shader.getUniformLocation("u_color");
-            gl.uniform4f(colorPosition, 1, 0.5, 0, 1);
-
-            let projectionPosition = this._shader.getUniformLocation("u_projection");
-            gl.uniformMatrix4fv(projectionPosition, false, new Float32Array(this._projection.data));
-
-            let modelLocation = this._shader.getUniformLocation("u_model");
-            gl.uniformMatrix4fv(modelLocation, false, new Float32Array(Matrix4x4.translation(this._sprite.position).data));*/
-            // render & animate
-            //this._sprite.position.x++;
-            //this._sprite.position.y++;
-            /*if (this._sprite.position.x > 200) {
-                this._sprite.position.x = 0;
-            }
-            if (this._sprite.position.y > 50) {
-                this._sprite.position.y = 0;
-            }
-
-            this._sprite.draw();*/
-            // run game loop
-            requestAnimationFrame(this.tick.bind(this));
-        };
-        Engine.prototype.resizeWindow = function () {
-            if (this._canvas !== undefined) {
-                this._canvas.width = window.innerWidth;
-                this._canvas.height = window.innerHeight;
-                //gl.viewport(-1, 1, 1, -1);
-            }
-        };
-        Engine.prototype.loadRendererShader = function () {
-            var vertexShaderSource = "\n                attribute vec3 vertex;\n                varying vec2 texCoord;\n                \n                void main() {\n                    texCoord = vertex.xy * 0.5 + 0.5;\n                    gl_Position = vec4(vertex, 1.0);\n                }\n            ";
-            var fragmentShaderSource = "\n                precision highp float;\n                varying vec2 texCoord;\n                uniform sampler2D texture;\n                \n                void main() {\n                    gl_FragColor = texture2D(texture, texCoord);\n                }\n            ";
-            this._rendererShader = new LH.Shader("renderer", vertexShaderSource, fragmentShaderSource);
-        };
-        Engine.prototype.loadTracerShader = function () {
-            var vertexShaderSource = "\n                attribute vec3 vertex;\n                uniform vec3 eye, ray00, ray01, ray10, ray11;\n                varying vec3 initialRay;\n                \n                void main() {\n                    vec2 percent = vertex.xy * 0.5 + 0.5;\n                    initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n                    gl_Position = vec4(vertex, 1.0);\n                }\n            ";
-            var fragmentShaderSource = "\n                precision highp float;\n                uniform vec3 eye;\n                varying vec3 initialRay;\n\n                uniform float textureWeight;\n                uniform float timeSinceStart;\n                uniform sampler2D texture;\n                uniform float glossiness;\n\n                vec3 roomCubeMin = vec3(-1.0, -1.0, -1.0);\n                vec3 roomCubeMax = vec3(1.0, 1.0, 1.0);\n\n                uniform vec3 light;\n\n                uniform vec3 sphereCenter0;\n                uniform float sphereRadius0;\n                uniform vec3 sphereCenter1;\n                uniform float sphereRadius1;\n                uniform vec3 sphereCenter2;\n                uniform float sphereRadius2;\n                uniform vec3 sphereCenter3;\n                uniform float sphereRadius3;\n\n                vec2 intersectCube(vec3 origin, vec3 ray, vec3 cubeMin, vec3 cubeMax) {\n                    vec3 tMin = (cubeMin - origin) / ray;\n                    vec3 tMax = (cubeMax - origin) / ray;\n                    vec3 t1 = min(tMin, tMax);\n                    vec3 t2 = max(tMin, tMax);\n                    float tNear = max(max(t1.x, t1.y), t1.z);\n                    float tFar = min(min(t2.x, t2.y), t2.z);\n                    \n                    return vec2(tNear, tFar);\n                }\n                \n                vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax) {\n                    if (hit.x < cubeMin.x + 0.0001) return vec3(-1.0, 0.0, 0.0);\n                    else if(hit.x > cubeMax.x - 0.0001) return vec3(1.0, 0.0, 0.0);\n                    else if(hit.y < cubeMin.y + 0.0001) return vec3(0.0, -1.0, 0.0);\n                    else if(hit.y > cubeMax.y - 0.0001) return vec3(0.0, 1.0, 0.0);\n                    else if(hit.z < cubeMin.z + 0.0001) return vec3(0.0, 0.0, -1.0);\n                    else return vec3(0.0, 0.0, 1.0);\n                }\n                \n                float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {\n                    vec3 toSphere = origin - sphereCenter;\n                    float a = dot(ray, ray);\n                    float b = 2.0 * dot(toSphere, ray);\n                    float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;\n                    float discriminant = b*b - 4.0*a*c;\n                    \n                    if(discriminant > 0.0) {\n                        float t = (-b - sqrt(discriminant)) / (2.0 * a);\n                        if(t > 0.0) return t;\n                    }\n                    \n                    return 10000.0;\n                }\n                \n                vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {\n                    return (hit - sphereCenter) / sphereRadius;\n                }\n                \n                float random(vec3 scale, float seed) {\n                    return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n                }\n                \n                vec3 cosineWeightedDirection(float seed, vec3 normal) {\n                    float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n                    float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n                    float r = sqrt(u);\n                    float angle = 6.283185307179586 * v;\n                    vec3 sdir, tdir;\n                    \n                    if (abs(normal.x)<.5) {\n                        sdir = cross(normal, vec3(1,0,0));\n                    } else {\n                        sdir = cross(normal, vec3(0,1,0));\n                    }\n                    \n                    tdir = cross(normal, sdir);\n                    \n                    return r*cos(angle)*sdir + r*sin(angle)*tdir + sqrt(1.-u)*normal;\n                }\n                \n                vec3 uniformlyRandomDirection(float seed) {\n                    float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n                    float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n                    float z = 1.0 - 2.0 * u;\n                    float r = sqrt(1.0 - z * z);\n                    float angle = 6.283185307179586 * v;\n                    return vec3(r * cos(angle), r * sin(angle), z);\n                }\n                \n                vec3 uniformlyRandomVector(float seed) {\n                    return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n                }\n                \n                float shadow(vec3 origin, vec3 ray) {\n                    float tSphere0 = intersectSphere(origin, ray, sphereCenter0, sphereRadius0);\n                    if(tSphere0 < 1.0) return 0.0;\n\n                    float tSphere1 = intersectSphere(origin, ray, sphereCenter1, sphereRadius1);\n                    if(tSphere1 < 1.0) return 0.0;\n\n                    float tSphere2 = intersectSphere(origin, ray, sphereCenter2, sphereRadius2);\n                    if(tSphere2 < 1.0) return 0.0;\n\n                    float tSphere3 = intersectSphere(origin, ray, sphereCenter3, sphereRadius3);\n                    if(tSphere3 < 1.0) return 0.0;\n                    \n                    return 1.0;\n                }\n                \n                vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n                    vec3 colorMask = vec3(1.0);\n                    vec3 accumulatedColor = vec3(0.0);\n                    for(int bounce = 0; bounce < 5; bounce++) {\n                        vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);\n\n                        float tSphere0 = intersectSphere(origin, ray, sphereCenter0, sphereRadius0);\n                        float tSphere1 = intersectSphere(origin, ray, sphereCenter1, sphereRadius1);\n                        float tSphere2 = intersectSphere(origin, ray, sphereCenter2, sphereRadius2);\n                        float tSphere3 = intersectSphere(origin, ray, sphereCenter3, sphereRadius3);\n\n                        float t = 10000.0;\n                        if(tRoom.x < tRoom.y) t = tRoom.y;\n                        \n                        if(tSphere0 < t) t = tSphere0;\n                        if(tSphere1 < t) t = tSphere1;\n                        if(tSphere2 < t) t = tSphere2;\n                        if(tSphere3 < t) t = tSphere3;\n                        \n                        vec3 hit = origin + ray * t;\n                        vec3 surfaceColor = vec3(0.75);\n                        float specularHighlight = 0.0;\n                        vec3 normal;\n                        \n                        if(t == tRoom.y) {\n                            normal = -normalForCube(hit, roomCubeMin, roomCubeMax);\n                            if(hit.x < -0.9999) surfaceColor = vec3(0.1, 0.5, 1.0);\n                            else if(hit.x > 0.9999) surfaceColor = vec3(1.0, 0.9, 0.1);\n                            \n                            ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n                        } else if(t == 10000.0) {\n                            break;\n                        } else {\n                            if(false) ; else if(t == tSphere0) normal = normalForSphere(hit, sphereCenter0, sphereRadius0);\n                            else if(t == tSphere1) normal = normalForSphere(hit, sphereCenter1, sphereRadius1);\n                            else if(t == tSphere2) normal = normalForSphere(hit, sphereCenter2, sphereRadius2);\n                            else if(t == tSphere3) normal = normalForSphere(hit, sphereCenter3, sphereRadius3);\n                            ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n                        }\n                        \n                        vec3 toLight = light - hit;\n                        float diffuse = max(0.0, dot(normalize(toLight), normal));\n                        float shadowIntensity = shadow(hit + normal * 0.0001, toLight);\n                        colorMask *= surfaceColor;\n                        \n                        accumulatedColor += colorMask * (0.5 * diffuse * shadowIntensity);\n                        accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n                        \n                        origin = hit;\n                    }\n                    \n                    return accumulatedColor;\n                }\n                \n                void main() {\n                    vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * 0.1;\n                    vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n                    gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);\n                }\n            ";
-            this._tracerShader = new LH.Shader("tracer", vertexShaderSource, fragmentShaderSource);
-        };
-        Engine.prototype.loadLineShader = function () {
-            var vertexShaderSource = "\n                attribute vec3 vertex;\n                uniform vec3 cubeMin;\n                uniform vec3 cubeMax;\n                uniform mat4 modelviewProjection;\n                \n                void main() {\n                    gl_Position = modelviewProjection * vec4(mix(cubeMin, cubeMax, vertex), 1.0);\n                }\n            ";
-            var fragmentShaderSource = "\n                precision highp float;\n                \n                void main() {\n                    gl_FragColor = vec4(1.0);\n                }\n            ";
-            this._lineShader = new LH.Shader("line", vertexShaderSource, fragmentShaderSource);
-        };
-        return Engine;
-    }());
-    LH.Engine = Engine;
-})(LH || (LH = {}));
-var LH;
-(function (LH) {
     var PathTracer = /** @class */ (function () {
         function PathTracer() {
             // create framebuffer
@@ -133,7 +56,7 @@ var LH;
             this.uniforms.timeSinceStart = timeSinceStart;
             this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
             // light uniforms
-            this.uniforms.light = this.light._position.add(this.light._temporaryTranslation);
+            this.uniforms.light = this.light._position;
             // spheres uniforms
             this.uniforms.totalSpheres = this.spheres.length;
             this.uniforms.spheres = this.spheres;
@@ -158,7 +81,9 @@ var LH;
             this.vertexBuffer.draw();
         };
         PathTracer.prototype.getEyeRay = function (matrix, x, y, eye) {
-            return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
+            var transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
+            var scaledVector = glMatrix.vec4.scale([], transformedVector, 1 / transformedVector[3]);
+            return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], eye);
         };
         return PathTracer;
     }());
@@ -173,175 +98,48 @@ var LH;
             this._angleX = 0;
             this._angleY = 0;
             this._zoomZ = 2.5;
-            this._eye = Vector.create([0, 0, 0]);
+            this._eye = glMatrix.vec3.create();
         }
         Renderer.prototype.start = function () {
             LH.gl.clearColor(0, 0, 0, 1);
             LH.gl.clear(LH.gl.COLOR_BUFFER_BIT | LH.gl.DEPTH_BUFFER_BIT);
             // create scene
-            var spheres = this.makeSphereColumn();
+            var spheres = this.createSphereColumn();
             this._pathTracer.setObjects(spheres, new LH.Light());
             var start = new Date();
             // TODO: use setInterval to avoid stripes on the output image
             //setInterval(function() { this.tick((new Date() - start) * 0.001); }, 1000 / 60);
             this.tick(0);
         };
-        Renderer.prototype.update = function (modelviewProjection, timeSinceStart) {
-            var jitter = Matrix.Translation(Vector.create([Math.random() * 2 - 1, Math.random() * 2 - 1, 0]).multiply(1 / 512));
-            var inverse = jitter.multiply(modelviewProjection).inverse();
-            this._pathTracer.update(inverse, timeSinceStart, this._eye);
-        };
         Renderer.prototype.tick = function (timeSinceStart) {
-            this._eye.elements[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
-            this._eye.elements[1] = this._zoomZ * Math.sin(this._angleX);
-            this._eye.elements[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
-            var modelview = this.makeLookAt(this._eye.elements[0], this._eye.elements[1], this._eye.elements[2], 0, 0, 0, 0, 1, 0);
-            var projection = this.makePerspective(55, 1, 0.1, 100);
-            var modelviewProjection = projection.multiply(modelview);
-            this.update(modelviewProjection, timeSinceStart);
+            this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
+            this._eye[1] = this._zoomZ * Math.sin(this._angleX);
+            this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
+            var view = glMatrix.mat4.lookAt([], this._eye, [0, 0, 0], [0, 1, 0]);
+            var projection = glMatrix.mat4.perspective([], Math.PI / 3, 1, 0.1, 1000);
+            var viewProjection = glMatrix.mat4.multiply([], projection, view);
+            viewProjection = glMatrix.mat4.invert([], viewProjection);
+            this._pathTracer.update(viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
             requestAnimationFrame(this.tick.bind(this));
         };
-        Renderer.prototype.makeLookAt = function (ex, ey, ez, cx, cy, cz, ux, uy, uz) {
-            var eye = $V([ex, ey, ez]);
-            var center = $V([cx, cy, cz]);
-            var up = $V([ux, uy, uz]);
-            var z = eye.subtract(center).toUnitVector();
-            var x = up.cross(z).toUnitVector();
-            var y = z.cross(x).toUnitVector();
-            var m = $M([
-                [x.e(1), x.e(2), x.e(3), 0],
-                [y.e(1), y.e(2), y.e(3), 0],
-                [z.e(1), z.e(2), z.e(3), 0],
-                [0, 0, 0, 1]
-            ]);
-            var t = $M([
-                [1, 0, 0, -ex],
-                [0, 1, 0, -ey],
-                [0, 0, 1, -ez],
-                [0, 0, 0, 1]
-            ]);
-            return m.x(t);
-        };
-        Renderer.prototype.makePerspective = function (fovy, aspect, znear, zfar) {
-            var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
-            var ymin = -ymax;
-            var xmin = ymin * aspect;
-            var xmax = ymax * aspect;
-            return this.makeFrustum(xmin, xmax, ymin, ymax, znear, zfar);
-        };
-        Renderer.prototype.makeFrustum = function (left, right, bottom, top, znear, zfar) {
-            var X = 2 * znear / (right - left);
-            var Y = 2 * znear / (top - bottom);
-            var A = (right + left) / (right - left);
-            var B = (top + bottom) / (top - bottom);
-            var C = -(zfar + znear) / (zfar - znear);
-            var D = -2 * zfar * znear / (zfar - znear);
-            return $M([
-                [X, 0, A, 0],
-                [0, Y, B, 0],
-                [0, 0, C, D],
-                [0, 0, -1, 0]
-            ]);
-        };
-        Renderer.prototype.makeSphereColumn = function () {
+        Renderer.prototype.createSphereColumn = function () {
             var objects = [];
-            objects.push(new LH.Sphere(Vector.create([0, -0.25, 0]), 0.25));
-            objects.push(new LH.Sphere(Vector.create([0, -0.75, 0]), 0.25));
+            objects.push(new LH.Sphere(glMatrix.vec3.fromValues(0, -0.25, 0), 0.25));
+            objects.push(new LH.Sphere(glMatrix.vec3.fromValues(0, -0.75, 0), 0.25));
             return objects;
         };
         return Renderer;
     }());
     LH.Renderer = Renderer;
 })(LH || (LH = {}));
-// entry point
 // vertex shader for drawing a textured quad
 var renderVertexSource = "\n    attribute vec3 vertex;\n    varying vec2 texCoord;\n\n    void main() {\n        texCoord = vertex.xy * 0.5 + 0.5;\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
 // fragment shader for drawing a textured quad
 var renderFragmentSource = "\n    precision highp float;\n\n    varying vec2 texCoord;\n    uniform sampler2D texture;\n\n    void main() {\n        gl_FragColor = texture2D(texture, texCoord);\n    }\n";
 // vertex shader, interpolate ray per-pixel
 var tracerVertexSource = "\n    attribute vec3 vertex;\n    uniform vec3 eye, ray00, ray01, ray10, ray11;\n    varying vec3 initialRay;\n\n    void main() {\n        vec2 percent = vertex.xy * 0.5 + 0.5;\n        initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
-var tracerFragmentSource = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n    #define BOUNCES 5\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n    #define LIGHT_SIZE 100.50\n    #define LIGHT_VALUE 2.5\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n\n    uniform vec3 light;\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n\n    varying vec3 initialRay;\n\n    float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {\n        vec3 toSphere = origin - sphereCenter;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t > 0.0) return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {\n        return (hit - sphereCenter) / sphereRadius;\n    }\n\n    float random(vec3 scale, float seed) {\n        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n    }\n\n    vec3 cosineWeightedDirection(float seed, vec3 normal) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float r = sqrt(u);\n        float angle = 6.283185307179586 * v;\n\n        // compute basis from normal\n        vec3 sdir, tdir;\n        if (abs(normal.x) < 0.5) {\n            sdir = cross(normal, vec3(1, 0, 0));\n        } else {\n            sdir = cross(normal, vec3(0, 1, 0));\n        }\n        tdir = cross(normal, sdir);\n\n        return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;\n    }\n\n    vec3 uniformlyRandomDirection(float seed) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float z = 1.0 - 2.0 * u;\n        float r = sqrt(1.0 - z * z);\n        float angle = 6.283185307179586 * v;\n\n        return vec3(r * cos(angle), r * sin(angle), z);\n    }\n\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n\n    float shadow(vec3 origin, vec3 ray) {\n\n        for (int i = 0; i < MAX_SPHERES; i++) {\n            if (i >= totalSpheres) break;\n            float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n            if (tSpehere < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n\n    vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n        vec3 colorMask = vec3(1.0);\n        vec3 accumulatedColor = vec3(0.0);\n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = normalForSphere(hit, spheres[i].center, spheres[i].radius);\n                }\n            }\n            \n            if (t == INFINITY) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n            \n            vec3 surfaceColor = vec3(0.75);\n            float specularHighlight = 0.0;\n\n            vec3 toLight = light - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = shadow(hit + normal * EPSILON, toLight);\n            colorMask *= surfaceColor;\n            \n            accumulatedColor += colorMask * (LIGHT_VALUE * diffuse * shadowIntensity);\n            accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n\n    void main() {\n        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * LIGHT_SIZE;\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);\n    }\n";
-////////////////////////////////////////////////////////////////////////////////
-// utility functions
-////////////////////////////////////////////////////////////////////////////////
-Vector.prototype.ensure3 = function () {
-    return Vector.create([this.elements[0], this.elements[1], this.elements[2]]);
-};
-Vector.prototype.ensure4 = function (w) {
-    return Vector.create([this.elements[0], this.elements[1], this.elements[2], w]);
-};
-Vector.prototype.divideByW = function () {
-    var w = this.elements[this.elements.length - 1];
-    var newElements = [];
-    for (var i = 0; i < this.elements.length; i++) {
-        newElements.push(this.elements[i] / w);
-    }
-    return Vector.create(newElements);
-};
-Vector.prototype.componentDivide = function (vector) {
-    if (this.elements.length != vector.elements.length) {
-        return null;
-    }
-    var newElements = [];
-    for (var i = 0; i < this.elements.length; i++) {
-        newElements.push(this.elements[i] / vector.elements[i]);
-    }
-    return Vector.create(newElements);
-};
-Vector.min = function (a, b) {
-    if (a.length != b.length) {
-        return null;
-    }
-    var newElements = [];
-    for (var i = 0; i < a.elements.length; i++) {
-        newElements.push(Math.min(a.elements[i], b.elements[i]));
-    }
-    return Vector.create(newElements);
-};
-Vector.max = function (a, b) {
-    if (a.length != b.length) {
-        return null;
-    }
-    var newElements = [];
-    for (var i = 0; i < a.elements.length; i++) {
-        newElements.push(Math.max(a.elements[i], b.elements[i]));
-    }
-    return Vector.create(newElements);
-};
-Vector.prototype.minComponent = function () {
-    var value = Number.MAX_VALUE;
-    for (var i = 0; i < this.elements.length; i++) {
-        value = Math.min(value, this.elements[i]);
-    }
-    return value;
-};
-Vector.prototype.maxComponent = function () {
-    var value = -Number.MAX_VALUE;
-    for (var i = 0; i < this.elements.length; i++) {
-        value = Math.max(value, this.elements[i]);
-    }
-    return value;
-};
-Matrix.Translation = function (v) {
-    if (v.elements.length == 2) {
-        var r = Matrix.I(3);
-        r.elements[2][0] = v.elements[0];
-        r.elements[2][1] = v.elements[1];
-        return r;
-    }
-    if (v.elements.length == 3) {
-        var r = Matrix.I(4);
-        r.elements[0][3] = v.elements[0];
-        r.elements[1][3] = v.elements[1];
-        r.elements[2][3] = v.elements[2];
-        return r;
-    }
-    throw "Invalid length for Translation";
-};
-////////////////////////////////////////////////////////////////////////////////
-// main program
-////////////////////////////////////////////////////////////////////////////////
+var tracerFragmentSource = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n    #define BOUNCES 5\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n    #define LIGHT_SIZE 100.50\n    #define LIGHT_VALUE 3.5\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n\n    uniform vec3 light;\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n\n    varying vec3 initialRay;\n\n    float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {\n        vec3 toSphere = origin - sphereCenter;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t > 0.0) return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {\n        return (hit - sphereCenter) / sphereRadius;\n    }\n\n    float random(vec3 scale, float seed) {\n        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n    }\n\n    vec3 cosineWeightedDirection(float seed, vec3 normal) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float r = sqrt(u);\n        float angle = 6.283185307179586 * v;\n\n        // compute basis from normal\n        vec3 sdir, tdir;\n        if (abs(normal.x) < 0.5) {\n            sdir = cross(normal, vec3(1, 0, 0));\n        } else {\n            sdir = cross(normal, vec3(0, 1, 0));\n        }\n        tdir = cross(normal, sdir);\n\n        return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;\n    }\n\n    vec3 uniformlyRandomDirection(float seed) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float z = 1.0 - 2.0 * u;\n        float r = sqrt(1.0 - z * z);\n        float angle = 6.283185307179586 * v;\n\n        return vec3(r * cos(angle), r * sin(angle), z);\n    }\n\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n\n    float shadow(vec3 origin, vec3 ray) {\n\n        for (int i = 0; i < MAX_SPHERES; i++) {\n            if (i >= totalSpheres) break;\n            float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n            if (tSpehere < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n\n    vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n        vec3 colorMask = vec3(1.0);\n        vec3 accumulatedColor = vec3(0.0);\n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = normalForSphere(hit, spheres[i].center, spheres[i].radius);\n                }\n            }\n            \n            if (t == INFINITY) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n            \n            vec3 surfaceColor = vec3(0.75);\n            float specularHighlight = 0.0;\n\n            vec3 toLight = light - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = shadow(hit + normal * EPSILON, toLight);\n            colorMask *= surfaceColor;\n            \n            accumulatedColor += colorMask * (LIGHT_VALUE * diffuse * shadowIntensity);\n            accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n\n    void main() {\n        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * LIGHT_SIZE;\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);\n    }\n";
 var renderer;
 window.onload = function () {
     renderer = new LH.Renderer();
@@ -351,8 +149,7 @@ var LH;
 (function (LH) {
     var Light = /** @class */ (function () {
         function Light() {
-            this._temporaryTranslation = Vector.create([0, 0, 0]);
-            this._position = Vector.create([0.4, 0.5, -0.6]);
+            this._position = glMatrix.vec3.create(0.4, 0.5, -0.6);
         }
         return Light;
     }());
@@ -543,13 +340,14 @@ var LH;
             }
             return this._uniforms[name];
         };
+        // TODO: this is very badly harcoded way to set uniforms
         Shader.prototype.setUniforms = function (uniforms) {
             for (var name_1 in uniforms) {
                 // specific case for spheres
                 if (name_1.toString() === "spheres") {
                     for (var i = 0; i < uniforms.spheres.length; i++) {
                         var centerLocation = LH.gl.getUniformLocation(this._program, "spheres[" + i + "].center");
-                        LH.gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i]._center.elements[0], uniforms.spheres[i]._center.elements[1], uniforms.spheres[i]._center.elements[2]]));
+                        LH.gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i]._center[0], uniforms.spheres[i]._center[1], uniforms.spheres[i]._center[2]]));
                         var radiusLocation = LH.gl.getUniformLocation(this._program, "spheres[" + i + "].radius");
                         LH.gl.uniform1f(radiusLocation, uniforms.spheres[i]._radius);
                     }
@@ -557,17 +355,33 @@ var LH;
                 var location_1 = LH.gl.getUniformLocation(this._program, name_1);
                 if (location_1 == null)
                     continue;
+                var vector3Uniforms = [
+                    "eye",
+                    "ray00",
+                    "ray01",
+                    "ray11",
+                    "ray10",
+                    "light"
+                ];
+                var matrix4Uniforms = [];
+                var intUniforms = [
+                    "totalSpheres"
+                ];
+                var floatUniforms = [
+                    "timeSinceStart",
+                    "textureWeight"
+                ];
                 var value = uniforms[name_1];
-                if (value instanceof Vector) {
-                    LH.gl.uniform3fv(location_1, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
+                if (vector3Uniforms.indexOf(name_1) > -1) {
+                    LH.gl.uniform3fv(location_1, new Float32Array([value[0], value[1], value[2]]));
                 }
-                else if (value instanceof Matrix) {
+                else if (matrix4Uniforms.indexOf(name_1) > -1) {
                     LH.gl.uniformMatrix4fv(location_1, false, new Float32Array(value.flatten()));
                 }
-                else if (name_1 === "totalSpheres") {
+                else if (intUniforms.indexOf(name_1) > -1) {
                     LH.gl.uniform1i(location_1, value);
                 }
-                else {
+                else if (floatUniforms.indexOf(name_1) > -1) {
                     LH.gl.uniform1f(location_1, value);
                 }
             }
@@ -621,166 +435,4 @@ var LH;
         return Shader;
     }());
     LH.Shader = Shader;
-})(LH || (LH = {}));
-var LH;
-(function (LH) {
-    var Sprite = /** @class */ (function () {
-        function Sprite(name, width, height, position) {
-            if (width === void 0) { width = 100; }
-            if (height === void 0) { height = 100; }
-            if (position === void 0) { position = new LH.Vector3(); }
-            this._name = name;
-            this._width = width;
-            this._height = height;
-            this._position = position;
-        }
-        Object.defineProperty(Sprite.prototype, "position", {
-            get: function () {
-                return this._position;
-            },
-            set: function (value) {
-                this._position = value;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Sprite.prototype.load = function () {
-            this._buffer = new LH.GLBuffer(3);
-            var positionAttribute = new LH.AttributeInformation();
-            //positionAttribute.location = this._shader.getAttributeLocation("a_position");
-            positionAttribute.location = 0;
-            positionAttribute.offset = 0;
-            positionAttribute.size = 3;
-            this._buffer.addAttributeLocation(positionAttribute);
-            var vertices = [
-                // x, y, z
-                0, 0, 0,
-                0, this._height, 0,
-                this._width, this._height, 0,
-                this._width, this._height, 0,
-                this._width, 0.0, 0,
-                0, 0, 0
-            ];
-            this._buffer.pushBackData(vertices);
-            this._buffer.upload();
-            this._buffer.unbind();
-        };
-        Sprite.prototype.update = function (time) {
-        };
-        Sprite.prototype.draw = function () {
-            this._buffer.bind();
-            this._buffer.draw();
-        };
-        return Sprite;
-    }());
-    LH.Sprite = Sprite;
-})(LH || (LH = {}));
-var LH;
-(function (LH) {
-    var Matrix4x4 = /** @class */ (function () {
-        function Matrix4x4() {
-            this._data = [];
-            this._data = [
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1,
-            ];
-        }
-        Object.defineProperty(Matrix4x4.prototype, "data", {
-            get: function () {
-                return this._data;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Matrix4x4.identity = function () {
-            return new Matrix4x4();
-        };
-        Matrix4x4.orthographic = function (left, right, bottom, top, nearClip, farClip) {
-            var matrix = new Matrix4x4();
-            var lr = 1.0 / (left - right);
-            var bt = 1.0 / (bottom - top);
-            var nf = 1.0 / (nearClip - farClip);
-            matrix._data[0] = -2.0 * lr;
-            matrix._data[5] = -2.0 * bt;
-            matrix._data[11] = 2.0 * nf;
-            matrix._data[12] = (left + right) * lr;
-            matrix._data[13] = (bottom + top) * bt;
-            matrix._data[14] = (nearClip + farClip) * nf;
-            return matrix;
-        };
-        Matrix4x4.translation = function (position) {
-            var matrix = new Matrix4x4();
-            matrix._data[12] = position.x;
-            matrix._data[13] = position.y;
-            matrix._data[14] = position.z;
-            return matrix;
-        };
-        return Matrix4x4;
-    }());
-    LH.Matrix4x4 = Matrix4x4;
-})(LH || (LH = {}));
-var LH;
-(function (LH) {
-    var Vector3 = /** @class */ (function () {
-        function Vector3(x, y, z) {
-            if (x === void 0) { x = 0; }
-            if (y === void 0) { y = 0; }
-            if (z === void 0) { z = 0; }
-            this._x = x;
-            this._y = y;
-            this._z = z;
-        }
-        Object.defineProperty(Vector3.prototype, "x", {
-            get: function () {
-                return this._x;
-            },
-            set: function (value) {
-                this._x = value;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Vector3.prototype, "y", {
-            get: function () {
-                return this._y;
-            },
-            set: function (value) {
-                this._y = value;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Vector3.prototype, "z", {
-            get: function () {
-                return this._z;
-            },
-            set: function (value) {
-                this._z = value;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Vector3.prototype.toArray = function () {
-            return [this._x, this._y, this._z];
-        };
-        Vector3.prototype.toFloat32Array = function () {
-            return new Float32Array(this.toArray());
-        };
-        Vector3.prototype.add = function (vector) {
-            this._x += vector._x;
-            this._y += vector._y;
-            this._z += vector._z;
-            return this;
-        };
-        Vector3.prototype.sub = function (vector) {
-            this._x -= vector._x;
-            this._y -= vector._y;
-            this._z -= vector._z;
-            return this;
-        };
-        return Vector3;
-    }());
-    LH.Vector3 = Vector3;
 })(LH || (LH = {}));

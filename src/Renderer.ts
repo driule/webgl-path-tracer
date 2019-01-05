@@ -8,7 +8,7 @@ namespace LH {
         private _angleX: number;
         private _angleY: number;
         private _zoomZ: number;
-        private _eye: Vector;
+        private _eye: any;
 
         public constructor() {
             this._canvas = GLUtilities.initialize("pathTracer");
@@ -17,7 +17,7 @@ namespace LH {
             this._angleX = 0;
             this._angleY = 0;
             this._zoomZ = 2.5;
-            this._eye = Vector.create([0, 0, 0]);
+            this._eye = glMatrix.vec3.create();
         }
 
         public start(): void {
@@ -25,7 +25,7 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            let spheres = this.makeSphereColumn();
+            let spheres = this.createSphereColumn();
             this._pathTracer.setObjects(spheres, new Light());
 
             var start = new Date();
@@ -33,90 +33,28 @@ namespace LH {
             //setInterval(function() { this.tick((new Date() - start) * 0.001); }, 1000 / 60);
             this.tick(0);
         }
-          
-        public update(modelviewProjection: Matrix, timeSinceStart: number): void {
-            var jitter = Matrix.Translation(Vector.create([Math.random() * 2 - 1, Math.random() * 2 - 1, 0]).multiply(1 / 512));
-            var inverse = jitter.multiply(modelviewProjection).inverse();
-            this._pathTracer.update(inverse, timeSinceStart, this._eye);
-        }
 
         public tick(timeSinceStart: number): void {
-            this._eye.elements[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
-            this._eye.elements[1] = this._zoomZ * Math.sin(this._angleX);
-            this._eye.elements[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
-        
-            let modelview = this.makeLookAt(this._eye.elements[0], this._eye.elements[1], this._eye.elements[2], 0, 0, 0, 0, 1, 0);
-            let projection = this.makePerspective(55, 1, 0.1, 100);
-            let modelviewProjection = projection.multiply(modelview);
-            this.update(modelviewProjection, timeSinceStart);
+            this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
+            this._eye[1] = this._zoomZ * Math.sin(this._angleX);
+            this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
+
+            let view = glMatrix.mat4.lookAt([], this._eye, [0, 0, 0], [0, 1, 0]);
+            let projection = glMatrix.mat4.perspective([], Math.PI / 3, 1, 0.1, 1000);
+            let viewProjection = glMatrix.mat4.multiply([], projection, view);
+            viewProjection = glMatrix.mat4.invert([], viewProjection);
             
+            this._pathTracer.update(viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
 
             requestAnimationFrame(this.tick.bind(this));
         }
-
-        private makeLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz) {
-            let eye = $V([ex, ey, ez]);
-            let center = $V([cx, cy, cz]);
-            let up = $V([ux, uy, uz]);
-
-            let z = eye.subtract(center).toUnitVector();
-            let x = up.cross(z).toUnitVector();
-            let y = z.cross(x).toUnitVector();
-
-            var m = $M(
-                [
-                    [x.e(1), x.e(2), x.e(3), 0],
-                    [y.e(1), y.e(2), y.e(3), 0],
-                    [z.e(1), z.e(2), z.e(3), 0],
-                    [0, 0, 0, 1]
-                ]
-            );
-
-            var t = $M(
-                [
-                    [1, 0, 0, -ex],
-                    [0, 1, 0, -ey],
-                    [0, 0, 1, -ez],
-                    [0, 0, 0, 1]
-                ]
-            );
-
-            return m.x(t);
-        }
-
-        private makePerspective(fovy, aspect, znear, zfar) {
-            var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
-            var ymin = -ymax;
-            var xmin = ymin * aspect;
-            var xmax = ymax * aspect;
-
-            return this.makeFrustum(xmin, xmax, ymin, ymax, znear, zfar);
-        }
-
-        private makeFrustum(left, right, bottom, top, znear, zfar) {
-            var X = 2 * znear / (right - left);
-            var Y = 2 * znear / (top - bottom);
-            var A = (right + left) / (right - left);
-            var B = (top + bottom) / (top - bottom);
-            var C = -(zfar + znear) / (zfar - znear);
-            var D = -2 * zfar * znear / (zfar - znear);
-
-            return $M(
-                [
-                    [X, 0, A, 0],
-                    [0, Y, B, 0],
-                    [0, 0, C, D],
-                    [0, 0, -1, 0]
-                ]
-            );
-        }
         
-        private makeSphereColumn() {
+        private createSphereColumn() {
             let objects = [];
 
-            objects.push(new Sphere(Vector.create([0, -0.25, 0]), 0.25));
-            objects.push(new Sphere(Vector.create([0, -0.75, 0]), 0.25));
+            objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.25, 0), 0.25));
+            objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.75, 0), 0.25));
         
             return objects;
         }
