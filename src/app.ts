@@ -3,10 +3,6 @@
 declare var Vector: any;
 declare var Matrix: any;
 
-////////////////////////////////////////////////////////////////////////////////
-// shader strings
-////////////////////////////////////////////////////////////////////////////////
-
 // vertex shader for drawing a textured quad
 var renderVertexSource = `
     attribute vec3 vertex;
@@ -43,8 +39,7 @@ var tracerVertexSource = `
     }
 `;
 
-// start of fragment shader
-var tracerFragmentSourceHeader = `
+var tracerFragmentSource = `
     precision highp float;
 
     #define MAX_SPHERES 128
@@ -64,18 +59,13 @@ var tracerFragmentSourceHeader = `
     uniform float textureWeight;
     uniform float timeSinceStart;
     uniform sampler2D texture;
-    uniform float glossiness;
 
     uniform vec3 light;
     uniform int totalSpheres;
     uniform Sphere spheres[MAX_SPHERES];
 
     varying vec3 initialRay;
-`;
 
-// compute the near intersection of a sphere
-// no intersection returns a value of +infinity
-var intersectSphereSource = `
     float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {
         vec3 toSphere = origin - sphereCenter;
         float a = dot(ray, ray);
@@ -90,25 +80,15 @@ var intersectSphereSource = `
 
         return INFINITY;
     }
-`;
 
-// given that hit is a point on the sphere, what is the surface normal?
-var normalForSphereSource = `
     vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {
         return (hit - sphereCenter) / sphereRadius;
     }
-`;
 
-// use the fragment position for randomness
-var randomSource = `
     float random(vec3 scale, float seed) {
         return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
     }
-`;
 
-// random cosine-weighted distributed vector
-// from http://www.rorydriscoll.com/2009/01/07/better-sampling/
-var cosineWeightedDirectionSource = `
     vec3 cosineWeightedDirection(float seed, vec3 normal) {
         float u = random(vec3(12.9898, 78.233, 151.7182), seed);
         float v = random(vec3(63.7264, 10.873, 623.6736), seed);
@@ -126,10 +106,7 @@ var cosineWeightedDirectionSource = `
 
         return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;
     }
-`;
 
-// random normalized vector
-var uniformlyRandomDirectionSource = `
     vec3 uniformlyRandomDirection(float seed) {
         float u = random(vec3(12.9898, 78.233, 151.7182), seed);
         float v = random(vec3(63.7264, 10.873, 623.6736), seed);
@@ -139,17 +116,11 @@ var uniformlyRandomDirectionSource = `
 
         return vec3(r * cos(angle), r * sin(angle), z);
     }
-`;
 
-// random vector in the unit sphere
-// note: this is probably not statistically uniform, saw raising to 1/3 power somewhere but that looks wrong?
-var uniformlyRandomVectorSource = `
     vec3 uniformlyRandomVector(float seed) {
         return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));
     }
-`;
 
-var shadowSource = `
     float shadow(vec3 origin, vec3 ray) {
 
         for (int i = 0; i < MAX_SPHERES; i++) {
@@ -160,9 +131,7 @@ var shadowSource = `
         
         return 1.0;
     }
-`;
 
-var calculateColorSource = `
     vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {
         vec3 colorMask = vec3(1.0);
         vec3 accumulatedColor = vec3(0.0);
@@ -204,29 +173,13 @@ var calculateColorSource = `
         
         return accumulatedColor;
     }
-`;
 
-var renderMainSource = `
     void main() {
         vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * LIGHT_SIZE;
         vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;
         gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);
     }
 `;
-
-function makeTracerFragmentSource() {
-    return tracerFragmentSourceHeader +
-        intersectSphereSource +
-        normalForSphereSource +
-        randomSource +
-        cosineWeightedDirectionSource +
-        uniformlyRandomDirectionSource +
-        uniformlyRandomVectorSource +
-        shadowSource +
-        calculateColorSource + 
-        renderMainSource
-    ;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // utility functions
@@ -329,13 +282,6 @@ Matrix.Translation = function (v)
 ////////////////////////////////////////////////////////////////////////////////
 // main program
 ////////////////////////////////////////////////////////////////////////////////
-
-var MATERIAL_DIFFUSE = 0;
-var MATERIAL_MIRROR = 1;
-var MATERIAL_GLOSSY = 2;
-var material = MATERIAL_DIFFUSE;
-
-var glossiness = 0.6;
 
 let renderer: LH.Renderer;
 

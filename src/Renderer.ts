@@ -55,8 +55,7 @@ namespace LH {
             requestAnimationFrame(this.tick.bind(this));
         }
 
-        private makeLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz)
-        {
+        private makeLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz) {
             let eye = $V([ex, ey, ez]);
             let center = $V([cx, cy, cz]);
             let up = $V([ux, uy, uz]);
@@ -86,8 +85,7 @@ namespace LH {
             return m.x(t);
         }
 
-        private makePerspective(fovy, aspect, znear, zfar)
-        {
+        private makePerspective(fovy, aspect, znear, zfar) {
             var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
             var ymin = -ymax;
             var xmin = ymin * aspect;
@@ -96,8 +94,7 @@ namespace LH {
             return this.makeFrustum(xmin, xmax, ymin, ymax, znear, zfar);
         }
 
-        private makeFrustum(left, right, bottom, top, znear, zfar)
-        {
+        private makeFrustum(left, right, bottom, top, znear, zfar) {
             var X = 2 * znear / (right - left);
             var Y = 2 * znear / (top - bottom);
             var A = (right + left) / (right - left);

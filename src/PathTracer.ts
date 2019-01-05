@@ -10,11 +10,9 @@ namespace LH {
         private renderShader: Shader;
         private tracerShader: Shader;
 
-        private tracerVertexAttribute: number;
         private sampleCount: number;
 
-        //private objects;
-        public uniforms;
+        private uniforms;
 
         private spheres: Sphere[];
         private light: Light;
@@ -22,7 +20,6 @@ namespace LH {
         public constructor() {
             // create framebuffer
             this.framebuffer = gl.createFramebuffer();
-            //this.framebuffer = new GLBuffer(2);
         
             // create textures
             var type = gl.getExtension('OES_texture_float') ? gl.FLOAT : gl.UNSIGNED_BYTE;
@@ -71,19 +68,13 @@ namespace LH {
                 this.tracerShader.delete();
             }
 
-            this.tracerShader = new Shader('tracer', tracerVertexSource, makeTracerFragmentSource());
-            //this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
-            //gl.enableVertexAttribArray(this.tracerVertexAttribute);
+            this.tracerShader = new Shader('tracer', tracerVertexSource, tracerFragmentSource);
         }
           
         public update(matrix: Matrix, timeSinceStart: number, eye: Vector): void {
             
             // calculate uniforms
-            /*for(var i = 0; i < this.objects.length; i++) {
-                this.objects[i].setUniforms(this);
-            }*/
             this.uniforms.eye = eye;
-            this.uniforms.glossiness = glossiness;
             this.uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
             this.uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
             this.uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
