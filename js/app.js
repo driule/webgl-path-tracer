@@ -253,8 +253,8 @@ var LH;
         };
         Renderer.prototype.makeSphereColumn = function () {
             var objects = [];
-            objects.push(new LH.Sphere(Vector.create([0, -0.25, 0]), 0.25, nextObjectId++));
-            objects.push(new LH.Sphere(Vector.create([0, -0.75, 0]), 0.25, nextObjectId++));
+            objects.push(new LH.Sphere(Vector.create([0, -0.25, 0]), 0.25));
+            objects.push(new LH.Sphere(Vector.create([0, -0.75, 0]), 0.25));
             return objects;
         };
         return Renderer;
@@ -269,19 +269,13 @@ var LH;
 var renderVertexSource = "\n    attribute vec3 vertex;\n    varying vec2 texCoord;\n\n    void main() {\n        texCoord = vertex.xy * 0.5 + 0.5;\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
 // fragment shader for drawing a textured quad
 var renderFragmentSource = "\n    precision highp float;\n\n    varying vec2 texCoord;\n    uniform sampler2D texture;\n\n    void main() {\n        gl_FragColor = texture2D(texture, texCoord);\n    }\n";
-// constants for the shaders
-var bounces = 5;
-var epsilon = 0.0001;
-var infinity = '10000.0';
-var lightSize = 100.5;
-var lightVal = 100.00;
 // vertex shader, interpolate ray per-pixel
 var tracerVertexSource = "\n    attribute vec3 vertex;\n    uniform vec3 eye, ray00, ray01, ray10, ray11;\n    varying vec3 initialRay;\n\n    void main() {\n        vec2 percent = vertex.xy * 0.5 + 0.5;\n        initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
 // start of fragment shader
-var tracerFragmentSourceHeader = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n    uniform float glossiness;\n\n    uniform vec3 light;\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n\n    varying vec3 initialRay;\n";
+var tracerFragmentSourceHeader = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n    #define BOUNCES 5\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n    #define LIGHT_SIZE 100.50\n    #define LIGHT_VALUE 2.5\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n    uniform float glossiness;\n\n    uniform vec3 light;\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n\n    varying vec3 initialRay;\n";
 // compute the near intersection of a sphere
 // no intersection returns a value of +infinity
-var intersectSphereSource = "\n    float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {\n        vec3 toSphere = origin - sphereCenter;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t > 0.0) return t;\n        }\n\n        return " + infinity + ";\n    }\n";
+var intersectSphereSource = "\n    float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {\n        vec3 toSphere = origin - sphereCenter;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t > 0.0) return t;\n        }\n\n        return INFINITY;\n    }\n";
 // given that hit is a point on the sphere, what is the surface normal?
 var normalForSphereSource = "\n    vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {\n        return (hit - sphereCenter) / sphereRadius;\n    }\n";
 // use the fragment position for randomness
@@ -294,17 +288,9 @@ var uniformlyRandomDirectionSource = "\n    vec3 uniformlyRandomDirection(float 
 // random vector in the unit sphere
 // note: this is probably not statistically uniform, saw raising to 1/3 power somewhere but that looks wrong?
 var uniformlyRandomVectorSource = "\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n";
-// compute specular lighting contribution
-var specularReflection = "\n    vec3 reflectedLight = normalize(reflect(light - hit, normal));\n    specularHighlight = max(0.0, dot(reflectedLight, normalize(hit - origin)));\n";
-// update ray using normal and bounce according to a diffuse reflection
-var newDiffuseRay = "\n    ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n";
-// update ray using normal according to a specular reflection
-var newReflectiveRay = "\n    ray = reflect(ray, normal);\n    " + specularReflection + "\n    specularHighlight = 2.0 * pow(specularHighlight, 20.0);\n";
-// update ray using normal and bounce according to a glossy reflection
-var newGlossyRay = "\n    ray = normalize(reflect(ray, normal)) + uniformlyRandomVector(timeSinceStart + float(bounce)) * glossiness;\n    " + specularReflection + "\n    specularHighlight = pow(specularHighlight, 3.0);\n";
 var shadowSource = "\n    float shadow(vec3 origin, vec3 ray) {\n\n        for (int i = 0; i < MAX_SPHERES; i++) {\n            if (i >= totalSpheres) break;\n            float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n            if (tSpehere < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n";
-var calculateColorSource = "\n    vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n        vec3 colorMask = vec3(1.0);\n        vec3 accumulatedColor = vec3(0.0);\n        for (int bounce = 0; bounce < 5; bounce++) {\n            float t = 10000.0;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = normalForSphere(hit, spheres[i].center, spheres[i].radius);\n                }\n            }\n            \n            if (t == 10000.0) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n            \n            vec3 surfaceColor = vec3(0.75);\n            float specularHighlight = 0.0;\n\n            vec3 toLight = light - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = shadow(hit + normal * 0.0001, toLight);\n            colorMask *= surfaceColor;\n            \n            accumulatedColor += colorMask * (0.5 * diffuse * shadowIntensity);\n            accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n";
-var renderMainSource = "\n    void main() {\n        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * " + lightSize + ";\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);\n    }\n";
+var calculateColorSource = "\n    vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n        vec3 colorMask = vec3(1.0);\n        vec3 accumulatedColor = vec3(0.0);\n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = normalForSphere(hit, spheres[i].center, spheres[i].radius);\n                }\n            }\n            \n            if (t == INFINITY) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n            \n            vec3 surfaceColor = vec3(0.75);\n            float specularHighlight = 0.0;\n\n            vec3 toLight = light - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = shadow(hit + normal * EPSILON, toLight);\n            colorMask *= surfaceColor;\n            \n            accumulatedColor += colorMask * (LIGHT_VALUE * diffuse * shadowIntensity);\n            accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n";
+var renderMainSource = "\n    void main() {\n        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * LIGHT_SIZE;\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);\n    }\n";
 function makeTracerFragmentSource() {
     return tracerFragmentSourceHeader +
         intersectSphereSource +
@@ -320,13 +306,6 @@ function makeTracerFragmentSource() {
 ////////////////////////////////////////////////////////////////////////////////
 // utility functions
 ////////////////////////////////////////////////////////////////////////////////
-function concat(objects, func) {
-    var text = '';
-    for (var i = 0; i < objects.length; i++) {
-        text += func(objects[i]);
-    }
-    return text;
-}
 Vector.prototype.ensure3 = function () {
     return Vector.create([this.elements[0], this.elements[1], this.elements[2]]);
 };
@@ -404,15 +383,11 @@ Matrix.Translation = function (v) {
 ////////////////////////////////////////////////////////////////////////////////
 // main program
 ////////////////////////////////////////////////////////////////////////////////
-var nextObjectId = 0;
 var MATERIAL_DIFFUSE = 0;
 var MATERIAL_MIRROR = 1;
 var MATERIAL_GLOSSY = 2;
 var material = MATERIAL_DIFFUSE;
 var glossiness = 0.6;
-var YELLOW_BLUE_CORNELL_BOX = 0;
-var RED_GREEN_CORNELL_BOX = 1;
-var environment = YELLOW_BLUE_CORNELL_BOX;
 var renderer;
 window.onload = function () {
     renderer = new LH.Renderer();
@@ -436,7 +411,7 @@ var LH;
         //private _radiusStr: string;
         //private _intersectStr: string;
         //private _temporaryTranslation: Vector;
-        function Sphere(center, radius, id) {
+        function Sphere(center, radius) {
             this._center = center;
             this._radius = radius;
             //this._centerStr = 'sphereCenter' + id;

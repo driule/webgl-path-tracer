@@ -118,8 +118,8 @@ namespace LH {
         private makeSphereColumn() {
             let objects = [];
 
-            objects.push(new Sphere(Vector.create([0, -0.25, 0]), 0.25, nextObjectId++));
-            objects.push(new Sphere(Vector.create([0, -0.75, 0]), 0.25, nextObjectId++));
+            objects.push(new Sphere(Vector.create([0, -0.25, 0]), 0.25));
+            objects.push(new Sphere(Vector.create([0, -0.75, 0]), 0.25));
         
             return objects;
         }

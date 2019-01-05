@@ -9,7 +9,7 @@ namespace LH {
         //private _intersectStr: string;
         //private _temporaryTranslation: Vector;
 
-        public constructor(center: Vector, radius: number, id: number) {
+        public constructor(center: Vector, radius: number) {
             this._center = center;
             this._radius = radius;
             //this._centerStr = 'sphereCenter' + id;

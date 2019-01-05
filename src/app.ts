@@ -30,13 +30,6 @@ var renderFragmentSource = `
     }
 `;
 
-// constants for the shaders
-var bounces = 5;
-var epsilon = 0.0001;
-var infinity = '10000.0';
-var lightSize = 100.5;
-var lightVal = 100.00;
-
 // vertex shader, interpolate ray per-pixel
 var tracerVertexSource = `
     attribute vec3 vertex;
@@ -55,6 +48,11 @@ var tracerFragmentSourceHeader = `
     precision highp float;
 
     #define MAX_SPHERES 128
+    #define BOUNCES 5
+    #define EPSILON 0.0001
+    #define INFINITY 10000.0
+    #define LIGHT_SIZE 100.50
+    #define LIGHT_VALUE 2.5
 
     struct Sphere
     {
@@ -90,7 +88,7 @@ var intersectSphereSource = `
             if (t > 0.0) return t;
         }
 
-        return ` + infinity + `;
+        return INFINITY;
     }
 `;
 
@@ -151,31 +149,6 @@ var uniformlyRandomVectorSource = `
     }
 `;
 
-// compute specular lighting contribution
-var specularReflection = `
-    vec3 reflectedLight = normalize(reflect(light - hit, normal));
-    specularHighlight = max(0.0, dot(reflectedLight, normalize(hit - origin)));
-`;
-
-// update ray using normal and bounce according to a diffuse reflection
-var newDiffuseRay = `
-    ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
-`;
-
-// update ray using normal according to a specular reflection
-var newReflectiveRay = `
-    ray = reflect(ray, normal);
-    ` + specularReflection + `
-    specularHighlight = 2.0 * pow(specularHighlight, 20.0);
-`;
-
-// update ray using normal and bounce according to a glossy reflection
-var newGlossyRay = `
-    ray = normalize(reflect(ray, normal)) + uniformlyRandomVector(timeSinceStart + float(bounce)) * glossiness;
-    ` + specularReflection + `
-    specularHighlight = pow(specularHighlight, 3.0);
-`;
-
 var shadowSource = `
     float shadow(vec3 origin, vec3 ray) {
 
@@ -193,8 +166,8 @@ var calculateColorSource = `
     vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {
         vec3 colorMask = vec3(1.0);
         vec3 accumulatedColor = vec3(0.0);
-        for (int bounce = 0; bounce < 5; bounce++) {
-            float t = 10000.0;
+        for (int bounce = 0; bounce < BOUNCES; bounce++) {
+            float t = INFINITY;
             vec3 normal;
             vec3 hit = origin + ray * t;
 
@@ -209,7 +182,7 @@ var calculateColorSource = `
                 }
             }
             
-            if (t == 10000.0) {
+            if (t == INFINITY) {
                 break;
             } else {
                 ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
@@ -220,10 +193,10 @@ var calculateColorSource = `
 
             vec3 toLight = light - hit;
             float diffuse = max(0.0, dot(normalize(toLight), normal));
-            float shadowIntensity = shadow(hit + normal * 0.0001, toLight);
+            float shadowIntensity = shadow(hit + normal * EPSILON, toLight);
             colorMask *= surfaceColor;
             
-            accumulatedColor += colorMask * (0.5 * diffuse * shadowIntensity);
+            accumulatedColor += colorMask * (LIGHT_VALUE * diffuse * shadowIntensity);
             accumulatedColor += colorMask * specularHighlight * shadowIntensity;
             
             origin = hit;
@@ -235,7 +208,7 @@ var calculateColorSource = `
 
 var renderMainSource = `
     void main() {
-        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * ` + lightSize + `;
+        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * LIGHT_SIZE;
         vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;
         gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);
     }
@@ -258,15 +231,6 @@ function makeTracerFragmentSource() {
 ////////////////////////////////////////////////////////////////////////////////
 // utility functions
 ////////////////////////////////////////////////////////////////////////////////
-
-function concat(objects, func) {
-    var text = '';
-    for(var i = 0; i < objects.length; i++) {
-        text += func(objects[i]);
-    }
-
-    return text;
-}
 
 Vector.prototype.ensure3 = function() {
     return Vector.create([this.elements[0], this.elements[1], this.elements[2]]);
@@ -342,39 +306,36 @@ Vector.prototype.maxComponent = function() {
 
 Matrix.Translation = function (v)
 {
-  if (v.elements.length == 2) {
-    var r = Matrix.I(3);
-    r.elements[2][0] = v.elements[0];
-    r.elements[2][1] = v.elements[1];
-    return r;
-  }
+    if (v.elements.length == 2) {
+        var r = Matrix.I(3);
+        r.elements[2][0] = v.elements[0];
+        r.elements[2][1] = v.elements[1];
 
-  if (v.elements.length == 3) {
-    var r = Matrix.I(4);
-    r.elements[0][3] = v.elements[0];
-    r.elements[1][3] = v.elements[1];
-    r.elements[2][3] = v.elements[2];
-    return r;
-  }
+        return r;
+    }
 
-  throw "Invalid length for Translation";
+    if (v.elements.length == 3) {
+        var r = Matrix.I(4);
+        r.elements[0][3] = v.elements[0];
+        r.elements[1][3] = v.elements[1];
+        r.elements[2][3] = v.elements[2];
+        
+        return r;
+    }
+
+    throw "Invalid length for Translation";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // main program
 ////////////////////////////////////////////////////////////////////////////////
 
-var nextObjectId = 0;
-
 var MATERIAL_DIFFUSE = 0;
 var MATERIAL_MIRROR = 1;
 var MATERIAL_GLOSSY = 2;
 var material = MATERIAL_DIFFUSE;
-var glossiness = 0.6;
 
-var YELLOW_BLUE_CORNELL_BOX = 0;
-var RED_GREEN_CORNELL_BOX = 1;
-var environment = YELLOW_BLUE_CORNELL_BOX;
+var glossiness = 0.6;
 
 let renderer: LH.Renderer;
 
