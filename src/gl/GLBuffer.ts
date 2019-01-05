@@ -137,6 +137,8 @@ namespace LH {
         }
 
         public draw(): void {
+            this.bind();
+            
             if (this._bufferType == gl.ARRAY_BUFFER) {
                 gl.drawArrays(this._mode, 0, this._data.length / this._elementSize);
             } else if (this._bufferType == gl.ELEMENT_ARRAY_BUFFER) {

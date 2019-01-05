@@ -32,7 +32,7 @@ namespace LH {
             var start = new Date();
             // TODO: use setInterval to avoid stripes on the output image
             //setInterval(function() { this.tick((new Date() - start) * 0.001); }, 1000 / 60);
-            this.tick((new Date() - start));
+            this.tick(0);
         }
           
         public update(modelviewProjection: Matrix, timeSinceStart: number): void {

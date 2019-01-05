@@ -79,18 +79,10 @@ var LH;
 (function (LH) {
     var PathTracer = /** @class */ (function () {
         function PathTracer() {
-            var vertices = [
-                -1, -1,
-                -1, +1,
-                +1, -1,
-                +1, +1
-            ];
-            // create vertex buffer
-            this.vertexBuffer = LH.gl.createBuffer();
-            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
-            LH.gl.bufferData(LH.gl.ARRAY_BUFFER, new Float32Array(vertices), LH.gl.STATIC_DRAW);
+            this.uniforms = {};
             // create framebuffer
             this.framebuffer = LH.gl.createFramebuffer();
+            //this.framebuffer = new GLBuffer(2);
             // create textures
             var type = LH.gl.getExtension('OES_texture_float') ? LH.gl.FLOAT : LH.gl.UNSIGNED_BYTE;
             this.textures = [];
@@ -104,8 +96,18 @@ var LH;
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
             // create render shader
             this.renderShader = new LH.Shader('render', renderVertexSource, renderFragmentSource);
-            this.renderVertexAttribute = this.renderShader.getAttributeLocation('vertex');
-            LH.gl.enableVertexAttribArray(this.renderVertexAttribute);
+            var renderVertexAttribute = new LH.AttributeInformation();
+            renderVertexAttribute.location = this.renderShader.getAttributeLocation('vertex');
+            renderVertexAttribute.offset = 0;
+            renderVertexAttribute.size = 2;
+            this.vertexBuffer = new LH.GLBuffer(2, LH.gl.FLOAT, LH.gl.ARRAY_BUFFER, LH.gl.TRIANGLE_STRIP);
+            this.vertexBuffer.pushBackData([
+                -1, -1,
+                -1, +1,
+                +1, -1,
+                +1, +1
+            ]);
+            this.vertexBuffer.addAttributeLocation(renderVertexAttribute);
             // objects and shader will be filled in when setObjects() is called
             this.objects = [];
             this.sampleCount = 0;
@@ -120,8 +122,8 @@ var LH;
                 this.tracerShader.delete();
             }
             this.tracerShader = new LH.Shader('tracer', tracerVertexSource, makeTracerFragmentSource(objects));
-            this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
-            LH.gl.enableVertexAttribArray(this.tracerVertexAttribute);
+            //this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
+            //gl.enableVertexAttribArray(this.tracerVertexAttribute);
         };
         PathTracer.prototype.update = function (matrix, timeSinceStart, eye) {
             // calculate uniforms
@@ -142,22 +144,19 @@ var LH;
             // render to texture
             this.tracerShader.use();
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
-            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
             LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, this.framebuffer);
             LH.gl.framebufferTexture2D(LH.gl.FRAMEBUFFER, LH.gl.COLOR_ATTACHMENT0, LH.gl.TEXTURE_2D, this.textures[1], 0);
-            LH.gl.vertexAttribPointer(this.tracerVertexAttribute, 2, LH.gl.FLOAT, false, 0, 0);
-            LH.gl.drawArrays(LH.gl.TRIANGLE_STRIP, 0, 4);
-            LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, null);
+            this.vertexBuffer.upload();
+            this.vertexBuffer.draw();
             // ping pong textures
             this.textures.reverse();
             this.sampleCount++;
         };
         PathTracer.prototype.render = function () {
             this.renderShader.use();
+            LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, null);
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
-            LH.gl.bindBuffer(LH.gl.ARRAY_BUFFER, this.vertexBuffer);
-            LH.gl.vertexAttribPointer(this.renderVertexAttribute, 2, LH.gl.FLOAT, false, 0, 0);
-            LH.gl.drawArrays(LH.gl.TRIANGLE_STRIP, 0, 4);
+            this.vertexBuffer.draw();
         };
         PathTracer.prototype.getEyeRay = function (matrix, x, y, eye) {
             return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
@@ -187,7 +186,7 @@ var LH;
             var start = new Date();
             // TODO: use setInterval to avoid stripes on the output image
             //setInterval(function() { this.tick((new Date() - start) * 0.001); }, 1000 / 60);
-            this.tick((new Date() - start));
+            this.tick(0);
         };
         Renderer.prototype.update = function (modelviewProjection, timeSinceStart) {
             var jitter = Matrix.Translation(Vector.create([Math.random() * 2 - 1, Math.random() * 2 - 1, 0]).multiply(1 / 512));
@@ -756,6 +755,7 @@ var LH;
             LH.gl.bufferData(this._bufferType, bufferData, LH.gl.STATIC_DRAW);
         };
         GLBuffer.prototype.draw = function () {
+            this.bind();
             if (this._bufferType == LH.gl.ARRAY_BUFFER) {
                 LH.gl.drawArrays(this._mode, 0, this._data.length / this._elementSize);
             }

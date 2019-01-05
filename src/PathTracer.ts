@@ -2,7 +2,7 @@ namespace LH {
 
     export class PathTracer {
 
-        private vertexBuffer: WebGLBuffer;
+        private vertexBuffer: GLBuffer;
         private framebuffer: WebGLBuffer;
 
         private textures: WebGLTexture[];
@@ -10,28 +10,16 @@ namespace LH {
         private renderShader: Shader;
         private tracerShader: Shader;
 
-        private renderVertexAttribute: number;
         private tracerVertexAttribute: number;
         private sampleCount: number;
 
         private objects;
-        public uniforms;
+        public uniforms: {[name: string]: WebGLUniformLocation} = {};
 
-        public constructor() {
-            var vertices = [
-                -1, -1,
-                -1, +1,
-                +1, -1,
-                +1, +1
-            ];
-            
-            // create vertex buffer
-            this.vertexBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        
+        public constructor() {        
             // create framebuffer
             this.framebuffer = gl.createFramebuffer();
+            //this.framebuffer = new GLBuffer(2);
         
             // create textures
             var type = gl.getExtension('OES_texture_float') ? gl.FLOAT : gl.UNSIGNED_BYTE;
@@ -47,8 +35,20 @@ namespace LH {
         
             // create render shader
             this.renderShader = new Shader('render', renderVertexSource, renderFragmentSource);
-            this.renderVertexAttribute = this.renderShader.getAttributeLocation('vertex');
-            gl.enableVertexAttribArray(this.renderVertexAttribute);
+
+            let renderVertexAttribute = new AttributeInformation();
+            renderVertexAttribute.location = this.renderShader.getAttributeLocation('vertex');
+            renderVertexAttribute.offset = 0;
+            renderVertexAttribute.size = 2;
+
+            this.vertexBuffer = new GLBuffer(2, gl.FLOAT, gl.ARRAY_BUFFER, gl.TRIANGLE_STRIP);
+            this.vertexBuffer.pushBackData([
+                -1, -1,
+                -1, +1,
+                +1, -1,
+                +1, +1
+            ]);
+            this.vertexBuffer.addAttributeLocation(renderVertexAttribute);
         
             // objects and shader will be filled in when setObjects() is called
             this.objects = [];
@@ -66,14 +66,15 @@ namespace LH {
                 this.tracerShader.delete();
             }
             this.tracerShader = new Shader('tracer', tracerVertexSource, makeTracerFragmentSource(objects));
-            this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
-            gl.enableVertexAttribArray(this.tracerVertexAttribute);
+            //this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
+            //gl.enableVertexAttribArray(this.tracerVertexAttribute);
         }
           
         public update(matrix: Matrix, timeSinceStart: number, eye: Vector): void {
+            
             // calculate uniforms
             for(var i = 0; i < this.objects.length; i++) {
-              this.objects[i].setUniforms(this);
+                this.objects[i].setUniforms(this);
             }
             this.uniforms.eye = eye;
             this.uniforms.glossiness = glossiness;
@@ -91,12 +92,11 @@ namespace LH {
             // render to texture
             this.tracerShader.use();
             gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textures[1], 0);
-            gl.vertexAttribPointer(this.tracerVertexAttribute, 2, gl.FLOAT, false, 0, 0);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            this.vertexBuffer.upload();
+            this.vertexBuffer.draw();
           
             // ping pong textures
             this.textures.reverse();
@@ -106,10 +106,10 @@ namespace LH {
         public render(): void {
             this.renderShader.use();
 
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-            gl.vertexAttribPointer(this.renderVertexAttribute, 2, gl.FLOAT, false, 0, 0);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            
+            this.vertexBuffer.draw();
         }
 
         private getEyeRay(matrix, x, y, eye): Matrix {
