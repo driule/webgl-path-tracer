@@ -13,8 +13,11 @@ namespace LH {
         private tracerVertexAttribute: number;
         private sampleCount: number;
 
-        private objects;
-        public uniforms: {[name: string]: WebGLUniformLocation} = {};
+        //private objects;
+        public uniforms;
+
+        private spheres: Sphere[];
+        private light: Light;
 
         public constructor() {
             // create framebuffer
@@ -51,21 +54,24 @@ namespace LH {
             this.vertexBuffer.addAttributeLocation(renderVertexAttribute);
         
             // objects and shader will be filled in when setObjects() is called
-            this.objects = [];
+            this.spheres = [];
+            this.light = null;
             this.sampleCount = 0;
             this.tracerShader = null;
         }
 
-        public setObjects(objects): void {
+        public setObjects(spheres: Sphere[], light: Light): void {
             this.uniforms = {};
             this.sampleCount = 0;
-            this.objects = objects;
+            this.spheres = spheres;
+            this.light = light;
           
             // create tracer shader
             if (this.tracerShader != null) {
                 this.tracerShader.delete();
             }
-            this.tracerShader = new Shader('tracer', tracerVertexSource, makeTracerFragmentSource(objects));
+
+            this.tracerShader = new Shader('tracer', tracerVertexSource, makeTracerFragmentSource());
             //this.tracerVertexAttribute = this.tracerShader.getAttributeLocation('vertex');
             //gl.enableVertexAttribArray(this.tracerVertexAttribute);
         }
@@ -73,9 +79,9 @@ namespace LH {
         public update(matrix: Matrix, timeSinceStart: number, eye: Vector): void {
             
             // calculate uniforms
-            for(var i = 0; i < this.objects.length; i++) {
+            /*for(var i = 0; i < this.objects.length; i++) {
                 this.objects[i].setUniforms(this);
-            }
+            }*/
             this.uniforms.eye = eye;
             this.uniforms.glossiness = glossiness;
             this.uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
@@ -84,6 +90,13 @@ namespace LH {
             this.uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
             this.uniforms.timeSinceStart = timeSinceStart;
             this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
+
+            // light uniforms
+            this.uniforms.light = this.light._position.add(this.light._temporaryTranslation);
+
+            // spheres uniforms
+            this.uniforms.totalSpheres = this.spheres.length;
+            this.uniforms.spheres = this.spheres;
           
             // set uniforms
             this.tracerShader.use();
@@ -112,7 +125,7 @@ namespace LH {
             this.vertexBuffer.draw();
         }
 
-        private getEyeRay(matrix, x, y, eye): Matrix {
+        private getEyeRay(matrix, x, y, eye): Vector {
             return matrix.multiply(Vector.create([x, y, 0, 1])).divideByW().ensure3().subtract(eye);
         }
     }

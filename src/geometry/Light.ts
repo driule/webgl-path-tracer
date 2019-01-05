@@ -2,16 +2,15 @@ namespace LH {
 
     export class Light {
 
-        private _temporaryTranslation: Vector;
-        private _position: Vector;
+        public _temporaryTranslation: Vector;
+        public _position: Vector;
 
         public constructor() {
             this._temporaryTranslation = Vector.create([0, 0, 0]);
-
             this._position = Vector.create([0.4, 0.5, -0.6]);
         }
 
-        public getGlobalCode(): string {
+        /*public getGlobalCode(): string {
             return 'uniform vec3 light;';
         }
           
@@ -33,6 +32,6 @@ namespace LH {
           
         public setUniforms(pathTracer: PathTracer): void {
             pathTracer.uniforms.light = this._position.add(this._temporaryTranslation);
-        }
+        }*/
     }
 }

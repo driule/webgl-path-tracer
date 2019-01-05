@@ -25,9 +25,8 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            let objects = this.makeSphereColumn();
-            objects.splice(0, 0, new Light());
-            this._pathTracer.setObjects(objects);
+            let spheres = this.makeSphereColumn();
+            this._pathTracer.setObjects(spheres, new Light());
 
             var start = new Date();
             // TODO: use setInterval to avoid stripes on the output image

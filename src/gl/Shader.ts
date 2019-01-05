@@ -41,6 +41,18 @@ namespace LH {
 
         public setUniforms(uniforms): void {
             for (let name in uniforms) {
+
+                // specific case for spheres
+                if (name.toString() === "spheres") {
+                    for (let i = 0; i < uniforms.spheres.length; i++) {
+                        let centerLocation = gl.getUniformLocation(this._program, "spheres[" + i + "].center");
+                        gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i]._center.elements[0], uniforms.spheres[i]._center.elements[1], uniforms.spheres[i]._center.elements[2]]));
+
+                        let radiusLocation = gl.getUniformLocation(this._program, "spheres[" + i + "].radius");
+                        gl.uniform1f(radiusLocation, uniforms.spheres[i]._radius);
+                    }
+                }
+
                 let location = gl.getUniformLocation(this._program, name);
                 if (location == null) continue;
         
@@ -49,6 +61,8 @@ namespace LH {
                     gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
                 } else if (value instanceof Matrix) {
                     gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
+                } else if (name === "totalSpheres") {
+                    gl.uniform1i(location, value);
                 } else {
                     gl.uniform1f(location, value);
                 }
