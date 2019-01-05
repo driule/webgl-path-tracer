@@ -53,8 +53,9 @@ namespace LH {
         private createSphereColumn() {
             let objects = [];
 
-            objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.25, 0), 0.25));
-            objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.75, 0), 0.25));
+            objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.75, 0), 0.33));
+            objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.10, 0), 0.30));
+            objects.push(new Sphere(glMatrix.vec3.fromValues(0, 0.45, 0), 0.25));
         
             return objects;
         }
