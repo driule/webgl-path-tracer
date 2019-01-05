@@ -1,18 +1,7 @@
-declare var Vector: any;
-declare var Matrix: any;
-
 // entry point
 
-/*let engine: LH.Engine;
-
-window.onload = function() {
-    engine = new LH.Engine();
-    engine.start();
-}
-
-window.onresize = function() {
-    engine.resizeWindow();
-}*/
+declare var Vector: any;
+declare var Matrix: any;
 
 ////////////////////////////////////////////////////////////////////////////////
 // shader strings
@@ -42,11 +31,11 @@ var renderFragmentSource = `
 `;
 
 // constants for the shaders
-var bounces = '5';
-var epsilon = '0.0001';
-var infinity = '100.0';
-var lightSize = 0.1;
-var lightVal = 0.5;
+var bounces = 5;
+var epsilon = 0.0001;
+var infinity = '10000.0';
+var lightSize = 100.5;
+var lightVal = 100.00;
 
 // vertex shader, interpolate ray per-pixel
 var tracerVertexSource = `
@@ -65,14 +54,7 @@ var tracerVertexSource = `
 var tracerFragmentSourceHeader = `
     precision highp float;
 
-    uniform vec3 eye;
-    varying vec3 initialRay;
-    uniform float textureWeight;
-    uniform float timeSinceStart;
-    uniform sampler2D texture;
-    uniform float glossiness;
-
-    uniform vec3 light;
+    #define MAX_SPHERES 128
 
     struct Sphere
     {
@@ -80,37 +62,18 @@ var tracerFragmentSourceHeader = `
         float radius;
     };
 
-    #define MAX_SPHERES 128
+    uniform vec3 eye;
+    uniform float textureWeight;
+    uniform float timeSinceStart;
+    uniform sampler2D texture;
+    uniform float glossiness;
 
+    uniform vec3 light;
     uniform int totalSpheres;
     uniform Sphere spheres[MAX_SPHERES];
+
+    varying vec3 initialRay;
 `;
-
-// compute the near and far intersections of the cube (stored in the x and y components) using the slab method
-// no intersection means vec.x > vec.y (really tNear > tFar)
-/*var intersectCubeSource =
-' vec2 intersectCube(vec3 origin, vec3 ray, vec3 cubeMin, vec3 cubeMax) {' +
-'   vec3 tMin = (cubeMin - origin) / ray;' +
-'   vec3 tMax = (cubeMax - origin) / ray;' +
-'   vec3 t1 = min(tMin, tMax);' +
-'   vec3 t2 = max(tMin, tMax);' +
-'   float tNear = max(max(t1.x, t1.y), t1.z);' +
-'   float tFar = min(min(t2.x, t2.y), t2.z);' +
-'   return vec2(tNear, tFar);' +
-' }';*/
-
-// given that hit is a point on the cube, what is the surface normal?
-// TODO: do this with fewer branches
-/*var normalForCubeSource =
-' vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax)' +
-' {' +
-'   if(hit.x < cubeMin.x + ' + epsilon + ') return vec3(-1.0, 0.0, 0.0);' +
-'   else if(hit.x > cubeMax.x - ' + epsilon + ') return vec3(1.0, 0.0, 0.0);' +
-'   else if(hit.y < cubeMin.y + ' + epsilon + ') return vec3(0.0, -1.0, 0.0);' +
-'   else if(hit.y > cubeMax.y - ' + epsilon + ') return vec3(0.0, 1.0, 0.0);' +
-'   else if(hit.z < cubeMin.z + ' + epsilon + ') return vec3(0.0, 0.0, -1.0);' +
-'   else return vec3(0.0, 0.0, 1.0);' +
-' }';*/
 
 // compute the near intersection of a sphere
 // no intersection returns a value of +infinity
@@ -213,25 +176,6 @@ var newGlossyRay = `
     specularHighlight = pow(specularHighlight, 3.0);
 `;
 
-/*var yellowBlueCornellBox =
-' if(hit.x < -0.9999) surfaceColor = vec3(0.1, 0.5, 1.0);' + // blue
-' else if(hit.x > 0.9999) surfaceColor = vec3(1.0, 0.9, 0.1);'; // yellow
-*/
-
-/*
-var redGreenCornellBox =
-' if(hit.x < -0.9999) surfaceColor = vec3(1.0, 0.3, 0.1);' + // red
-' else if(hit.x > 0.9999) surfaceColor = vec3(0.3, 1.0, 0.1);'; // green
-*/
-
-/*function makeShadow(objects) {
-  return '' +
-' float shadow(vec3 origin, vec3 ray) {' +
-    concat(objects, function(o){ return o.getShadowTestCode(); }) +
-'   return 1.0;' +
-' }';
-}*/
-
 var shadowSource = `
     float shadow(vec3 origin, vec3 ray) {
 
@@ -245,62 +189,6 @@ var shadowSource = `
     }
 `;
 
-/*function makeCalculateColor(objects) {
-  return '' +
-' vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {' +
-'   vec3 colorMask = vec3(1.0);' +
-'   vec3 accumulatedColor = vec3(0.0);' +
-  
-    // main raytracing loop
-'   for(int bounce = 0; bounce < ' + bounces + '; bounce++) {' +
-      // compute the intersection with everything
-'     vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);' +
-      concat(objects, function(o){ return o.getIntersectCode(); }) +
-
-      // find the closest intersection
-'     float t = ' + infinity + ';' +
-'     if(tRoom.x < tRoom.y) t = tRoom.y;' +
-      concat(objects, function(o){ return o.getMinimumIntersectCode(); }) +
-
-      // info about hit
-'     vec3 hit = origin + ray * t;' +
-'     vec3 surfaceColor = vec3(0.75);' +
-'     float specularHighlight = 0.0;' +
-'     vec3 normal;' +
-
-      // calculate the normal (and change wall color)
-'     if(t == tRoom.y) {' +
-'       normal = -normalForCube(hit, roomCubeMin, roomCubeMax);' +
-        [yellowBlueCornellBox, redGreenCornellBox][environment] +
-        newDiffuseRay +
-'     } else if(t == ' + infinity + ') {' +
-'       break;' +
-'     } else {' +
-'       if(false) ;' + // hack to discard the first 'else' in 'else if'
-        concat(objects, function(o){ return o.getNormalCalculationCode(); }) +
-        [newDiffuseRay, newReflectiveRay, newGlossyRay][material] +
-'     }' +
-
-      // compute diffuse lighting contribution
-'     vec3 toLight = light - hit;' +
-'     float diffuse = max(0.0, dot(normalize(toLight), normal));' +
-
-      // trace a shadow ray to the light
-'     float shadowIntensity = shadow(hit + normal * ' + epsilon + ', toLight);' +
-
-      // do light bounce
-'     colorMask *= surfaceColor;' +
-'     accumulatedColor += colorMask * (' + lightVal + ' * diffuse * shadowIntensity);' +
-'     accumulatedColor += colorMask * specularHighlight * shadowIntensity;' +
-
-      // calculate next origin
-'     origin = hit;' +
-'   }' +
-
-'   return accumulatedColor;' +
-' }';
-}*/
-
 var calculateColorSource = `
     vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {
         vec3 colorMask = vec3(1.0);
@@ -312,7 +200,7 @@ var calculateColorSource = `
 
             for (int i = 0; i < MAX_SPHERES; i++) {
                 if (i >= totalSpheres) break;
-
+                
                 float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);
                 if (tSpehere < t) {
                     t = tSpehere;
@@ -345,16 +233,6 @@ var calculateColorSource = `
     }
 `;
 
-/*
-function makeMain() {
-  return '' +
-' void main() {' +
-'   vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * ' + lightSize + ';' +
-'   vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;' +
-'   gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);' +
-' }';
-}*/
-
 var renderMainSource = `
     void main() {
         vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * ` + lightSize + `;
@@ -365,24 +243,14 @@ var renderMainSource = `
 
 function makeTracerFragmentSource() {
     return tracerFragmentSourceHeader +
-        //concat(objects, function(o){ return o.getGlobalCode(); }) +
-        
-        // TODO: add spheres array uniform and totalSpheres
-        // spheresUniformSource +
-
-        // intersectCubeSource +
-        // normalForCubeSource +
         intersectSphereSource +
         normalForSphereSource +
         randomSource +
         cosineWeightedDirectionSource +
         uniformlyRandomDirectionSource +
         uniformlyRandomVectorSource +
-        // makeShadow(objects) +
         shadowSource +
-        //makeCalculateColor(objects) +
         calculateColorSource + 
-        // makeMain()
         renderMainSource
     ;
 }

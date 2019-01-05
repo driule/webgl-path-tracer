@@ -262,16 +262,6 @@ var LH;
     LH.Renderer = Renderer;
 })(LH || (LH = {}));
 // entry point
-/*let engine: LH.Engine;
-
-window.onload = function() {
-    engine = new LH.Engine();
-    engine.start();
-}
-
-window.onresize = function() {
-    engine.resizeWindow();
-}*/
 ////////////////////////////////////////////////////////////////////////////////
 // shader strings
 ////////////////////////////////////////////////////////////////////////////////
@@ -280,39 +270,15 @@ var renderVertexSource = "\n    attribute vec3 vertex;\n    varying vec2 texCoor
 // fragment shader for drawing a textured quad
 var renderFragmentSource = "\n    precision highp float;\n\n    varying vec2 texCoord;\n    uniform sampler2D texture;\n\n    void main() {\n        gl_FragColor = texture2D(texture, texCoord);\n    }\n";
 // constants for the shaders
-var bounces = '5';
-var epsilon = '0.0001';
-var infinity = '100.0';
-var lightSize = 0.1;
-var lightVal = 0.5;
+var bounces = 5;
+var epsilon = 0.0001;
+var infinity = '10000.0';
+var lightSize = 100.5;
+var lightVal = 100.00;
 // vertex shader, interpolate ray per-pixel
 var tracerVertexSource = "\n    attribute vec3 vertex;\n    uniform vec3 eye, ray00, ray01, ray10, ray11;\n    varying vec3 initialRay;\n\n    void main() {\n        vec2 percent = vertex.xy * 0.5 + 0.5;\n        initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
 // start of fragment shader
-var tracerFragmentSourceHeader = "\n    precision highp float;\n\n    uniform vec3 eye;\n    varying vec3 initialRay;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n    uniform float glossiness;\n\n    uniform vec3 light;\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    #define MAX_SPHERES 128\n\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n";
-// compute the near and far intersections of the cube (stored in the x and y components) using the slab method
-// no intersection means vec.x > vec.y (really tNear > tFar)
-/*var intersectCubeSource =
-' vec2 intersectCube(vec3 origin, vec3 ray, vec3 cubeMin, vec3 cubeMax) {' +
-'   vec3 tMin = (cubeMin - origin) / ray;' +
-'   vec3 tMax = (cubeMax - origin) / ray;' +
-'   vec3 t1 = min(tMin, tMax);' +
-'   vec3 t2 = max(tMin, tMax);' +
-'   float tNear = max(max(t1.x, t1.y), t1.z);' +
-'   float tFar = min(min(t2.x, t2.y), t2.z);' +
-'   return vec2(tNear, tFar);' +
-' }';*/
-// given that hit is a point on the cube, what is the surface normal?
-// TODO: do this with fewer branches
-/*var normalForCubeSource =
-' vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax)' +
-' {' +
-'   if(hit.x < cubeMin.x + ' + epsilon + ') return vec3(-1.0, 0.0, 0.0);' +
-'   else if(hit.x > cubeMax.x - ' + epsilon + ') return vec3(1.0, 0.0, 0.0);' +
-'   else if(hit.y < cubeMin.y + ' + epsilon + ') return vec3(0.0, -1.0, 0.0);' +
-'   else if(hit.y > cubeMax.y - ' + epsilon + ') return vec3(0.0, 1.0, 0.0);' +
-'   else if(hit.z < cubeMin.z + ' + epsilon + ') return vec3(0.0, 0.0, -1.0);' +
-'   else return vec3(0.0, 0.0, 1.0);' +
-' }';*/
+var tracerFragmentSourceHeader = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n    uniform float glossiness;\n\n    uniform vec3 light;\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n\n    varying vec3 initialRay;\n";
 // compute the near intersection of a sphere
 // no intersection returns a value of +infinity
 var intersectSphereSource = "\n    float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {\n        vec3 toSphere = origin - sphereCenter;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t > 0.0) return t;\n        }\n\n        return " + infinity + ";\n    }\n";
@@ -336,107 +302,19 @@ var newDiffuseRay = "\n    ray = cosineWeightedDirection(timeSinceStart + float(
 var newReflectiveRay = "\n    ray = reflect(ray, normal);\n    " + specularReflection + "\n    specularHighlight = 2.0 * pow(specularHighlight, 20.0);\n";
 // update ray using normal and bounce according to a glossy reflection
 var newGlossyRay = "\n    ray = normalize(reflect(ray, normal)) + uniformlyRandomVector(timeSinceStart + float(bounce)) * glossiness;\n    " + specularReflection + "\n    specularHighlight = pow(specularHighlight, 3.0);\n";
-/*var yellowBlueCornellBox =
-' if(hit.x < -0.9999) surfaceColor = vec3(0.1, 0.5, 1.0);' + // blue
-' else if(hit.x > 0.9999) surfaceColor = vec3(1.0, 0.9, 0.1);'; // yellow
-*/
-/*
-var redGreenCornellBox =
-' if(hit.x < -0.9999) surfaceColor = vec3(1.0, 0.3, 0.1);' + // red
-' else if(hit.x > 0.9999) surfaceColor = vec3(0.3, 1.0, 0.1);'; // green
-*/
-/*function makeShadow(objects) {
-  return '' +
-' float shadow(vec3 origin, vec3 ray) {' +
-    concat(objects, function(o){ return o.getShadowTestCode(); }) +
-'   return 1.0;' +
-' }';
-}*/
 var shadowSource = "\n    float shadow(vec3 origin, vec3 ray) {\n\n        for (int i = 0; i < MAX_SPHERES; i++) {\n            if (i >= totalSpheres) break;\n            float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n            if (tSpehere < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n";
-/*function makeCalculateColor(objects) {
-  return '' +
-' vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {' +
-'   vec3 colorMask = vec3(1.0);' +
-'   vec3 accumulatedColor = vec3(0.0);' +
-  
-    // main raytracing loop
-'   for(int bounce = 0; bounce < ' + bounces + '; bounce++) {' +
-      // compute the intersection with everything
-'     vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);' +
-      concat(objects, function(o){ return o.getIntersectCode(); }) +
-
-      // find the closest intersection
-'     float t = ' + infinity + ';' +
-'     if(tRoom.x < tRoom.y) t = tRoom.y;' +
-      concat(objects, function(o){ return o.getMinimumIntersectCode(); }) +
-
-      // info about hit
-'     vec3 hit = origin + ray * t;' +
-'     vec3 surfaceColor = vec3(0.75);' +
-'     float specularHighlight = 0.0;' +
-'     vec3 normal;' +
-
-      // calculate the normal (and change wall color)
-'     if(t == tRoom.y) {' +
-'       normal = -normalForCube(hit, roomCubeMin, roomCubeMax);' +
-        [yellowBlueCornellBox, redGreenCornellBox][environment] +
-        newDiffuseRay +
-'     } else if(t == ' + infinity + ') {' +
-'       break;' +
-'     } else {' +
-'       if(false) ;' + // hack to discard the first 'else' in 'else if'
-        concat(objects, function(o){ return o.getNormalCalculationCode(); }) +
-        [newDiffuseRay, newReflectiveRay, newGlossyRay][material] +
-'     }' +
-
-      // compute diffuse lighting contribution
-'     vec3 toLight = light - hit;' +
-'     float diffuse = max(0.0, dot(normalize(toLight), normal));' +
-
-      // trace a shadow ray to the light
-'     float shadowIntensity = shadow(hit + normal * ' + epsilon + ', toLight);' +
-
-      // do light bounce
-'     colorMask *= surfaceColor;' +
-'     accumulatedColor += colorMask * (' + lightVal + ' * diffuse * shadowIntensity);' +
-'     accumulatedColor += colorMask * specularHighlight * shadowIntensity;' +
-
-      // calculate next origin
-'     origin = hit;' +
-'   }' +
-
-'   return accumulatedColor;' +
-' }';
-}*/
-var calculateColorSource = "\n    vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n        vec3 colorMask = vec3(1.0);\n        vec3 accumulatedColor = vec3(0.0);\n        for (int bounce = 0; bounce < 5; bounce++) {\n            float t = 10000.0;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n\n                float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = normalForSphere(hit, spheres[i].center, spheres[i].radius);\n                }\n            }\n            \n            if (t == 10000.0) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n            \n            vec3 surfaceColor = vec3(0.75);\n            float specularHighlight = 0.0;\n\n            vec3 toLight = light - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = shadow(hit + normal * 0.0001, toLight);\n            colorMask *= surfaceColor;\n            \n            accumulatedColor += colorMask * (0.5 * diffuse * shadowIntensity);\n            accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n";
-/*
-function makeMain() {
-  return '' +
-' void main() {' +
-'   vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * ' + lightSize + ';' +
-'   vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;' +
-'   gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);' +
-' }';
-}*/
+var calculateColorSource = "\n    vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {\n        vec3 colorMask = vec3(1.0);\n        vec3 accumulatedColor = vec3(0.0);\n        for (int bounce = 0; bounce < 5; bounce++) {\n            float t = 10000.0;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = normalForSphere(hit, spheres[i].center, spheres[i].radius);\n                }\n            }\n            \n            if (t == 10000.0) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n            \n            vec3 surfaceColor = vec3(0.75);\n            float specularHighlight = 0.0;\n\n            vec3 toLight = light - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = shadow(hit + normal * 0.0001, toLight);\n            colorMask *= surfaceColor;\n            \n            accumulatedColor += colorMask * (0.5 * diffuse * shadowIntensity);\n            accumulatedColor += colorMask * specularHighlight * shadowIntensity;\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n";
 var renderMainSource = "\n    void main() {\n        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * " + lightSize + ";\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);\n    }\n";
 function makeTracerFragmentSource() {
     return tracerFragmentSourceHeader +
-        //concat(objects, function(o){ return o.getGlobalCode(); }) +
-        // TODO: add spheres array uniform and totalSpheres
-        // spheresUniformSource +
-        // intersectCubeSource +
-        // normalForCubeSource +
         intersectSphereSource +
         normalForSphereSource +
         randomSource +
         cosineWeightedDirectionSource +
         uniformlyRandomDirectionSource +
         uniformlyRandomVectorSource +
-        // makeShadow(objects) +
         shadowSource +
-        //makeCalculateColor(objects) +
         calculateColorSource +
-        // makeMain()
         renderMainSource;
 }
 ////////////////////////////////////////////////////////////////////////////////
