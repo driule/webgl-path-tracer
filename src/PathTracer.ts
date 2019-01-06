@@ -81,7 +81,7 @@ namespace LH {
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
             // light uniforms
-            uniforms.light = this._light.position;
+            uniforms.light = this._light;
 
             // spheres uniforms
             uniforms.totalSpheres = this._spheres.length;

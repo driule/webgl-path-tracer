@@ -43,8 +43,6 @@ var tracerFragmentSource = `
     #define BOUNCES 5
     #define EPSILON 0.0001
     #define INFINITY 10000.0
-    #define LIGHT_SIZE 100.50
-    #define LIGHT_VALUE 3.5
 
     struct Sphere
     {
@@ -52,12 +50,19 @@ var tracerFragmentSource = `
         float radius;
     };
 
+    struct Light
+    {
+        vec3 position;
+        float radius;
+        float intensity;
+    };
+
     uniform vec3 eye;
     uniform float textureWeight;
     uniform float timeSinceStart;
     uniform sampler2D texture;
 
-    uniform vec3 light;
+    uniform Light light;
     uniform int totalSpheres;
     uniform Sphere spheres[MAX_SPHERES];
 
@@ -92,7 +97,6 @@ var tracerFragmentSource = `
         float r = sqrt(u);
         float angle = 6.283185307179586 * v;
 
-        // compute basis from normal
         vec3 sdir, tdir;
         if (abs(normal.x) < 0.5) {
             sdir = cross(normal, vec3(1, 0, 0));
@@ -122,6 +126,7 @@ var tracerFragmentSource = `
 
         for (int i = 0; i < MAX_SPHERES; i++) {
             if (i >= totalSpheres) break;
+            
             float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);
             if (tSpehere < 1.0) return 0.0;
         }
@@ -129,7 +134,7 @@ var tracerFragmentSource = `
         return 1.0;
     }
 
-    vec3 calculateColor(vec3 origin, vec3 ray, vec3 light) {
+    vec3 calculateColor(vec3 origin, vec3 ray, Light light) {
         vec3 colorMask = vec3(1.0);
         vec3 accumulatedColor = vec3(0.0);
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
@@ -155,15 +160,13 @@ var tracerFragmentSource = `
             }
             
             vec3 surfaceColor = vec3(0.75);
-            float specularHighlight = 0.0;
 
-            vec3 toLight = light - hit;
+            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart) * light.radius) - hit;
             float diffuse = max(0.0, dot(normalize(toLight), normal));
             float shadowIntensity = shadow(hit + normal * EPSILON, toLight);
             colorMask *= surfaceColor;
             
-            accumulatedColor += colorMask * (LIGHT_VALUE * diffuse * shadowIntensity);
-            accumulatedColor += colorMask * specularHighlight * shadowIntensity;
+            accumulatedColor += colorMask * (light.intensity * diffuse * shadowIntensity);
             
             origin = hit;
         }
@@ -172,9 +175,8 @@ var tracerFragmentSource = `
     }
 
     void main() {
-        vec3 newLight = light + uniformlyRandomVector(timeSinceStart - 53.0) * LIGHT_SIZE;
         vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;
-        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, newLight), texture, textureWeight), 1.0);
+        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);
     }
 `;
 

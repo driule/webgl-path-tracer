@@ -52,6 +52,20 @@ namespace LH {
                         let radiusLocation = gl.getUniformLocation(this._program, "spheres[" + i + "].radius");
                         gl.uniform1f(radiusLocation, uniforms.spheres[i].radius);
                     }
+                    continue;
+                }
+
+                // specific case for light
+                if (name.toString() === "light") {
+                    let centerLocation = gl.getUniformLocation(this._program, "light.position");
+                    gl.uniform3fv(centerLocation, new Float32Array([uniforms.light.position[0], uniforms.light.position[1], uniforms.light.position[2]]));
+
+                    let radiusLocation = gl.getUniformLocation(this._program, "light.radius");
+                    gl.uniform1f(radiusLocation, uniforms.light.radius);
+
+                    let intensityLocation = gl.getUniformLocation(this._program, "light.intensity");
+                    gl.uniform1f(intensityLocation, uniforms.light.intensity);
+                    continue;
                 }
 
                 let location = gl.getUniformLocation(this._program, name);
