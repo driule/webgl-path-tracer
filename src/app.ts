@@ -83,7 +83,7 @@ var tracerFragmentSource = `
         return INFINITY;
     }
 
-    vec3 normalForSphere(vec3 hit, vec3 sphereCenter, float sphereRadius) {
+    vec3 getSphereNormal(vec3 hit, vec3 sphereCenter, float sphereRadius) {
         return (hit - sphereCenter) / sphereRadius;
     }
 
@@ -122,7 +122,7 @@ var tracerFragmentSource = `
         return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));
     }
 
-    float shadow(vec3 origin, vec3 ray) {
+    float getShadowIntensity(vec3 origin, vec3 ray) {
 
         for (int i = 0; i < MAX_SPHERES; i++) {
             if (i >= totalSpheres) break;
@@ -135,7 +135,6 @@ var tracerFragmentSource = `
     }
 
     vec3 calculateColor(vec3 origin, vec3 ray, Light light) {
-        vec3 colorMask = vec3(1.0);
         vec3 accumulatedColor = vec3(0.0);
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
             float t = INFINITY;
@@ -149,7 +148,7 @@ var tracerFragmentSource = `
                 if (tSpehere < t) {
                     t = tSpehere;
                     hit = origin + ray * t;
-                    normal = normalForSphere(hit, spheres[i].center, spheres[i].radius);
+                    normal = getSphereNormal(hit, spheres[i].center, spheres[i].radius);
                 }
             }
             
@@ -163,10 +162,9 @@ var tracerFragmentSource = `
 
             vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart) * light.radius) - hit;
             float diffuse = max(0.0, dot(normalize(toLight), normal));
-            float shadowIntensity = shadow(hit + normal * EPSILON, toLight);
-            colorMask *= surfaceColor;
+            float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);
             
-            accumulatedColor += colorMask * (light.intensity * diffuse * shadowIntensity);
+            accumulatedColor += surfaceColor * (light.intensity * diffuse * shadowIntensity);
             
             origin = hit;
         }
