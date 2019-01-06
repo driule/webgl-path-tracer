@@ -68,6 +68,20 @@ namespace LH {
                     continue;
                 }
 
+                // specific case for triangles
+                if (name.toString() === "triangle") {
+                    let aLocation = gl.getUniformLocation(this._program, "triangle.a");
+                    gl.uniform3fv(aLocation, new Float32Array([uniforms.triangle.a[0], uniforms.triangle.a[1], uniforms.triangle.a[2]]));
+                    
+                    let bLocation = gl.getUniformLocation(this._program, "triangle.b");
+                    gl.uniform3fv(bLocation, new Float32Array([uniforms.triangle.b[0], uniforms.triangle.b[1], uniforms.triangle.b[2]]));
+                    
+                    let cLocation = gl.getUniformLocation(this._program, "triangle.c");
+                    gl.uniform3fv(cLocation, new Float32Array([uniforms.triangle.c[0], uniforms.triangle.c[1], uniforms.triangle.c[2]]));
+
+                    continue;
+                }
+
                 let location = gl.getUniformLocation(this._program, name);
                 if (location == null) continue;
 

@@ -27,7 +27,7 @@ namespace LH {
 
             // create scene
             let spheres = this.createSphereColumn();
-            let light: Light = new Light([0.4, 0.5, -0.6], 3.0, 5.0);
+            let light: Light = new Light([0.4, 0.5, -0.6], 3.0, 3.0);
             this._pathTracer.setObjects(spheres, light);
 
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);

@@ -86,6 +86,10 @@ namespace LH {
             // spheres uniforms
             uniforms.totalSpheres = this._spheres.length;
             uniforms.spheres = this._spheres;
+
+            // triangles uniforms
+            //uniforms.triangle = new Triangle([0.5, 0.5, 0], [-0.5, 0.5, 0], [0.5, -0.5, 0]);
+            uniforms.triangle = new Triangle([0.75, -0.95, -0.75], [-1.5, -0.95, -0.75], [0.5, -0.95, 0.75]);
           
             // set uniforms
             this._tracerShader.use();

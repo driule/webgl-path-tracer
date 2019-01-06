@@ -50,6 +50,11 @@ var tracerFragmentSource = `
         float radius;
     };
 
+    struct Triangle
+    {
+        vec3 a, b, c;
+    };
+
     struct Light
     {
         vec3 position;
@@ -65,6 +70,7 @@ var tracerFragmentSource = `
     uniform Light light;
     uniform int totalSpheres;
     uniform Sphere spheres[MAX_SPHERES];
+    uniform Triangle triangle;
 
     varying vec3 initialRay;
 
@@ -77,7 +83,7 @@ var tracerFragmentSource = `
 
         if (discriminant > 0.0) {
             float t = (-b - sqrt(discriminant)) / (2.0 * a);
-            if (t > 0.0) return t;
+            if (t >= EPSILON) return t;
         }
 
         return INFINITY;
@@ -85,6 +91,40 @@ var tracerFragmentSource = `
 
     vec3 getSphereNormal(vec3 hit, Sphere sphere) {
         return (hit - sphere.center) / sphere.radius;
+    }
+
+    float intersectTriangle(vec3 origin, vec3 ray, Triangle triangle) {
+        float t, u, v;
+
+        vec3 ab = triangle.b - triangle.a;
+        vec3 ac = triangle.c - triangle.a;
+        vec3 pvec = cross(ray, ac);
+        float det = dot(ab, pvec);
+    
+        float invDet = 1.0 / det;
+    
+        vec3 tvec = origin - triangle.a;
+        u = dot(tvec, pvec) * invDet;
+    
+        if (u < 0.0 || u > 1.0) return INFINITY;
+    
+        vec3 qvec = cross(tvec, ab);
+        v = dot(ray, qvec) * invDet;
+        if (v < 0.0 || u + v > 1.0) return INFINITY;
+    
+        t = dot(ac, qvec) * invDet;
+        if (t >= EPSILON)
+        {
+            return t;
+        }
+
+        return INFINITY;
+    }
+
+    vec3 getTriangleNormal(vec3 hit, Triangle triangle) {
+        return normalize(
+            cross(triangle.a - triangle.b, triangle.b - triangle.c)
+        );
     }
 
     float random(vec3 scale, float seed) {
@@ -130,6 +170,9 @@ var tracerFragmentSource = `
             float tSpehere = intersectSphere(origin, ray, spheres[i]);
             if (tSpehere < 1.0) return 0.0;
         }
+
+        float tTriangle = intersectTriangle(origin, ray, triangle);
+        if (tTriangle < 1.0) return 0.0;
         
         return 1.0;
     }
@@ -151,6 +194,13 @@ var tracerFragmentSource = `
                     hit = origin + ray * t;
                     normal = getSphereNormal(hit, spheres[i]);
                 }
+            }
+
+            float tTriangle = intersectTriangle(origin, ray, triangle);
+            if (tTriangle < t) {
+                t = tTriangle;
+                hit = origin + ray * t;
+                normal = getTriangleNormal(hit, triangle);
             }
             
             if (t == INFINITY) {
