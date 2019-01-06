@@ -184,4 +184,7 @@ let renderer: LH.Renderer;
 window.onload = function() {
     renderer = new LH.Renderer();
     renderer.start();
+
+    let start = Date.now();
+    setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
 }

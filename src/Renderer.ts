@@ -45,15 +45,15 @@ namespace LH {
             //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
             //viewProjection = glMatrix.mat4.invert([], viewProjection);
 
-            var startTime = Date.now();
-            this.tick((Date.now() - startTime) * 0.001);
+            //var startTime = Date.now();
+            //this.tick((Date.now() - startTime) * 0.001);
         }
 
         public tick(timeSinceStart: number): void {
             this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
 
-            requestAnimationFrame(this.tick.bind(this));
+            //requestAnimationFrame(this.tick.bind(this));
         }
         
         private createSphereColumn() {

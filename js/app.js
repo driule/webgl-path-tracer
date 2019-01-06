@@ -119,13 +119,13 @@ var LH;
             //jitter = glMatrix.mat4.multiplyScalar([], jitter, (1.00 / 512.00));
             //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
             //viewProjection = glMatrix.mat4.invert([], viewProjection);
-            var startTime = Date.now();
-            this.tick((Date.now() - startTime) * 0.001);
+            //var startTime = Date.now();
+            //this.tick((Date.now() - startTime) * 0.001);
         };
         Renderer.prototype.tick = function (timeSinceStart) {
             this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
-            requestAnimationFrame(this.tick.bind(this));
+            //requestAnimationFrame(this.tick.bind(this));
         };
         Renderer.prototype.createSphereColumn = function () {
             var objects = [];
@@ -149,6 +149,8 @@ var renderer;
 window.onload = function () {
     renderer = new LH.Renderer();
     renderer.start();
+    var start = Date.now();
+    setInterval(function () { renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
 };
 var LH;
 (function (LH) {
