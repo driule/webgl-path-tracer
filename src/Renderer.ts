@@ -28,10 +28,8 @@ namespace LH {
             let spheres = this.createSphereColumn();
             this._pathTracer.setObjects(spheres, new Light());
 
-            var start = new Date();
-            // TODO: use setInterval to avoid stripes on the output image
-            //setInterval(function() { this.tick((new Date() - start) * 0.001); }, 1000 / 60);
-            this.tick(0);
+            var startTime = Date.now();
+            this.tick((Date.now() - startTime) * 0.001);
         }
 
         public tick(timeSinceStart: number): void {

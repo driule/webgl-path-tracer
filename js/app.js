@@ -106,10 +106,8 @@ var LH;
             // create scene
             var spheres = this.createSphereColumn();
             this._pathTracer.setObjects(spheres, new LH.Light());
-            var start = new Date();
-            // TODO: use setInterval to avoid stripes on the output image
-            //setInterval(function() { this.tick((new Date() - start) * 0.001); }, 1000 / 60);
-            this.tick(0);
+            var startTime = Date.now();
+            this.tick((Date.now() - startTime) * 0.001);
         };
         Renderer.prototype.tick = function (timeSinceStart) {
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
