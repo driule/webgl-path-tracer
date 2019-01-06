@@ -68,11 +68,11 @@ var tracerFragmentSource = `
 
     varying vec3 initialRay;
 
-    float intersectSphere(vec3 origin, vec3 ray, vec3 sphereCenter, float sphereRadius) {
-        vec3 toSphere = origin - sphereCenter;
+    float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
+        vec3 toSphere = origin - sphere.center;
         float a = dot(ray, ray);
         float b = 2.0 * dot(toSphere, ray);
-        float c = dot(toSphere, toSphere) - sphereRadius*sphereRadius;
+        float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;
         float discriminant = b * b - 4.0 * a * c;
 
         if (discriminant > 0.0) {
@@ -83,8 +83,8 @@ var tracerFragmentSource = `
         return INFINITY;
     }
 
-    vec3 getSphereNormal(vec3 hit, vec3 sphereCenter, float sphereRadius) {
-        return (hit - sphereCenter) / sphereRadius;
+    vec3 getSphereNormal(vec3 hit, Sphere sphere) {
+        return (hit - sphere.center) / sphere.radius;
     }
 
     float random(vec3 scale, float seed) {
@@ -127,7 +127,7 @@ var tracerFragmentSource = `
         for (int i = 0; i < MAX_SPHERES; i++) {
             if (i >= totalSpheres) break;
             
-            float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);
+            float tSpehere = intersectSphere(origin, ray, spheres[i]);
             if (tSpehere < 1.0) return 0.0;
         }
         
@@ -136,6 +136,7 @@ var tracerFragmentSource = `
 
     vec3 calculateColor(vec3 origin, vec3 ray, Light light) {
         vec3 accumulatedColor = vec3(0.0);
+        
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
             float t = INFINITY;
             vec3 normal;
@@ -144,11 +145,11 @@ var tracerFragmentSource = `
             for (int i = 0; i < MAX_SPHERES; i++) {
                 if (i >= totalSpheres) break;
                 
-                float tSpehere = intersectSphere(origin, ray, spheres[i].center, spheres[i].radius);
+                float tSpehere = intersectSphere(origin, ray, spheres[i]);
                 if (tSpehere < t) {
                     t = tSpehere;
                     hit = origin + ray * t;
-                    normal = getSphereNormal(hit, spheres[i].center, spheres[i].radius);
+                    normal = getSphereNormal(hit, spheres[i]);
                 }
             }
             
