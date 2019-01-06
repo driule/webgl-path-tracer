@@ -47,10 +47,10 @@ namespace LH {
                 if (name.toString() === "spheres") {
                     for (let i = 0; i < uniforms.spheres.length; i++) {
                         let centerLocation = gl.getUniformLocation(this._program, "spheres[" + i + "].center");
-                        gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i]._center[0], uniforms.spheres[i]._center[1], uniforms.spheres[i]._center[2]]));
+                        gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i].center[0], uniforms.spheres[i].center[1], uniforms.spheres[i].center[2]]));
 
                         let radiusLocation = gl.getUniformLocation(this._program, "spheres[" + i + "].radius");
-                        gl.uniform1f(radiusLocation, uniforms.spheres[i]._radius);
+                        gl.uniform1f(radiusLocation, uniforms.spheres[i].radius);
                     }
                 }
 

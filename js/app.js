@@ -3,47 +3,47 @@ var LH;
     var PathTracer = /** @class */ (function () {
         function PathTracer() {
             // create framebuffer
-            this.framebuffer = LH.gl.createFramebuffer();
+            this._framebuffer = LH.gl.createFramebuffer();
             // create textures
             var type = LH.gl.getExtension('OES_texture_float') ? LH.gl.FLOAT : LH.gl.UNSIGNED_BYTE;
-            this.textures = [];
+            this._textures = [];
             for (var i = 0; i < 2; i++) {
-                this.textures.push(LH.gl.createTexture());
-                LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[i]);
+                this._textures.push(LH.gl.createTexture());
+                LH.gl.bindTexture(LH.gl.TEXTURE_2D, this._textures[i]);
                 LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MAG_FILTER, LH.gl.NEAREST);
                 LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MIN_FILTER, LH.gl.NEAREST);
                 LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB, 512, 512, 0, LH.gl.RGB, type, null);
             }
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
             // create render shader
-            this.renderShader = new LH.Shader('render', renderVertexSource, renderFragmentSource);
+            this._renderShader = new LH.Shader('render', renderVertexSource, renderFragmentSource);
             var renderVertexAttribute = new LH.AttributeInformation();
-            renderVertexAttribute.location = this.renderShader.getAttributeLocation('vertex');
+            renderVertexAttribute.location = this._renderShader.getAttributeLocation('vertex');
             renderVertexAttribute.offset = 0;
             renderVertexAttribute.size = 2;
-            this.vertexBuffer = new LH.GLBuffer(2, LH.gl.FLOAT, LH.gl.ARRAY_BUFFER, LH.gl.TRIANGLE_STRIP);
-            this.vertexBuffer.pushBackData([
+            this._vertexBuffer = new LH.GLBuffer(2, LH.gl.FLOAT, LH.gl.ARRAY_BUFFER, LH.gl.TRIANGLE_STRIP);
+            this._vertexBuffer.pushBackData([
                 -1, -1,
                 -1, +1,
                 +1, -1,
                 +1, +1
             ]);
-            this.vertexBuffer.addAttributeLocation(renderVertexAttribute);
+            this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
             // objects and shader will be filled in when setObjects() is called
-            this.spheres = [];
-            this.light = null;
-            this.sampleCount = 0;
-            this.tracerShader = null;
+            this._spheres = [];
+            this._light = null;
+            this._sampleCount = 0;
+            this._tracerShader = null;
         }
         PathTracer.prototype.setObjects = function (spheres, light) {
-            this.sampleCount = 0;
-            this.spheres = spheres;
-            this.light = light;
+            this._sampleCount = 0;
+            this._spheres = spheres;
+            this._light = light;
             // create tracer shader
-            if (this.tracerShader != null) {
-                this.tracerShader.delete();
+            if (this._tracerShader != null) {
+                this._tracerShader.delete();
             }
-            this.tracerShader = new LH.Shader('tracer', tracerVertexSource, tracerFragmentSource);
+            this._tracerShader = new LH.Shader('tracer', tracerVertexSource, tracerFragmentSource);
         };
         PathTracer.prototype.update = function (matrix, timeSinceStart, eye) {
             // calculate uniforms
@@ -54,31 +54,31 @@ var LH;
             uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
             uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
             uniforms.timeSinceStart = timeSinceStart;
-            uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
+            uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
             // light uniforms
-            uniforms.light = this.light._position;
+            uniforms.light = this._light.position;
             // spheres uniforms
-            uniforms.totalSpheres = this.spheres.length;
-            uniforms.spheres = this.spheres;
+            uniforms.totalSpheres = this._spheres.length;
+            uniforms.spheres = this._spheres;
             // set uniforms
-            this.tracerShader.use();
-            this.tracerShader.setUniforms(uniforms);
+            this._tracerShader.use();
+            this._tracerShader.setUniforms(uniforms);
             // render to texture
-            this.tracerShader.use();
-            LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
-            LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, this.framebuffer);
-            LH.gl.framebufferTexture2D(LH.gl.FRAMEBUFFER, LH.gl.COLOR_ATTACHMENT0, LH.gl.TEXTURE_2D, this.textures[1], 0);
-            this.vertexBuffer.upload();
-            this.vertexBuffer.draw();
+            this._tracerShader.use();
+            LH.gl.bindTexture(LH.gl.TEXTURE_2D, this._textures[0]);
+            LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, this._framebuffer);
+            LH.gl.framebufferTexture2D(LH.gl.FRAMEBUFFER, LH.gl.COLOR_ATTACHMENT0, LH.gl.TEXTURE_2D, this._textures[1], 0);
+            this._vertexBuffer.upload();
+            this._vertexBuffer.draw();
             // ping pong textures
-            this.textures.reverse();
-            this.sampleCount++;
+            this._textures.reverse();
+            this._sampleCount++;
         };
         PathTracer.prototype.render = function () {
-            this.renderShader.use();
+            this._renderShader.use();
             LH.gl.bindFramebuffer(LH.gl.FRAMEBUFFER, null);
-            LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
-            this.vertexBuffer.draw();
+            LH.gl.bindTexture(LH.gl.TEXTURE_2D, this._textures[0]);
+            this._vertexBuffer.draw();
         };
         PathTracer.prototype.getEyeRay = function (matrix, x, y, eye) {
             var transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
@@ -106,23 +106,23 @@ var LH;
             // create scene
             var spheres = this.createSphereColumn();
             this._pathTracer.setObjects(spheres, new LH.Light());
-            var startTime = Date.now();
-            this.tick((Date.now() - startTime) * 0.001);
-        };
-        Renderer.prototype.tick = function (timeSinceStart) {
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
             this._eye[1] = this._zoomZ * Math.sin(this._angleX);
             this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
             var view = glMatrix.mat4.lookAt([], this._eye, [0, 0, 0], [0, 1, 0]);
             var projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
-            var viewProjection = glMatrix.mat4.multiply([], projection, view);
-            viewProjection = glMatrix.mat4.invert([], viewProjection);
+            this._viewProjection = glMatrix.mat4.multiply([], projection, view);
+            this._viewProjection = glMatrix.mat4.invert([], this._viewProjection);
             // TODO: implement jitter to avoid edgy lines
             //let jitter = glMatrix.mat4.fromTranslation([], [Math.random() * 2 - 1, Math.random() * 2 - 1, 0]);
             //jitter = glMatrix.mat4.multiplyScalar([], jitter, (1.00 / 512.00));
             //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
             //viewProjection = glMatrix.mat4.invert([], viewProjection);
-            this._pathTracer.update(viewProjection, timeSinceStart, this._eye);
+            var startTime = Date.now();
+            this.tick((Date.now() - startTime) * 0.001);
+        };
+        Renderer.prototype.tick = function (timeSinceStart) {
+            this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
             requestAnimationFrame(this.tick.bind(this));
         };
@@ -152,9 +152,17 @@ window.onload = function () {
 var LH;
 (function (LH) {
     var Light = /** @class */ (function () {
-        function Light() {
-            this._position = glMatrix.vec3.create(0.4, 0.5, -0.6);
+        function Light(position) {
+            if (position === void 0) { position = [0.4, 0.5, -0.6]; }
+            this._position = position;
         }
+        Object.defineProperty(Light.prototype, "position", {
+            get: function () {
+                return this._position;
+            },
+            enumerable: true,
+            configurable: true
+        });
         return Light;
     }());
     LH.Light = Light;
@@ -166,6 +174,20 @@ var LH;
             this._center = center;
             this._radius = radius;
         }
+        Object.defineProperty(Sphere.prototype, "center", {
+            get: function () {
+                return this._center;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Sphere.prototype, "radius", {
+            get: function () {
+                return this._radius;
+            },
+            enumerable: true,
+            configurable: true
+        });
         return Sphere;
     }());
     LH.Sphere = Sphere;
@@ -351,9 +373,9 @@ var LH;
                 if (name_1.toString() === "spheres") {
                     for (var i = 0; i < uniforms.spheres.length; i++) {
                         var centerLocation = LH.gl.getUniformLocation(this._program, "spheres[" + i + "].center");
-                        LH.gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i]._center[0], uniforms.spheres[i]._center[1], uniforms.spheres[i]._center[2]]));
+                        LH.gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i].center[0], uniforms.spheres[i].center[1], uniforms.spheres[i].center[2]]));
                         var radiusLocation = LH.gl.getUniformLocation(this._program, "spheres[" + i + "].radius");
-                        LH.gl.uniform1f(radiusLocation, uniforms.spheres[i]._radius);
+                        LH.gl.uniform1f(radiusLocation, uniforms.spheres[i].radius);
                     }
                 }
                 var location_1 = LH.gl.getUniformLocation(this._program, name_1);

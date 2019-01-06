@@ -2,10 +2,14 @@ namespace LH {
 
     export class Light {
 
-        public _position: any;
+        private _position: any;
 
-        public constructor() {
-            this._position = glMatrix.vec3.create(0.4, 0.5, -0.6);
+        public constructor(position: any = [0.4, 0.5, -0.6]) {
+            this._position = position;
+        }
+
+        public get position(): any {
+            return this._position;
         }
     }
 }
