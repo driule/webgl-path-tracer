@@ -36,7 +36,6 @@ var LH;
             this.tracerShader = null;
         }
         PathTracer.prototype.setObjects = function (spheres, light) {
-            this.uniforms = {};
             this.sampleCount = 0;
             this.spheres = spheres;
             this.light = light;
@@ -48,21 +47,22 @@ var LH;
         };
         PathTracer.prototype.update = function (matrix, timeSinceStart, eye) {
             // calculate uniforms
-            this.uniforms.eye = eye;
-            this.uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
-            this.uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
-            this.uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
-            this.uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
-            this.uniforms.timeSinceStart = timeSinceStart;
-            this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
+            var uniforms = {};
+            uniforms.eye = eye;
+            uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
+            uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
+            uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
+            uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
+            uniforms.timeSinceStart = timeSinceStart;
+            uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
             // light uniforms
-            this.uniforms.light = this.light._position;
+            uniforms.light = this.light._position;
             // spheres uniforms
-            this.uniforms.totalSpheres = this.spheres.length;
-            this.uniforms.spheres = this.spheres;
+            uniforms.totalSpheres = this.spheres.length;
+            uniforms.spheres = this.spheres;
             // set uniforms
             this.tracerShader.use();
-            this.tracerShader.setUniforms(this.uniforms);
+            this.tracerShader.setUniforms(uniforms);
             // render to texture
             this.tracerShader.use();
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, this.textures[0]);
@@ -82,7 +82,7 @@ var LH;
         };
         PathTracer.prototype.getEyeRay = function (matrix, x, y, eye) {
             var transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
-            var scaledVector = glMatrix.vec4.scale([], transformedVector, 1 / transformedVector[3]);
+            var scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
             return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], eye);
         };
         return PathTracer;
@@ -114,9 +114,14 @@ var LH;
             this._eye[1] = this._zoomZ * Math.sin(this._angleX);
             this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
             var view = glMatrix.mat4.lookAt([], this._eye, [0, 0, 0], [0, 1, 0]);
-            var projection = glMatrix.mat4.perspective([], Math.PI / 3, 1, 0.1, 1000);
+            var projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
             var viewProjection = glMatrix.mat4.multiply([], projection, view);
             viewProjection = glMatrix.mat4.invert([], viewProjection);
+            // TODO: implement jitter to avoid edgy lines
+            //let jitter = glMatrix.mat4.fromTranslation([], [Math.random() * 2 - 1, Math.random() * 2 - 1, 0]);
+            //jitter = glMatrix.mat4.multiplyScalar([], jitter, (1.00 / 512.00));
+            //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
+            //viewProjection = glMatrix.mat4.invert([], viewProjection);
             this._pathTracer.update(viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
             requestAnimationFrame(this.tick.bind(this));

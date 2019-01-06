@@ -12,8 +12,6 @@ namespace LH {
 
         private sampleCount: number;
 
-        private uniforms;
-
         private spheres: Sphere[];
         private light: Light;
 
@@ -58,7 +56,6 @@ namespace LH {
         }
 
         public setObjects(spheres: Sphere[], light: Light): void {
-            this.uniforms = {};
             this.sampleCount = 0;
             this.spheres = spheres;
             this.light = light;
@@ -74,24 +71,25 @@ namespace LH {
         public update(matrix, timeSinceStart: number, eye): void {
             
             // calculate uniforms
-            this.uniforms.eye = eye;
-            this.uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
-            this.uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
-            this.uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
-            this.uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
-            this.uniforms.timeSinceStart = timeSinceStart;
-            this.uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
+            let uniforms: any = {};
+            uniforms.eye = eye;
+            uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
+            uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
+            uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
+            uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
+            uniforms.timeSinceStart = timeSinceStart;
+            uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
 
             // light uniforms
-            this.uniforms.light = this.light._position;
+            uniforms.light = this.light._position;
 
             // spheres uniforms
-            this.uniforms.totalSpheres = this.spheres.length;
-            this.uniforms.spheres = this.spheres;
+            uniforms.totalSpheres = this.spheres.length;
+            uniforms.spheres = this.spheres;
           
             // set uniforms
             this.tracerShader.use();
-            this.tracerShader.setUniforms(this.uniforms);
+            this.tracerShader.setUniforms(uniforms);
           
             // render to texture
             this.tracerShader.use();
@@ -118,7 +116,7 @@ namespace LH {
 
         private getEyeRay(matrix, x: number, y: number, eye): any {
             let transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
-            let scaledVector = glMatrix.vec4.scale([], transformedVector, 1 / transformedVector[3]);
+            let scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
 
             return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], eye);
         }
