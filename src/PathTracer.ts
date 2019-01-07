@@ -13,6 +13,7 @@ namespace LH {
         private _sampleCount: number;
 
         private _spheres: Sphere[];
+        private _triangles: Triangle[];
         private _light: Light;
 
         public constructor() {
@@ -31,7 +32,8 @@ namespace LH {
             }
             gl.bindTexture(gl.TEXTURE_2D, null);
         
-            // create render shader
+            // create shaders
+            this._tracerShader = new Shader('tracer', tracerVertexSource, tracerFragmentSource);
             this._renderShader = new Shader('render', renderVertexSource, renderFragmentSource);
 
             let renderVertexAttribute = new AttributeInformation();
@@ -52,20 +54,13 @@ namespace LH {
             this._spheres = [];
             this._light = null;
             this._sampleCount = 0;
-            this._tracerShader = null;
         }
 
-        public setObjects(spheres: Sphere[], light: Light): void {
+        public setObjects(spheres: Sphere[], triangles: Triangle[], light: Light): void {
             this._sampleCount = 0;
             this._spheres = spheres;
+            this._triangles = triangles;
             this._light = light;
-          
-            // create tracer shader
-            if (this._tracerShader != null) {
-                this._tracerShader.delete();
-            }
-
-            this._tracerShader = new Shader('tracer', tracerVertexSource, tracerFragmentSource);
         }
           
         public update(matrix: any, timeSinceStart: number, eye: any): void {
@@ -89,7 +84,9 @@ namespace LH {
 
             // triangles uniforms
             //uniforms.triangle = new Triangle([0.5, 0.5, 0], [-0.5, 0.5, 0], [0.5, -0.5, 0]);
-            uniforms.triangle = new Triangle([0.75, -0.95, -0.75], [-1.5, -0.95, -0.75], [0.5, -0.95, 0.75]);
+            //uniforms.triangle = new Triangle([0.75, -0.95, -0.75], [-1.5, -0.95, -0.75], [0.5, -0.95, 0.75]);
+            uniforms.triangles = this._triangles;
+            uniforms.totalTriangles = this._triangles.length;
           
             // set uniforms
             this._tracerShader.use();

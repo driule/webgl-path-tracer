@@ -55,6 +55,22 @@ namespace LH {
                     continue;
                 }
 
+                // specific case for triangles
+                if (name.toString() === "triangles") {
+                    for (let i = 0; i < uniforms.triangles.length; i++) {
+                        let aLocation = gl.getUniformLocation(this._program, "triangles[" + i + "].a");
+                        gl.uniform3fv(aLocation, new Float32Array([uniforms.triangles[i].a[0], uniforms.triangles[i].a[1], uniforms.triangles[i].a[2]]));
+
+                        let bLocation = gl.getUniformLocation(this._program, "triangles[" + i + "].b");
+                        gl.uniform3fv(bLocation, new Float32Array([uniforms.triangles[i].b[0], uniforms.triangles[i].b[1], uniforms.triangles[i].b[2]]));
+
+                        let cLocation = gl.getUniformLocation(this._program, "triangles[" + i + "].c");
+                        gl.uniform3fv(cLocation, new Float32Array([uniforms.triangles[i].c[0], uniforms.triangles[i].c[1], uniforms.triangles[i].c[2]]));
+
+                    }
+                    continue;
+                }
+
                 // specific case for light
                 if (name.toString() === "light") {
                     let centerLocation = gl.getUniformLocation(this._program, "light.position");
@@ -69,18 +85,18 @@ namespace LH {
                 }
 
                 // specific case for triangles
-                if (name.toString() === "triangle") {
-                    let aLocation = gl.getUniformLocation(this._program, "triangle.a");
-                    gl.uniform3fv(aLocation, new Float32Array([uniforms.triangle.a[0], uniforms.triangle.a[1], uniforms.triangle.a[2]]));
+                // if (name.toString() === "triangle") {
+                //     let aLocation = gl.getUniformLocation(this._program, "triangle.a");
+                //     gl.uniform3fv(aLocation, new Float32Array([uniforms.triangle.a[0], uniforms.triangle.a[1], uniforms.triangle.a[2]]));
                     
-                    let bLocation = gl.getUniformLocation(this._program, "triangle.b");
-                    gl.uniform3fv(bLocation, new Float32Array([uniforms.triangle.b[0], uniforms.triangle.b[1], uniforms.triangle.b[2]]));
+                //     let bLocation = gl.getUniformLocation(this._program, "triangle.b");
+                //     gl.uniform3fv(bLocation, new Float32Array([uniforms.triangle.b[0], uniforms.triangle.b[1], uniforms.triangle.b[2]]));
                     
-                    let cLocation = gl.getUniformLocation(this._program, "triangle.c");
-                    gl.uniform3fv(cLocation, new Float32Array([uniforms.triangle.c[0], uniforms.triangle.c[1], uniforms.triangle.c[2]]));
+                //     let cLocation = gl.getUniformLocation(this._program, "triangle.c");
+                //     gl.uniform3fv(cLocation, new Float32Array([uniforms.triangle.c[0], uniforms.triangle.c[1], uniforms.triangle.c[2]]));
 
-                    continue;
-                }
+                //     continue;
+                // }
 
                 let location = gl.getUniformLocation(this._program, name);
                 if (location == null) continue;
@@ -96,7 +112,8 @@ namespace LH {
                 var matrix4Uniforms = [
                 ];
                 var intUniforms = [
-                    "totalSpheres"
+                    "totalSpheres",
+                    "totalTriangles"
                 ];
                 var floatUniforms = [
                     "timeSinceStart",

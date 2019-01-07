@@ -26,9 +26,10 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            let spheres = this.createSphereColumn();
-            let light: Light = new Light([0.4, 0.5, -0.6], 3.0, 3.0);
-            this._pathTracer.setObjects(spheres, light);
+            let spheres = this.createSpheres();
+            let triangles = this.createTriangles();
+            let light: Light = new Light([0.5, 0.5, -0.6], 3.0, 3.0);
+            this._pathTracer.setObjects(spheres, triangles, light);
 
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
             this._eye[1] = this._zoomZ * Math.sin(this._angleX);
@@ -56,12 +57,21 @@ namespace LH {
             //requestAnimationFrame(this.tick.bind(this));
         }
         
-        private createSphereColumn() {
+        private createSpheres() {
             let objects = [];
 
             objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.75, 0), 0.33));
             objects.push(new Sphere(glMatrix.vec3.fromValues(0, -0.10, 0), 0.30));
             objects.push(new Sphere(glMatrix.vec3.fromValues(0, 0.45, 0), 0.25));
+        
+            return objects;
+        }
+
+        private createTriangles() {
+            let objects = [];
+
+            objects.push(new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]));
+            objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]));
         
             return objects;
         }

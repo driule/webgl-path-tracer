@@ -40,6 +40,7 @@ var tracerFragmentSource = `
     precision highp float;
 
     #define MAX_SPHERES 128
+    #define MAX_TRIANGLES 128
     #define BOUNCES 5
     #define EPSILON 0.0001
     #define INFINITY 10000.0
@@ -67,10 +68,14 @@ var tracerFragmentSource = `
     uniform float timeSinceStart;
     uniform sampler2D texture;
 
+    // geometry
     uniform Light light;
+
     uniform int totalSpheres;
     uniform Sphere spheres[MAX_SPHERES];
-    uniform Triangle triangle;
+
+    uniform int totalTriangles;
+    uniform Triangle triangles[MAX_TRIANGLES];
 
     varying vec3 initialRay;
 
@@ -171,8 +176,15 @@ var tracerFragmentSource = `
             if (tSpehere < 1.0) return 0.0;
         }
 
-        float tTriangle = intersectTriangle(origin, ray, triangle);
-        if (tTriangle < 1.0) return 0.0;
+        /*float tTriangle = intersectTriangle(origin, ray, triangle);
+        if (tTriangle < 1.0) return 0.0;*/
+
+        for (int i = 0; i < MAX_TRIANGLES; i++) {
+            if (i >= totalTriangles) break;
+            
+            float tTriangle = intersectTriangle(origin, ray, triangles[i]);
+            if (tTriangle < 1.0) return 0.0;
+        }
         
         return 1.0;
     }
@@ -197,13 +209,25 @@ var tracerFragmentSource = `
                 }
             }
 
-            float tTriangle = intersectTriangle(origin, ray, triangle);
+            for (int i = 0; i < MAX_TRIANGLES; i++) {
+                if (i >= totalTriangles) break;
+                
+                float tTriangle = intersectTriangle(origin, ray, triangles[i]);
+                if (tTriangle < t) {
+                    t = tTriangle;
+                    hit = origin + ray * t;
+                    normal = getTriangleNormal(hit, triangles[i]);
+                    surfaceColor = vec3(0.25, 0.00, 0.00);
+                }
+            }
+
+            /*float tTriangle = intersectTriangle(origin, ray, triangle);
             if (tTriangle < t) {
                 t = tTriangle;
                 hit = origin + ray * t;
                 normal = getTriangleNormal(hit, triangle);
                 surfaceColor = vec3(0.25, 0.00, 0.00);
-            }
+            }*/
             
             if (t == INFINITY) {
                 break;

@@ -15,7 +15,8 @@ var LH;
                 LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB, 512, 512, 0, LH.gl.RGB, type, null);
             }
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
-            // create render shader
+            // create shaders
+            this._tracerShader = new LH.Shader('tracer', tracerVertexSource, tracerFragmentSource);
             this._renderShader = new LH.Shader('render', renderVertexSource, renderFragmentSource);
             var renderVertexAttribute = new LH.AttributeInformation();
             renderVertexAttribute.location = this._renderShader.getAttributeLocation('vertex');
@@ -33,17 +34,12 @@ var LH;
             this._spheres = [];
             this._light = null;
             this._sampleCount = 0;
-            this._tracerShader = null;
         }
-        PathTracer.prototype.setObjects = function (spheres, light) {
+        PathTracer.prototype.setObjects = function (spheres, triangles, light) {
             this._sampleCount = 0;
             this._spheres = spheres;
+            this._triangles = triangles;
             this._light = light;
-            // create tracer shader
-            if (this._tracerShader != null) {
-                this._tracerShader.delete();
-            }
-            this._tracerShader = new LH.Shader('tracer', tracerVertexSource, tracerFragmentSource);
         };
         PathTracer.prototype.update = function (matrix, timeSinceStart, eye) {
             // calculate uniforms
@@ -62,7 +58,9 @@ var LH;
             uniforms.spheres = this._spheres;
             // triangles uniforms
             //uniforms.triangle = new Triangle([0.5, 0.5, 0], [-0.5, 0.5, 0], [0.5, -0.5, 0]);
-            uniforms.triangle = new LH.Triangle([0.75, -0.95, -0.75], [-1.5, -0.95, -0.75], [0.5, -0.95, 0.75]);
+            //uniforms.triangle = new Triangle([0.75, -0.95, -0.75], [-1.5, -0.95, -0.75], [0.5, -0.95, 0.75]);
+            uniforms.triangles = this._triangles;
+            uniforms.totalTriangles = this._triangles.length;
             // set uniforms
             this._tracerShader.use();
             this._tracerShader.setUniforms(uniforms);
@@ -107,9 +105,10 @@ var LH;
             LH.gl.clearColor(0, 0, 0, 1);
             LH.gl.clear(LH.gl.COLOR_BUFFER_BIT | LH.gl.DEPTH_BUFFER_BIT);
             // create scene
-            var spheres = this.createSphereColumn();
-            var light = new LH.Light([0.4, 0.5, -0.6], 3.0, 3.0);
-            this._pathTracer.setObjects(spheres, light);
+            var spheres = this.createSpheres();
+            var triangles = this.createTriangles();
+            var light = new LH.Light([0.5, 0.5, -0.6], 3.0, 3.0);
+            this._pathTracer.setObjects(spheres, triangles, light);
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
             this._eye[1] = this._zoomZ * Math.sin(this._angleX);
             this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
@@ -130,11 +129,17 @@ var LH;
             this._pathTracer.render();
             //requestAnimationFrame(this.tick.bind(this));
         };
-        Renderer.prototype.createSphereColumn = function () {
+        Renderer.prototype.createSpheres = function () {
             var objects = [];
             objects.push(new LH.Sphere(glMatrix.vec3.fromValues(0, -0.75, 0), 0.33));
             objects.push(new LH.Sphere(glMatrix.vec3.fromValues(0, -0.10, 0), 0.30));
             objects.push(new LH.Sphere(glMatrix.vec3.fromValues(0, 0.45, 0), 0.25));
+            return objects;
+        };
+        Renderer.prototype.createTriangles = function () {
+            var objects = [];
+            objects.push(new LH.Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]));
+            objects.push(new LH.Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]));
             return objects;
         };
         return Renderer;
@@ -147,7 +152,7 @@ var renderVertexSource = "\n    attribute vec3 vertex;\n    varying vec2 texCoor
 var renderFragmentSource = "\n    precision highp float;\n\n    varying vec2 texCoord;\n    uniform sampler2D texture;\n\n    void main() {\n        gl_FragColor = texture2D(texture, texCoord);\n    }\n";
 // vertex shader, interpolate ray per-pixel
 var tracerVertexSource = "\n    attribute vec3 vertex;\n    uniform vec3 eye, ray00, ray01, ray10, ray11;\n    varying vec3 initialRay;\n\n    void main() {\n        vec2 percent = vertex.xy * 0.5 + 0.5;\n        initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
-var tracerFragmentSource = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n    #define BOUNCES 5\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    struct Triangle\n    {\n        vec3 a, b, c;\n    };\n\n    struct Light\n    {\n        vec3 position;\n        float radius;\n        float intensity;\n    };\n\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n\n    uniform Light light;\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n    uniform Triangle triangle;\n\n    varying vec3 initialRay;\n\n    float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {\n        vec3 toSphere = origin - sphere.center;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t >= EPSILON) return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 getSphereNormal(vec3 hit, Sphere sphere) {\n        return (hit - sphere.center) / sphere.radius;\n    }\n\n    float intersectTriangle(vec3 origin, vec3 ray, Triangle triangle) {\n        float t, u, v;\n\n        vec3 ab = triangle.b - triangle.a;\n        vec3 ac = triangle.c - triangle.a;\n        vec3 pvec = cross(ray, ac);\n        float det = dot(ab, pvec);\n    \n        float invDet = 1.0 / det;\n    \n        vec3 tvec = origin - triangle.a;\n        u = dot(tvec, pvec) * invDet;\n    \n        if (u < 0.0 || u > 1.0) return INFINITY;\n    \n        vec3 qvec = cross(tvec, ab);\n        v = dot(ray, qvec) * invDet;\n        if (v < 0.0 || u + v > 1.0) return INFINITY;\n    \n        t = dot(ac, qvec) * invDet;\n        if (t >= EPSILON)\n        {\n            return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 getTriangleNormal(vec3 hit, Triangle triangle) {\n        return normalize(\n            cross(triangle.a - triangle.b, triangle.b - triangle.c)\n        );\n    }\n\n    float random(vec3 scale, float seed) {\n        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n    }\n\n    vec3 cosineWeightedDirection(float seed, vec3 normal) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float r = sqrt(u);\n        float angle = 6.283185307179586 * v;\n\n        vec3 sdir, tdir;\n        if (abs(normal.x) < 0.5) {\n            sdir = cross(normal, vec3(1, 0, 0));\n        } else {\n            sdir = cross(normal, vec3(0, 1, 0));\n        }\n        tdir = cross(normal, sdir);\n\n        return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;\n    }\n\n    vec3 uniformlyRandomDirection(float seed) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float z = 1.0 - 2.0 * u;\n        float r = sqrt(1.0 - z * z);\n        float angle = 6.283185307179586 * v;\n\n        return vec3(r * cos(angle), r * sin(angle), z);\n    }\n\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n\n    float getShadowIntensity(vec3 origin, vec3 ray) {\n\n        for (int i = 0; i < MAX_SPHERES; i++) {\n            if (i >= totalSpheres) break;\n            \n            float tSpehere = intersectSphere(origin, ray, spheres[i]);\n            if (tSpehere < 1.0) return 0.0;\n        }\n\n        float tTriangle = intersectTriangle(origin, ray, triangle);\n        if (tTriangle < 1.0) return 0.0;\n        \n        return 1.0;\n    }\n\n    vec3 calculateColor(vec3 origin, vec3 ray, Light light) {\n        vec3 accumulatedColor = vec3(0.0);\n        vec3 surfaceColor = vec3(0.75);\n        \n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i]);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = getSphereNormal(hit, spheres[i]);\n                }\n            }\n\n            float tTriangle = intersectTriangle(origin, ray, triangle);\n            if (tTriangle < t) {\n                t = tTriangle;\n                hit = origin + ray * t;\n                normal = getTriangleNormal(hit, triangle);\n                surfaceColor = vec3(0.25, 0.00, 0.00);\n            }\n            \n            if (t == INFINITY) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n\n            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);\n            \n            accumulatedColor += surfaceColor * (light.intensity * diffuse * shadowIntensity);\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n\n    void main() {\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);\n    }\n";
+var tracerFragmentSource = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n    #define MAX_TRIANGLES 128\n    #define BOUNCES 5\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    struct Triangle\n    {\n        vec3 a, b, c;\n    };\n\n    struct Light\n    {\n        vec3 position;\n        float radius;\n        float intensity;\n    };\n\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n\n    // geometry\n    uniform Light light;\n\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n\n    uniform int totalTriangles;\n    uniform Triangle triangles[MAX_TRIANGLES];\n\n    varying vec3 initialRay;\n\n    float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {\n        vec3 toSphere = origin - sphere.center;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t >= EPSILON) return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 getSphereNormal(vec3 hit, Sphere sphere) {\n        return (hit - sphere.center) / sphere.radius;\n    }\n\n    float intersectTriangle(vec3 origin, vec3 ray, Triangle triangle) {\n        float t, u, v;\n\n        vec3 ab = triangle.b - triangle.a;\n        vec3 ac = triangle.c - triangle.a;\n        vec3 pvec = cross(ray, ac);\n        float det = dot(ab, pvec);\n    \n        float invDet = 1.0 / det;\n    \n        vec3 tvec = origin - triangle.a;\n        u = dot(tvec, pvec) * invDet;\n    \n        if (u < 0.0 || u > 1.0) return INFINITY;\n    \n        vec3 qvec = cross(tvec, ab);\n        v = dot(ray, qvec) * invDet;\n        if (v < 0.0 || u + v > 1.0) return INFINITY;\n    \n        t = dot(ac, qvec) * invDet;\n        if (t >= EPSILON)\n        {\n            return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 getTriangleNormal(vec3 hit, Triangle triangle) {\n        return normalize(\n            cross(triangle.a - triangle.b, triangle.b - triangle.c)\n        );\n    }\n\n    float random(vec3 scale, float seed) {\n        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n    }\n\n    vec3 cosineWeightedDirection(float seed, vec3 normal) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float r = sqrt(u);\n        float angle = 6.283185307179586 * v;\n\n        vec3 sdir, tdir;\n        if (abs(normal.x) < 0.5) {\n            sdir = cross(normal, vec3(1, 0, 0));\n        } else {\n            sdir = cross(normal, vec3(0, 1, 0));\n        }\n        tdir = cross(normal, sdir);\n\n        return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;\n    }\n\n    vec3 uniformlyRandomDirection(float seed) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float z = 1.0 - 2.0 * u;\n        float r = sqrt(1.0 - z * z);\n        float angle = 6.283185307179586 * v;\n\n        return vec3(r * cos(angle), r * sin(angle), z);\n    }\n\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n\n    float getShadowIntensity(vec3 origin, vec3 ray) {\n\n        for (int i = 0; i < MAX_SPHERES; i++) {\n            if (i >= totalSpheres) break;\n            \n            float tSpehere = intersectSphere(origin, ray, spheres[i]);\n            if (tSpehere < 1.0) return 0.0;\n        }\n\n        /*float tTriangle = intersectTriangle(origin, ray, triangle);\n        if (tTriangle < 1.0) return 0.0;*/\n\n        for (int i = 0; i < MAX_TRIANGLES; i++) {\n            if (i >= totalTriangles) break;\n            \n            float tTriangle = intersectTriangle(origin, ray, triangles[i]);\n            if (tTriangle < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n\n    vec3 calculateColor(vec3 origin, vec3 ray, Light light) {\n        vec3 accumulatedColor = vec3(0.0);\n        vec3 surfaceColor = vec3(0.75);\n        \n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i]);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = getSphereNormal(hit, spheres[i]);\n                }\n            }\n\n            for (int i = 0; i < MAX_TRIANGLES; i++) {\n                if (i >= totalTriangles) break;\n                \n                float tTriangle = intersectTriangle(origin, ray, triangles[i]);\n                if (tTriangle < t) {\n                    t = tTriangle;\n                    hit = origin + ray * t;\n                    normal = getTriangleNormal(hit, triangles[i]);\n                    surfaceColor = vec3(0.25, 0.00, 0.00);\n                }\n            }\n\n            /*float tTriangle = intersectTriangle(origin, ray, triangle);\n            if (tTriangle < t) {\n                t = tTriangle;\n                hit = origin + ray * t;\n                normal = getTriangleNormal(hit, triangle);\n                surfaceColor = vec3(0.25, 0.00, 0.00);\n            }*/\n            \n            if (t == INFINITY) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n\n            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);\n            \n            accumulatedColor += surfaceColor * (light.intensity * diffuse * shadowIntensity);\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n\n    void main() {\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);\n    }\n";
 var renderer;
 window.onload = function () {
     renderer = new LH.Renderer();
@@ -433,6 +438,18 @@ var LH;
                     }
                     continue;
                 }
+                // specific case for triangles
+                if (name_1.toString() === "triangles") {
+                    for (var i = 0; i < uniforms.triangles.length; i++) {
+                        var aLocation = LH.gl.getUniformLocation(this._program, "triangles[" + i + "].a");
+                        LH.gl.uniform3fv(aLocation, new Float32Array([uniforms.triangles[i].a[0], uniforms.triangles[i].a[1], uniforms.triangles[i].a[2]]));
+                        var bLocation = LH.gl.getUniformLocation(this._program, "triangles[" + i + "].b");
+                        LH.gl.uniform3fv(bLocation, new Float32Array([uniforms.triangles[i].b[0], uniforms.triangles[i].b[1], uniforms.triangles[i].b[2]]));
+                        var cLocation = LH.gl.getUniformLocation(this._program, "triangles[" + i + "].c");
+                        LH.gl.uniform3fv(cLocation, new Float32Array([uniforms.triangles[i].c[0], uniforms.triangles[i].c[1], uniforms.triangles[i].c[2]]));
+                    }
+                    continue;
+                }
                 // specific case for light
                 if (name_1.toString() === "light") {
                     var centerLocation = LH.gl.getUniformLocation(this._program, "light.position");
@@ -444,15 +461,15 @@ var LH;
                     continue;
                 }
                 // specific case for triangles
-                if (name_1.toString() === "triangle") {
-                    var aLocation = LH.gl.getUniformLocation(this._program, "triangle.a");
-                    LH.gl.uniform3fv(aLocation, new Float32Array([uniforms.triangle.a[0], uniforms.triangle.a[1], uniforms.triangle.a[2]]));
-                    var bLocation = LH.gl.getUniformLocation(this._program, "triangle.b");
-                    LH.gl.uniform3fv(bLocation, new Float32Array([uniforms.triangle.b[0], uniforms.triangle.b[1], uniforms.triangle.b[2]]));
-                    var cLocation = LH.gl.getUniformLocation(this._program, "triangle.c");
-                    LH.gl.uniform3fv(cLocation, new Float32Array([uniforms.triangle.c[0], uniforms.triangle.c[1], uniforms.triangle.c[2]]));
-                    continue;
-                }
+                // if (name.toString() === "triangle") {
+                //     let aLocation = gl.getUniformLocation(this._program, "triangle.a");
+                //     gl.uniform3fv(aLocation, new Float32Array([uniforms.triangle.a[0], uniforms.triangle.a[1], uniforms.triangle.a[2]]));
+                //     let bLocation = gl.getUniformLocation(this._program, "triangle.b");
+                //     gl.uniform3fv(bLocation, new Float32Array([uniforms.triangle.b[0], uniforms.triangle.b[1], uniforms.triangle.b[2]]));
+                //     let cLocation = gl.getUniformLocation(this._program, "triangle.c");
+                //     gl.uniform3fv(cLocation, new Float32Array([uniforms.triangle.c[0], uniforms.triangle.c[1], uniforms.triangle.c[2]]));
+                //     continue;
+                // }
                 var location_1 = LH.gl.getUniformLocation(this._program, name_1);
                 if (location_1 == null)
                     continue;
@@ -466,7 +483,8 @@ var LH;
                 ];
                 var matrix4Uniforms = [];
                 var intUniforms = [
-                    "totalSpheres"
+                    "totalSpheres",
+                    "totalTriangles"
                 ];
                 var floatUniforms = [
                     "timeSinceStart",
