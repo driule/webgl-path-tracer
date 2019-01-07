@@ -179,6 +179,7 @@ var tracerFragmentSource = `
 
     vec3 calculateColor(vec3 origin, vec3 ray, Light light) {
         vec3 accumulatedColor = vec3(0.0);
+        vec3 surfaceColor = vec3(0.75);
         
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
             float t = INFINITY;
@@ -201,6 +202,7 @@ var tracerFragmentSource = `
                 t = tTriangle;
                 hit = origin + ray * t;
                 normal = getTriangleNormal(hit, triangle);
+                surfaceColor = vec3(0.25, 0.00, 0.00);
             }
             
             if (t == INFINITY) {
@@ -208,8 +210,6 @@ var tracerFragmentSource = `
             } else {
                 ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
             }
-            
-            vec3 surfaceColor = vec3(0.75);
 
             vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
             float diffuse = max(0.0, dot(normalize(toLight), normal));
