@@ -34,24 +34,23 @@ var LH;
             this._spheres = [];
             this._triangles = [];
         }
-        PathTracer.prototype.update = function (matrix, timeSinceStart, eye) {
+        PathTracer.prototype.update = function (viewProjectionMatrix, timeSinceStart, eye) {
+            // jitter for anti-aliasing
+            var jitterVector = [Math.random() * 2 - 1, Math.random() * 2 - 1, 0];
+            jitterVector = glMatrix.vec3.scale([], jitterVector, 1 / 512);
+            viewProjectionMatrix = glMatrix.mat4.translate([], viewProjectionMatrix, jitterVector);
             // calculate uniforms
             var uniforms = {};
             uniforms.eye = eye;
-            uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
-            uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
-            uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
-            uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
+            uniforms.ray00 = this.getEyeRay(viewProjectionMatrix, -1, -1, eye);
+            uniforms.ray01 = this.getEyeRay(viewProjectionMatrix, -1, +1, eye);
+            uniforms.ray10 = this.getEyeRay(viewProjectionMatrix, +1, -1, eye);
+            uniforms.ray11 = this.getEyeRay(viewProjectionMatrix, +1, +1, eye);
             uniforms.timeSinceStart = timeSinceStart;
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
-            // light uniforms
             uniforms.light = this._light;
-            // spheres uniforms
-            uniforms.totalSpheres = this._spheres.length;
             uniforms.spheres = this._spheres;
-            // triangles uniforms
-            //uniforms.triangle = new Triangle([0.5, 0.5, 0], [-0.5, 0.5, 0], [0.5, -0.5, 0]);
-            //uniforms.triangle = new Triangle([0.75, -0.95, -0.75], [-1.5, -0.95, -0.75], [0.5, -0.95, 0.75]);
+            uniforms.totalSpheres = this._spheres.length;
             uniforms.triangles = this._triangles;
             uniforms.totalTriangles = this._triangles.length;
             // set uniforms
@@ -128,11 +127,6 @@ var LH;
             var projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
             this._viewProjection = glMatrix.mat4.multiply([], projection, view);
             this._viewProjection = glMatrix.mat4.invert([], this._viewProjection);
-            // TODO: implement jitter to avoid edgy lines
-            //let jitter = glMatrix.mat4.fromTranslation([], [Math.random() * 2 - 1, Math.random() * 2 - 1, 0]);
-            //jitter = glMatrix.mat4.multiplyScalar([], jitter, (1.00 / 512.00));
-            //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
-            //viewProjection = glMatrix.mat4.invert([], viewProjection);
         };
         //
         // camera controls
@@ -525,16 +519,6 @@ var LH;
                     LH.gl.uniform1f(intensityLocation, uniforms.light.intensity);
                     continue;
                 }
-                // specific case for triangles
-                // if (name.toString() === "triangle") {
-                //     let aLocation = gl.getUniformLocation(this._program, "triangle.a");
-                //     gl.uniform3fv(aLocation, new Float32Array([uniforms.triangle.a[0], uniforms.triangle.a[1], uniforms.triangle.a[2]]));
-                //     let bLocation = gl.getUniformLocation(this._program, "triangle.b");
-                //     gl.uniform3fv(bLocation, new Float32Array([uniforms.triangle.b[0], uniforms.triangle.b[1], uniforms.triangle.b[2]]));
-                //     let cLocation = gl.getUniformLocation(this._program, "triangle.c");
-                //     gl.uniform3fv(cLocation, new Float32Array([uniforms.triangle.c[0], uniforms.triangle.c[1], uniforms.triangle.c[2]]));
-                //     continue;
-                // }
                 var location_1 = LH.gl.getUniformLocation(this._program, name_1);
                 if (location_1 == null)
                     continue;
@@ -560,7 +544,7 @@ var LH;
                     LH.gl.uniform3fv(location_1, new Float32Array([value[0], value[1], value[2]]));
                 }
                 else if (matrix4Uniforms.indexOf(name_1) > -1) {
-                    LH.gl.uniformMatrix4fv(location_1, false, new Float32Array(value.flatten()));
+                    // TODO: implement matrix uniform support
                 }
                 else if (intUniforms.indexOf(name_1) > -1) {
                     LH.gl.uniform1i(location_1, value);

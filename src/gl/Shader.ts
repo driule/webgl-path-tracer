@@ -84,20 +84,6 @@ namespace LH {
                     continue;
                 }
 
-                // specific case for triangles
-                // if (name.toString() === "triangle") {
-                //     let aLocation = gl.getUniformLocation(this._program, "triangle.a");
-                //     gl.uniform3fv(aLocation, new Float32Array([uniforms.triangle.a[0], uniforms.triangle.a[1], uniforms.triangle.a[2]]));
-                    
-                //     let bLocation = gl.getUniformLocation(this._program, "triangle.b");
-                //     gl.uniform3fv(bLocation, new Float32Array([uniforms.triangle.b[0], uniforms.triangle.b[1], uniforms.triangle.b[2]]));
-                    
-                //     let cLocation = gl.getUniformLocation(this._program, "triangle.c");
-                //     gl.uniform3fv(cLocation, new Float32Array([uniforms.triangle.c[0], uniforms.triangle.c[1], uniforms.triangle.c[2]]));
-
-                //     continue;
-                // }
-
                 let location = gl.getUniformLocation(this._program, name);
                 if (location == null) continue;
 
@@ -124,7 +110,7 @@ namespace LH {
                 if (vector3Uniforms.indexOf(name) > -1) {
                     gl.uniform3fv(location, new Float32Array([value[0], value[1], value[2]]));
                 } else if (matrix4Uniforms.indexOf(name) > -1) {
-                    gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
+                    // TODO: implement matrix uniform support
                 } else if (intUniforms.indexOf(name) > -1) {
                     gl.uniform1i(location, value);
                 } else if (floatUniforms.indexOf(name) > -1) {

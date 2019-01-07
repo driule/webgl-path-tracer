@@ -53,12 +53,6 @@ namespace LH {
             let projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
             this._viewProjection = glMatrix.mat4.multiply([], projection, view);
             this._viewProjection = glMatrix.mat4.invert([], this._viewProjection);
-
-            // TODO: implement jitter to avoid edgy lines
-            //let jitter = glMatrix.mat4.fromTranslation([], [Math.random() * 2 - 1, Math.random() * 2 - 1, 0]);
-            //jitter = glMatrix.mat4.multiplyScalar([], jitter, (1.00 / 512.00));
-            //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
-            //viewProjection = glMatrix.mat4.invert([], viewProjection);
         }
 
         //

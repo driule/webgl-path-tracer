@@ -55,28 +55,26 @@ namespace LH {
             this._triangles = [];
         }
           
-        public update(matrix: any, timeSinceStart: number, eye: any): void {
+        public update(viewProjectionMatrix: any, timeSinceStart: number, eye: any): void {
             
+            // jitter for anti-aliasing
+            let jitterVector = [Math.random() * 2 - 1, Math.random() * 2 - 1, 0];
+            jitterVector = glMatrix.vec3.scale([], jitterVector, 1 / 512);
+            viewProjectionMatrix = glMatrix.mat4.translate([], viewProjectionMatrix, jitterVector);
+
             // calculate uniforms
             let uniforms: any = {};
             uniforms.eye = eye;
-            uniforms.ray00 = this.getEyeRay(matrix, -1, -1, eye);
-            uniforms.ray01 = this.getEyeRay(matrix, -1, +1, eye);
-            uniforms.ray10 = this.getEyeRay(matrix, +1, -1, eye);
-            uniforms.ray11 = this.getEyeRay(matrix, +1, +1, eye);
+            uniforms.ray00 = this.getEyeRay(viewProjectionMatrix, -1, -1, eye);
+            uniforms.ray01 = this.getEyeRay(viewProjectionMatrix, -1, +1, eye);
+            uniforms.ray10 = this.getEyeRay(viewProjectionMatrix, +1, -1, eye);
+            uniforms.ray11 = this.getEyeRay(viewProjectionMatrix, +1, +1, eye);
             uniforms.timeSinceStart = timeSinceStart;
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
-            // light uniforms
             uniforms.light = this._light;
-
-            // spheres uniforms
-            uniforms.totalSpheres = this._spheres.length;
             uniforms.spheres = this._spheres;
-
-            // triangles uniforms
-            //uniforms.triangle = new Triangle([0.5, 0.5, 0], [-0.5, 0.5, 0], [0.5, -0.5, 0]);
-            //uniforms.triangle = new Triangle([0.75, -0.95, -0.75], [-1.5, -0.95, -0.75], [0.5, -0.95, 0.75]);
+            uniforms.totalSpheres = this._spheres.length;
             uniforms.triangles = this._triangles;
             uniforms.totalTriangles = this._triangles.length;
           
