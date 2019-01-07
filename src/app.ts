@@ -211,7 +211,7 @@ var tracerFragmentSource = `
             
             vec3 surfaceColor = vec3(0.75);
 
-            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart) * light.radius) - hit;
+            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
             float diffuse = max(0.0, dot(normalize(toLight), normal));
             float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);
             
