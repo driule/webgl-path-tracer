@@ -169,16 +169,12 @@ var tracerFragmentSource = `
     }
 
     float getShadowIntensity(vec3 origin, vec3 ray) {
-
         for (int i = 0; i < MAX_SPHERES; i++) {
             if (i >= totalSpheres) break;
             
             float tSpehere = intersectSphere(origin, ray, spheres[i]);
             if (tSpehere < 1.0) return 0.0;
         }
-
-        /*float tTriangle = intersectTriangle(origin, ray, triangle);
-        if (tTriangle < 1.0) return 0.0;*/
 
         for (int i = 0; i < MAX_TRIANGLES; i++) {
             if (i >= totalTriangles) break;
