@@ -26,9 +26,11 @@ namespace LH {
             for (var i = 0; i < 2; i++) {
                 this._textures.push(gl.createTexture());
                 gl.bindTexture(gl.TEXTURE_2D, this._textures[i]);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 512, 512, 0, gl.RGB, type, null);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 640, 480, 0, gl.RGB, type, null);
             }
             gl.bindTexture(gl.TEXTURE_2D, null);
         
@@ -59,7 +61,7 @@ namespace LH {
             
             // jitter for anti-aliasing
             let jitterVector = [Math.random() * 2 - 1, Math.random() * 2 - 1, 0];
-            jitterVector = glMatrix.vec3.scale([], jitterVector, 1 / 512);
+            jitterVector = glMatrix.vec3.scale([], jitterVector, 1 / 640);
             viewProjectionMatrix = glMatrix.mat4.translate([], viewProjectionMatrix, jitterVector);
 
             // calculate uniforms

@@ -248,7 +248,7 @@ var tracerFragmentSource = `
     }
 
     void main() {
-        vec3 texture = texture2D(texture, gl_FragCoord.xy / 512.0).rgb;
+        vec3 texture = texture2D(texture, gl_FragCoord.xy / vec2(640.0, 480.0) ).rgb;
         gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);
     }
 `;
