@@ -95,6 +95,9 @@ namespace LH {
                     "ray10",
                     "light"
                 ];
+                var vector2Uniforms = [
+                    "resolution"
+                ];
                 var matrix4Uniforms = [
                 ];
                 var intUniforms = [
@@ -107,7 +110,9 @@ namespace LH {
                 ];
         
                 let value = uniforms[name];
-                if (vector3Uniforms.indexOf(name) > -1) {
+                if (vector2Uniforms.indexOf(name) > -1) {
+                    gl.uniform2fv(location, new Float32Array([value[0], value[1]]));
+                } else if (vector3Uniforms.indexOf(name) > -1) {
                     gl.uniform3fv(location, new Float32Array([value[0], value[1], value[2]]));
                 } else if (matrix4Uniforms.indexOf(name) > -1) {
                     // TODO: implement matrix uniform support

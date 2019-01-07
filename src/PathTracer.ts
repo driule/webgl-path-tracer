@@ -2,6 +2,8 @@ namespace LH {
 
     export class PathTracer {
 
+        private _resolution: any;
+
         private _vertexBuffer: GLBuffer;
         private _framebuffer: WebGLBuffer;
 
@@ -16,7 +18,9 @@ namespace LH {
         private _triangles: Triangle[];
         private _light: Light;
 
-        public constructor() {
+        public constructor(resolution: any) {
+            this._resolution = resolution;
+
             // create framebuffer
             this._framebuffer = gl.createFramebuffer();
         
@@ -30,7 +34,7 @@ namespace LH {
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 640, 480, 0, gl.RGB, type, null);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, this._resolution[0], this._resolution[1], 0, gl.RGB, type, null);
             }
             gl.bindTexture(gl.TEXTURE_2D, null);
         
@@ -59,13 +63,14 @@ namespace LH {
           
         public update(viewProjectionMatrix: any, timeSinceStart: number, eye: any): void {
             
-            // jitter for anti-aliasing
+            // jitter view-projection matrix for anti-aliasing
             let jitterVector = [Math.random() * 2 - 1, Math.random() * 2 - 1, 0];
             jitterVector = glMatrix.vec3.scale([], jitterVector, 1 / 640);
             viewProjectionMatrix = glMatrix.mat4.translate([], viewProjectionMatrix, jitterVector);
 
             // calculate uniforms
             let uniforms: any = {};
+            uniforms.resolution = this._resolution;
             uniforms.eye = eye;
             uniforms.ray00 = this.getEyeRay(viewProjectionMatrix, -1, -1, eye);
             uniforms.ray01 = this.getEyeRay(viewProjectionMatrix, -1, +1, eye);
@@ -85,7 +90,6 @@ namespace LH {
             this._tracerShader.setUniforms(uniforms);
           
             // render to texture
-            this._tracerShader.use();
             gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
             gl.bindFramebuffer(gl.FRAMEBUFFER, this._framebuffer);
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._textures[1], 0);

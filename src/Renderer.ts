@@ -13,7 +13,7 @@ namespace LH {
 
         public constructor() {
             this._canvas = GLUtilities.initialize("pathTracer");
-            this._pathTracer = new PathTracer();
+            this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
 
             this._angleX = 0;
             this._angleY = 0;

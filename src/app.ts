@@ -63,6 +63,7 @@ var tracerFragmentSource = `
         float intensity;
     };
 
+    uniform vec2 resolution;
     uniform vec3 eye;
     uniform float textureWeight;
     uniform float timeSinceStart;
@@ -220,14 +221,6 @@ var tracerFragmentSource = `
                     surfaceColor = vec3(0.25, 0.00, 0.00);
                 }
             }
-
-            /*float tTriangle = intersectTriangle(origin, ray, triangle);
-            if (tTriangle < t) {
-                t = tTriangle;
-                hit = origin + ray * t;
-                normal = getTriangleNormal(hit, triangle);
-                surfaceColor = vec3(0.25, 0.00, 0.00);
-            }*/
             
             if (t == INFINITY) {
                 break;
@@ -248,7 +241,7 @@ var tracerFragmentSource = `
     }
 
     void main() {
-        vec3 texture = texture2D(texture, gl_FragCoord.xy / vec2(640.0, 480.0) ).rgb;
+        vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;
         gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);
     }
 `;
