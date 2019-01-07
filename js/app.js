@@ -39,8 +39,7 @@ var LH;
         }
         PathTracer.prototype.update = function (viewProjectionMatrix, timeSinceStart, eye) {
             // jitter view-projection matrix for anti-aliasing
-            var jitterVector = [Math.random() * 2 - 1, Math.random() * 2 - 1, 0];
-            jitterVector = glMatrix.vec3.scale([], jitterVector, 1 / 640);
+            var jitterVector = [(Math.random() * 2 - 1) / this._resolution[0], (Math.random() * 2 - 1) / this._resolution[1], 0];
             viewProjectionMatrix = glMatrix.mat4.translate([], viewProjectionMatrix, jitterVector);
             // calculate uniforms
             var uniforms = {};
