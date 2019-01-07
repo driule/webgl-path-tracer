@@ -262,3 +262,36 @@ window.onload = function() {
     let start = Date.now();
     setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
 }
+
+document.onkeydown = function(event) {
+
+    // W
+    if (event.keyCode == 87) {
+        renderer.moveUp();
+    }
+
+    // S
+    if (event.keyCode == 83) {
+        renderer.moveDown();
+    }
+
+    // A
+    if (event.keyCode == 65) {
+        renderer.moveLeft();
+    }
+
+    // D
+    if (event.keyCode == 68) {
+        renderer.moveRight();
+    }
+
+    // -
+    if (event.keyCode == 189 || event.keyCode == 109) {
+        renderer.zoomOut();
+    }
+
+    // +
+    if (event.keyCode == 187 || event.keyCode == 107) {
+        renderer.zoomIn();
+    }
+};

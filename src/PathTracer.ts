@@ -50,17 +50,9 @@ namespace LH {
             ]);
             this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
         
-            // objects and shader will be filled in when setObjects() is called
-            this._spheres = [];
             this._light = null;
-            this._sampleCount = 0;
-        }
-
-        public setObjects(spheres: Sphere[], triangles: Triangle[], light: Light): void {
-            this._sampleCount = 0;
-            this._spheres = spheres;
-            this._triangles = triangles;
-            this._light = light;
+            this._spheres = [];
+            this._triangles = [];
         }
           
         public update(matrix: any, timeSinceStart: number, eye: any): void {
@@ -113,6 +105,18 @@ namespace LH {
             gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
             
             this._vertexBuffer.draw();
+        }
+
+        public setObjects(spheres: Sphere[], triangles: Triangle[], light: Light): void {
+            this._spheres = spheres;
+            this._triangles = triangles;
+            this._light = light;
+
+            this.restart();
+        }
+        
+        public restart(): void {
+            this._sampleCount = 0;
         }
         
         private getEyeRay(matrix: any, x: number, y: number, eye: any): any {

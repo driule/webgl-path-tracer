@@ -30,17 +30,10 @@ var LH;
                 +1, +1
             ]);
             this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
-            // objects and shader will be filled in when setObjects() is called
-            this._spheres = [];
             this._light = null;
-            this._sampleCount = 0;
+            this._spheres = [];
+            this._triangles = [];
         }
-        PathTracer.prototype.setObjects = function (spheres, triangles, light) {
-            this._sampleCount = 0;
-            this._spheres = spheres;
-            this._triangles = triangles;
-            this._light = light;
-        };
         PathTracer.prototype.update = function (matrix, timeSinceStart, eye) {
             // calculate uniforms
             var uniforms = {};
@@ -81,6 +74,15 @@ var LH;
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, this._textures[0]);
             this._vertexBuffer.draw();
         };
+        PathTracer.prototype.setObjects = function (spheres, triangles, light) {
+            this._spheres = spheres;
+            this._triangles = triangles;
+            this._light = light;
+            this.restart();
+        };
+        PathTracer.prototype.restart = function () {
+            this._sampleCount = 0;
+        };
         PathTracer.prototype.getEyeRay = function (matrix, x, y, eye) {
             var transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
             var scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
@@ -109,6 +111,16 @@ var LH;
             var triangles = this.createTriangles();
             var light = new LH.Light([0.5, 0.5, -0.6], 3.0, 3.0);
             this._pathTracer.setObjects(spheres, triangles, light);
+            this.calculateViewProjection();
+            //var startTime = Date.now();
+            //this.tick((Date.now() - startTime) * 0.001);
+        };
+        Renderer.prototype.tick = function (timeSinceStart) {
+            this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
+            this._pathTracer.render();
+            //requestAnimationFrame(this.tick.bind(this));
+        };
+        Renderer.prototype.calculateViewProjection = function () {
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
             this._eye[1] = this._zoomZ * Math.sin(this._angleX);
             this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
@@ -121,14 +133,41 @@ var LH;
             //jitter = glMatrix.mat4.multiplyScalar([], jitter, (1.00 / 512.00));
             //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
             //viewProjection = glMatrix.mat4.invert([], viewProjection);
-            //var startTime = Date.now();
-            //this.tick((Date.now() - startTime) * 0.001);
         };
-        Renderer.prototype.tick = function (timeSinceStart) {
-            this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
-            this._pathTracer.render();
-            //requestAnimationFrame(this.tick.bind(this));
+        //
+        // camera controls
+        //
+        Renderer.prototype.moveUp = function () {
+            this._angleX += 0.1;
+            this.restart();
         };
+        Renderer.prototype.moveDown = function () {
+            this._angleX -= 0.1;
+            this.restart();
+        };
+        Renderer.prototype.moveRight = function () {
+            this._angleY += 0.1;
+            this.restart();
+        };
+        Renderer.prototype.moveLeft = function () {
+            this._angleY -= 0.1;
+            this.restart();
+        };
+        Renderer.prototype.zoomIn = function () {
+            this._zoomZ -= 0.1;
+            this.restart();
+        };
+        Renderer.prototype.zoomOut = function () {
+            this._zoomZ += 0.1;
+            this.restart();
+        };
+        Renderer.prototype.restart = function () {
+            this._pathTracer.restart();
+            this.calculateViewProjection();
+        };
+        //
+        // scene objects
+        //
         Renderer.prototype.createSpheres = function () {
             var objects = [];
             objects.push(new LH.Sphere(glMatrix.vec3.fromValues(0, -0.75, 0), 0.33));
@@ -159,6 +198,32 @@ window.onload = function () {
     renderer.start();
     var start = Date.now();
     setInterval(function () { renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
+};
+document.onkeydown = function (event) {
+    // W
+    if (event.keyCode == 87) {
+        renderer.moveUp();
+    }
+    // S
+    if (event.keyCode == 83) {
+        renderer.moveDown();
+    }
+    // A
+    if (event.keyCode == 65) {
+        renderer.moveLeft();
+    }
+    // D
+    if (event.keyCode == 68) {
+        renderer.moveRight();
+    }
+    // -
+    if (event.keyCode == 189 || event.keyCode == 109) {
+        renderer.zoomOut();
+    }
+    // +
+    if (event.keyCode == 187 || event.keyCode == 107) {
+        renderer.zoomIn();
+    }
 };
 var LH;
 (function (LH) {

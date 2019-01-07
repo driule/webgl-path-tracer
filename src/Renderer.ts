@@ -31,6 +31,20 @@ namespace LH {
             let light: Light = new Light([0.5, 0.5, -0.6], 3.0, 3.0);
             this._pathTracer.setObjects(spheres, triangles, light);
 
+            this.calculateViewProjection();
+
+            //var startTime = Date.now();
+            //this.tick((Date.now() - startTime) * 0.001);
+        }
+
+        public tick(timeSinceStart: number): void {
+            this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
+            this._pathTracer.render();
+
+            //requestAnimationFrame(this.tick.bind(this));
+        }
+
+        private calculateViewProjection(): void {
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
             this._eye[1] = this._zoomZ * Math.sin(this._angleX);
             this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
@@ -45,18 +59,49 @@ namespace LH {
             //jitter = glMatrix.mat4.multiplyScalar([], jitter, (1.00 / 512.00));
             //viewProjection = glMatrix.mat4.multiply([], jitter, viewProjection);
             //viewProjection = glMatrix.mat4.invert([], viewProjection);
-
-            //var startTime = Date.now();
-            //this.tick((Date.now() - startTime) * 0.001);
         }
 
-        public tick(timeSinceStart: number): void {
-            this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
-            this._pathTracer.render();
+        //
+        // camera controls
+        //
+        public moveUp(): void {
+            this._angleX += 0.1;
+            this.restart();
+        }
 
-            //requestAnimationFrame(this.tick.bind(this));
+        public moveDown(): void {
+            this._angleX -= 0.1;
+            this.restart();
+        }
+
+        public moveRight(): void {
+            this._angleY += 0.1;
+            this.restart();
+        }
+
+        public moveLeft(): void {
+            this._angleY -= 0.1;
+            this.restart();
+        }
+
+        public zoomIn(): void {
+            this._zoomZ -= 0.1;
+            this.restart();
+        }
+
+        public zoomOut(): void {
+            this._zoomZ += 0.1;
+            this.restart();
+        }
+
+        private restart(): void {
+            this._pathTracer.restart();
+            this.calculateViewProjection();
         }
         
+        //
+        // scene objects
+        //
         private createSpheres() {
             let objects = [];
 
