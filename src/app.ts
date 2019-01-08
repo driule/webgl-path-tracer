@@ -189,6 +189,10 @@ var tracerFragmentSource = `
     vec3 calculateColor(vec3 origin, vec3 ray, Light light) {
         vec3 accumulatedColor = vec3(0.0);
         vec3 surfaceColor = vec3(0.75);
+        vec3 lightColor = vec3(1.0, 1.0, 0.85);
+        vec3 colorMask = vec3(1.0);
+
+        Sphere sphericalLight = Sphere(light.position, light.radius);
         
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
             float t = INFINITY;
@@ -217,6 +221,12 @@ var tracerFragmentSource = `
                     surfaceColor = vec3(0.25, 0.00, 0.00);
                 }
             }
+
+            float tLight = intersectSphere(origin, ray, sphericalLight);
+            if (tLight < t) {
+                accumulatedColor += colorMask * lightColor;
+                break;
+            }
             
             if (t == INFINITY) {
                 break;
@@ -228,7 +238,8 @@ var tracerFragmentSource = `
             float diffuse = max(0.0, dot(normalize(toLight), normal));
             float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);
             
-            accumulatedColor += surfaceColor * (light.intensity * diffuse * shadowIntensity);
+            colorMask *= surfaceColor;
+            accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity);
             
             origin = hit;
         }

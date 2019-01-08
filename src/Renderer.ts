@@ -28,7 +28,7 @@ namespace LH {
             // create scene
             let spheres = this.createSpheres();
             let triangles = this.createTriangles();
-            let light: Light = new Light([0.5, 0.5, -0.6], 3.0, 3.0);
+            let light: Light = new Light([1.25, 1.25, 0.25], 0.25, 9.0);
             this._pathTracer.setObjects(spheres, triangles, light);
 
             this.calculateViewProjection();
