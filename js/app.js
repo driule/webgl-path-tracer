@@ -110,6 +110,7 @@ var LH;
             // create scene
             var spheres = this.createSpheres();
             var triangles = this.createTriangles();
+            //let triangles = this.loadObject('assets/cube.obj');
             var light = new LH.Light([1.25, 1.25, 0.25], 0.25, 9.0);
             this._pathTracer.setObjects(spheres, triangles, light);
             this.calculateViewProjection();
@@ -183,6 +184,42 @@ var LH;
             objects.push(new LH.Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, -0.75], [-0.75, 0.95, -0.75]));
             objects.push(new LH.Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75]));
             return objects;
+        };
+        Renderer.prototype.loadObject = function (filePath) {
+            var triangles = [];
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("GET", filePath, false);
+            xmlhttp.send(null);
+            var fileContent = xmlhttp.responseText;
+            var fileArray = fileContent.split('\n');
+            var vertices = [];
+            var faceIndexes = [];
+            var meshVertices = [];
+            // collect vertices and facets data
+            for (var i = 0; i < fileArray.length; i++) {
+                var line = fileArray[i];
+                var parts = line.split(" ");
+                if (parts[0] === "v") {
+                    vertices.push([parts[1], parts[2], parts[3]]);
+                }
+                else if (parts[0] === "f") {
+                    faceIndexes.push((+parts[1]) - 1);
+                    faceIndexes.push((+parts[2]) - 1);
+                    faceIndexes.push((+parts[3]) - 1);
+                }
+            }
+            // build all mesh vertices
+            for (var i = 0; i < faceIndexes.length; i++) {
+                meshVertices.push([vertices[faceIndexes[i]][0], vertices[faceIndexes[i]][1], vertices[faceIndexes[i]][2]]);
+            }
+            var primitivesCount = meshVertices.length / 3;
+            for (var i = 0; i < primitivesCount; i++) {
+                var a = meshVertices[i * 3 + 2];
+                var b = meshVertices[i * 3 + 1];
+                var c = meshVertices[i * 3];
+                triangles.push(new LH.Triangle(a, b, c));
+            }
+            return triangles;
         };
         return Renderer;
     }());
