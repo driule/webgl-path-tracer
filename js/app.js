@@ -519,7 +519,6 @@ var LH;
         });
         Shader.prototype.getAttributeLocation = function (name) {
             if (this._attributes[name] === undefined) {
-                console.log('boom');
                 throw new Error("Unable to find attribute '" + name + "' in shader '" + this._name + "'");
             }
             return this._attributes[name];

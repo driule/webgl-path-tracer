@@ -24,7 +24,6 @@ namespace LH {
 
         public getAttributeLocation(name: string): number {
             if (this._attributes[name] === undefined) {
-                console.log('boom');
                 throw new Error(`Unable to find attribute '${name}' in shader '${this._name}'`);
             }
 
