@@ -214,9 +214,9 @@ var LH;
             }
             var primitivesCount = meshVertices.length / 3;
             for (var i = 0; i < primitivesCount; i++) {
-                var a = meshVertices[i * 3 + 2];
+                var a = meshVertices[i * 3];
                 var b = meshVertices[i * 3 + 1];
-                var c = meshVertices[i * 3];
+                var c = meshVertices[i * 3 + 1];
                 triangles.push(new LH.Triangle(a, b, c));
             }
             return triangles;

@@ -162,9 +162,9 @@ namespace LH {
 
             let primitivesCount: number = meshVertices.length / 3;
             for (let i = 0; i < primitivesCount; i++) {
-                let a = meshVertices[i * 3 + 2];
+                let a = meshVertices[i * 3];
                 let b = meshVertices[i * 3 + 1];
-                let c = meshVertices[i * 3];
+                let c = meshVertices[i * 3 + 1];
 
                 triangles.push(new Triangle(a, b, c));
             }
