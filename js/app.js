@@ -111,7 +111,7 @@ var LH;
             var spheres = this.createSpheres();
             var triangles = this.createTriangles();
             //let triangles = this.loadObject('assets/cube.obj');
-            var light = new LH.Light([1.25, 1.25, 0.25], 0.25, 9.0);
+            var light = new LH.Light([1.25, 1.25, 0.25], 0.25, 5.0);
             this._pathTracer.setObjects(spheres, triangles, light);
             this.calculateViewProjection();
             //var startTime = Date.now();

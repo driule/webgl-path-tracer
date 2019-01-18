@@ -29,7 +29,7 @@ namespace LH {
             let spheres = this.createSpheres();
             let triangles = this.createTriangles();
             //let triangles = this.loadObject('assets/cube.obj');
-            let light: Light = new Light([1.25, 1.25, 0.25], 0.25, 9.0);
+            let light: Light = new Light([1.25, 1.25, 0.25], 0.25, 5.0);
             this._pathTracer.setObjects(spheres, triangles, light);
 
             this.calculateViewProjection();
