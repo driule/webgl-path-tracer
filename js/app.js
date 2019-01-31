@@ -120,7 +120,17 @@ var LH;
         Renderer.prototype.tick = function (timeSinceStart) {
             this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
-            //requestAnimationFrame(this.tick.bind(this));
+            // fps measurement
+            var currentTick = new Date().getTime();
+            frameCount++;
+            elapsedTime += (currentTick - lastTick);
+            lastTick = currentTick;
+            if (elapsedTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                elapsedTime -= 1000;
+            }
+            requestAnimationFrame(this.tick.bind(this));
         };
         Renderer.prototype.calculateViewProjection = function () {
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
@@ -167,7 +177,7 @@ var LH;
         //
         Renderer.prototype.createSpheres = function () {
             var objects = [];
-            for (var i = 0; i < 3; i++) {
+            for (var i = 0; i < 35; i++) {
                 objects.push(new LH.Sphere(glMatrix.vec3.fromValues(i, -0.75, 0), 0.33));
                 objects.push(new LH.Sphere(glMatrix.vec3.fromValues(i, -0.10, 0), 0.30));
                 objects.push(new LH.Sphere(glMatrix.vec3.fromValues(i, 0.45, 0), 0.25));
@@ -235,11 +245,22 @@ var renderFragmentSource = "\n    precision highp float;\n\n    varying vec2 tex
 var tracerVertexSource = "\n    attribute vec3 vertex;\n    uniform vec3 eye, ray00, ray01, ray10, ray11;\n    varying vec3 initialRay;\n\n    void main() {\n        vec2 percent = vertex.xy * 0.5 + 0.5;\n        initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
 var tracerFragmentSource = "\n    precision highp float;\n\n    #define MAX_SPHERES 128\n    #define MAX_TRIANGLES 128\n    #define BOUNCES 5\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    struct Triangle\n    {\n        vec3 a, b, c;\n    };\n\n    struct Light\n    {\n        vec3 position;\n        float radius;\n        float intensity;\n    };\n\n    uniform vec2 resolution;\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n\n    // geometry\n    uniform Light light;\n\n    uniform int totalSpheres;\n    uniform Sphere spheres[MAX_SPHERES];\n\n    uniform int totalTriangles;\n    uniform Triangle triangles[MAX_TRIANGLES];\n\n    varying vec3 initialRay;\n\n    float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {\n        vec3 toSphere = origin - sphere.center;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t >= EPSILON) return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 getSphereNormal(vec3 hit, Sphere sphere) {\n        return (hit - sphere.center) / sphere.radius;\n    }\n\n    float intersectTriangle(vec3 origin, vec3 ray, Triangle triangle) {\n        float t, u, v;\n\n        vec3 ab = triangle.b - triangle.a;\n        vec3 ac = triangle.c - triangle.a;\n        vec3 pvec = cross(ray, ac);\n        float det = dot(ab, pvec);\n    \n        float invDet = 1.0 / det;\n    \n        vec3 tvec = origin - triangle.a;\n        u = dot(tvec, pvec) * invDet;\n    \n        if (u < 0.0 || u > 1.0) return INFINITY;\n    \n        vec3 qvec = cross(tvec, ab);\n        v = dot(ray, qvec) * invDet;\n        if (v < 0.0 || u + v > 1.0) return INFINITY;\n    \n        t = dot(ac, qvec) * invDet;\n        if (t >= EPSILON)\n        {\n            return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 getTriangleNormal(vec3 hit, Triangle triangle) {\n        return normalize(\n            cross(triangle.a - triangle.b, triangle.b - triangle.c)\n        );\n    }\n\n    float random(vec3 scale, float seed) {\n        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n    }\n\n    vec3 cosineWeightedDirection(float seed, vec3 normal) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float r = sqrt(u);\n        float angle = 6.283185307179586 * v;\n\n        vec3 sdir, tdir;\n        if (abs(normal.x) < 0.5) {\n            sdir = cross(normal, vec3(1, 0, 0));\n        } else {\n            sdir = cross(normal, vec3(0, 1, 0));\n        }\n        tdir = cross(normal, sdir);\n\n        return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;\n    }\n\n    vec3 uniformlyRandomDirection(float seed) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float z = 1.0 - 2.0 * u;\n        float r = sqrt(1.0 - z * z);\n        float angle = 6.283185307179586 * v;\n\n        return vec3(r * cos(angle), r * sin(angle), z);\n    }\n\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n\n    float getShadowIntensity(vec3 origin, vec3 ray) {\n        for (int i = 0; i < MAX_SPHERES; i++) {\n            if (i >= totalSpheres) break;\n            \n            float tSpehere = intersectSphere(origin, ray, spheres[i]);\n            if (tSpehere < 1.0) return 0.0;\n        }\n\n        for (int i = 0; i < MAX_TRIANGLES; i++) {\n            if (i >= totalTriangles) break;\n            \n            float tTriangle = intersectTriangle(origin, ray, triangles[i]);\n            if (tTriangle < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n\n    vec3 calculateColor(vec3 origin, vec3 ray, Light light) {\n        vec3 accumulatedColor = vec3(0.0);\n        vec3 surfaceColor = vec3(0.75);\n        vec3 lightColor = vec3(1.0, 1.0, 0.85);\n        vec3 colorMask = vec3(1.0);\n\n        Sphere sphericalLight = Sphere(light.position, light.radius);\n        \n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_SPHERES; i++) {\n                if (i >= totalSpheres) break;\n                \n                float tSpehere = intersectSphere(origin, ray, spheres[i]);\n                if (tSpehere < t) {\n                    t = tSpehere;\n                    hit = origin + ray * t;\n                    normal = getSphereNormal(hit, spheres[i]);\n                }\n            }\n\n            for (int i = 0; i < MAX_TRIANGLES; i++) {\n                if (i >= totalTriangles) break;\n                \n                float tTriangle = intersectTriangle(origin, ray, triangles[i]);\n                if (tTriangle < t) {\n                    t = tTriangle;\n                    hit = origin + ray * t;\n                    normal = getTriangleNormal(hit, triangles[i]);\n                    surfaceColor = vec3(0.25, 0.00, 0.00);\n                }\n            }\n\n            float tLight = intersectSphere(origin, ray, sphericalLight);\n            if (tLight < t) {\n                accumulatedColor += colorMask * lightColor;\n                break;\n            }\n            \n            if (t == INFINITY) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n\n            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);\n            \n            colorMask *= surfaceColor;\n            accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity);\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n\n    void main() {\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);\n    }\n";
 var renderer;
+// fps measurement
+var lastTick = Date.now();
+var fps = 0;
+var elapsedTime = 0;
+var frameCount = 0;
 window.onload = function () {
     renderer = new LH.Renderer();
     renderer.start();
     var start = Date.now();
-    setInterval(function () { renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
+    renderer.tick(Date.now() - start);
+    // TODO: always use requestAnimationFrame() over setInterval()
+    //setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
+    var fpsOut = document.getElementById('fps');
+    setInterval(function () {
+        fpsOut.innerHTML = fps.toFixed(1) + " fps";
+    }, 200);
 };
 document.onkeydown = function (event) {
     // W

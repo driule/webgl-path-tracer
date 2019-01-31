@@ -255,12 +255,26 @@ var tracerFragmentSource = `
 
 let renderer: LH.Renderer;
 
+// fps measurement
+var lastTick: number = Date.now();
+var fps: number = 0;
+var elapsedTime = 0;
+var frameCount = 0;
+
 window.onload = function() {
     renderer = new LH.Renderer();
     renderer.start();
 
     let start = Date.now();
-    setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
+    renderer.tick(Date.now() - start);
+
+    // TODO: always use requestAnimationFrame() over setInterval()
+    //setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
+
+    var fpsOut = document.getElementById('fps');
+    setInterval(function() {
+        fpsOut.innerHTML = fps.toFixed(1) + " fps";
+    }, 200);
 }
 
 document.onkeydown = function(event) {

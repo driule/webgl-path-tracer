@@ -42,7 +42,18 @@ namespace LH {
             this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
             this._pathTracer.render();
 
-            //requestAnimationFrame(this.tick.bind(this));
+            // fps measurement
+            var currentTick = new Date().getTime();
+            frameCount++;
+            elapsedTime += (currentTick - lastTick);
+            lastTick = currentTick;
+            if (elapsedTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                elapsedTime -= 1000;
+            }
+
+            requestAnimationFrame(this.tick.bind(this));
         }
 
         private calculateViewProjection(): void {
@@ -100,7 +111,7 @@ namespace LH {
         private createSpheres() {
             let objects = [];
 
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 35; i++) {
                 objects.push(new Sphere(glMatrix.vec3.fromValues(i, -0.75, 0), 0.33));
                 objects.push(new Sphere(glMatrix.vec3.fromValues(i, -0.10, 0), 0.30));
                 objects.push(new Sphere(glMatrix.vec3.fromValues(i, 0.45, 0), 0.25));
