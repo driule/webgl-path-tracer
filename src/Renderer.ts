@@ -111,10 +111,10 @@ namespace LH {
         private createSpheres() {
             let objects = [];
 
-            for (let i = 0; i < 35; i++) {
-                objects.push(new Sphere(glMatrix.vec3.fromValues(i, -0.75, 0), 0.33));
-                objects.push(new Sphere(glMatrix.vec3.fromValues(i, -0.10, 0), 0.30));
-                objects.push(new Sphere(glMatrix.vec3.fromValues(i, 0.45, 0), 0.25));
+            for (let i = 0; i < 30; i++) {
+                objects.push(new Sphere(glMatrix.vec3.fromValues(i - 3, -0.75, 0), 0.33));
+                objects.push(new Sphere(glMatrix.vec3.fromValues(i - 3, -0.10, 0), 0.30));
+                objects.push(new Sphere(glMatrix.vec3.fromValues(i - 3, 0.45, 0), 0.25));
             }
         
             return objects;
@@ -123,17 +123,19 @@ namespace LH {
         private createTriangles() {
             let objects = [];
 
-            // ground plane
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]));
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]));
-            
-            // left side
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]));
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75],  [-0.75, 0.95, 0.75]));
+            for (let i = 0; i < 30; i++) {
+                // ground plane
+                objects.push(new Triangle([-0.75 + i - 3, -0.95, -0.75], [0.75 + i - 3, -0.95, 0.75], [0.75 + i - 3, -0.95, -0.75]));
+                objects.push(new Triangle([-0.75 + i - 3, -0.95, -0.75], [-0.75+ i - 3, -0.95, 0.75], [0.75 + i - 3, -0.95, 0.75]));
+                
+                // left side
+                //objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]));
+                //objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75],  [-0.75, 0.95, 0.75]));
 
-            // back side
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, -0.75], [-0.75, 0.95, -0.75]));
-            objects.push(new Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75]));
+                // back side
+                objects.push(new Triangle([-0.75 + i - 3, -0.95, -0.75], [0.75 + i - 3, -0.95, -0.75], [-0.75 + i - 3, 0.95, -0.75]));
+                objects.push(new Triangle([0.75 + i - 3, -0.95, -0.75], [0.75 + i - 3, 0.95, -0.75], [-0.75 + i - 3, 0.95, -0.75]));
+            }
 
             return objects;
         }
