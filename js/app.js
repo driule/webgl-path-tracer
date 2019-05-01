@@ -116,8 +116,8 @@ var LH;
             // create scene
             var spheres = [];
             this.createSpheres();
-            // let triangles = this.createTriangles();
-            var triangles = this.loadObject('assets/teddy.obj');
+            var triangles = this.createTriangles();
+            // let triangles = this.loadObject('assets/teddy.obj');
             var light = new LH.Light([12.25, 15.75, 0.25], 0.25, 5000.0);
             this._pathTracer.setObjects(spheres, triangles, light);
             this.calculateViewProjection();
