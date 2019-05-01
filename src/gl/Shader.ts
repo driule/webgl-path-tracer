@@ -43,54 +43,36 @@ namespace LH {
             for (let name in uniforms) {
 
                 // specific case for triangle data texture
-                if (name.toString() === "triangleData") {
-                    let triangleDataLocation = gl.getUniformLocation(this._program, "triangleDataTexture");
-                    // console.log(triangleDataLocation);
+                if (name.toString() === "triangles") {
 
                     let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
-                    for (let i = 0; i < triangleList.length; i++) {
-                        triangleList[i] = 0.0;
-                    }
-
                     for (let i = 0; i < uniforms.totalTriangles; i++) {
-                        triangleList[i * 3 * 3] = uniforms.triangleData[i].a[0];
-                        triangleList[i * 3 * 3 + 1] = uniforms.triangleData[i].a[1];
-                        triangleList[i * 3 * 3 + 2] = uniforms.triangleData[i].a[2];
+                        triangleList[i * 3 * 3] = uniforms.triangles[i].a[0];
+                        triangleList[i * 3 * 3 + 1] = uniforms.triangles[i].a[1];
+                        triangleList[i * 3 * 3 + 2] = uniforms.triangles[i].a[2];
 
-                        triangleList[i * 3 * 3 + 3] = uniforms.triangleData[i].b[0];
-                        triangleList[i * 3 * 3 + 4] = uniforms.triangleData[i].b[1];
-                        triangleList[i * 3 * 3 + 5] = uniforms.triangleData[i].b[2];
+                        triangleList[i * 3 * 3 + 3] = uniforms.triangles[i].b[0];
+                        triangleList[i * 3 * 3 + 4] = uniforms.triangles[i].b[1];
+                        triangleList[i * 3 * 3 + 5] = uniforms.triangles[i].b[2];
 
-                        triangleList[i * 3 * 3 + 6] = uniforms.triangleData[i].c[0];
-                        triangleList[i * 3 * 3 + 7] = uniforms.triangleData[i].c[1];
-                        triangleList[i * 3 * 3 + 8] = uniforms.triangleData[i].c[2];
+                        triangleList[i * 3 * 3 + 6] = uniforms.triangles[i].c[0];
+                        triangleList[i * 3 * 3 + 7] = uniforms.triangles[i].c[1];
+                        triangleList[i * 3 * 3 + 8] = uniforms.triangles[i].c[2];
                     }
-
-                    // console.log(uniforms.totalTriangles);
-                    // console.log(triangleList);
-
-                    let triangleDataTexture = gl.createTexture();
 
                     gl.activeTexture(gl.TEXTURE1);
-                    gl.bindTexture(gl.TEXTURE_2D, triangleDataTexture);
+                    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                    // let extension = gl.getExtension('OES_texture_float');
-                    // if (extension) {
-                    //     console.log('zjbs');
-                    // } else {
-                    //     console.log('bbs');
-                    // }
-
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
-
+                    
+                    let triangleDataLocation = gl.getUniformLocation(this._program, "triangleDataTexture");
                     gl.uniform1i(triangleDataLocation, 1);
 
-                    // console.log(triangleList);
                     continue;
                 }
 
@@ -105,21 +87,6 @@ namespace LH {
                     }
                     continue;
                 }
-
-                // specific case for triangles
-                // if (name.toString() === "triangles") {
-                //     for (let i = 0; i < uniforms.triangles.length; i++) {
-                //         let aLocation = gl.getUniformLocation(this._program, "triangles[" + i + "].a");
-                //         gl.uniform3fv(aLocation, new Float32Array([uniforms.triangles[i].a[0], uniforms.triangles[i].a[1], uniforms.triangles[i].a[2]]));
-
-                //         let bLocation = gl.getUniformLocation(this._program, "triangles[" + i + "].b");
-                //         gl.uniform3fv(bLocation, new Float32Array([uniforms.triangles[i].b[0], uniforms.triangles[i].b[1], uniforms.triangles[i].b[2]]));
-
-                //         let cLocation = gl.getUniformLocation(this._program, "triangles[" + i + "].c");
-                //         gl.uniform3fv(cLocation, new Float32Array([uniforms.triangles[i].c[0], uniforms.triangles[i].c[1], uniforms.triangles[i].c[2]]));
-                //     }
-                //     continue;
-                // }
 
                 // specific case for light
                 if (name.toString() === "light") {

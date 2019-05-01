@@ -17,7 +17,7 @@ namespace LH {
 
             this._angleX = 0;
             this._angleY = 0;
-            this._zoomZ = 40.0;
+            this._zoomZ = 2.5;
             this._eye = glMatrix.vec3.create();
         }
 
@@ -26,13 +26,15 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            let spheres = [];this.createSpheres();
+            let spheres = this.createSpheres();
             let triangles = this.createTriangles();
             // let triangles = this.loadObject('assets/teddy.obj');
-            let light: Light = new Light([12.25, 15.75, 0.25], 0.25, 5000.0);
+            let light: Light = new Light([12.25, 15.75, 0.25], 0.75, 5.0);
             this._pathTracer.setObjects(spheres, triangles, light);
 
             this.calculateViewProjection();
+
+            primitiveCount = spheres.length + triangles.length;
 
             //var startTime = Date.now();
             //this.tick((Date.now() - startTime) * 0.001);

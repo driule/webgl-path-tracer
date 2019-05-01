@@ -26,7 +26,6 @@ namespace LH {
         
             // create textures
             var type = gl.getExtension('OES_texture_float') ? gl.FLOAT : gl.UNSIGNED_BYTE;
-            // console.log('type: ' + type);
             this._textures = [];
             for (var i = 0; i < 2; i++) {
                 this._textures.push(gl.createTexture());
@@ -82,13 +81,11 @@ namespace LH {
             uniforms.light = this._light;
             uniforms.spheres = this._spheres;
             uniforms.totalSpheres = this._spheres.length;
-            // uniforms.triangles = this._triangles;
-            uniforms.totalTriangles = this._triangles.length;
-            // console.log('total triangles: ' + uniforms.totalTriangles);
 
-            // ToDo:
-            uniforms.triangleDataTextureSize = 256;
-            uniforms.triangleData = this._triangles;
+            // triangle data
+            uniforms.triangles = this._triangles;
+            uniforms.totalTriangles = this._triangles.length;
+            uniforms.triangleDataTextureSize = 512;
           
             // set uniforms
             this._tracerShader.use();

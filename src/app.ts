@@ -69,12 +69,12 @@ var tracerFragmentSource = `
     uniform float timeSinceStart;
     uniform sampler2D texture;
 
+    // geometry
+    uniform Light light;
+
     uniform int totalTriangles;
     uniform float triangleDataTextureSize;
     uniform sampler2D triangleDataTexture;
-
-    // geometry
-    uniform Light light;
 
     uniform int totalSpheres;
     uniform Sphere spheres[MAX_SPHERES];
@@ -232,8 +232,6 @@ var tracerFragmentSource = `
                 vec3 coordC = getValueFromTexture(float(i * 3 + 2));
                 Triangle triangle = Triangle(coordA, coordB, coordC);
 
-                // float answer = texelFetch(triangleDataTexture, ivec3(0, 0, 0), 0);
-
                 float tTriangle = intersectTriangle(origin, ray, triangle);
                 if (tTriangle < t) {
                     t = tTriangle;
@@ -271,71 +269,7 @@ var tracerFragmentSource = `
     void main() {
         vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;
         gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);
-
-        // for (int i = 0; i < MAX_TRIANGLES; i++) {
-        //     if (i >= totalTriangles) break;
-
-        //     vec3 coordA = getValueFromTexture(float(i * 3));
-        //     vec3 coordB = getValueFromTexture(float(i * 3 + 1));
-        //     vec3 coordC = getValueFromTexture(float(i * 3 + 2));
-        //     // Triangle triangle = Triangle(coordA, coordB, coordC);
-
-        //     if (i == 1) {
-        //         if (
-        //             // triangle #1
-        //             // abs(coordA[0] - -0.75) < 0.01
-        //             // && abs(coordA[1] - -0.95) < 0.01
-        //             // && abs(coordA[2] - -0.75) < 0.01
-
-        //             // && abs(coordB[0] - 0.75) < 0.01
-        //             // && abs(coordB[1] - -0.95) < 0.01
-        //             // && abs(coordB[2] - 0.75) < 0.01
-                    
-        //             // && abs(coordC[0] - 0.75) < 0.01
-        //             // && abs(coordC[1] - -0.95) < 0.01
-        //             // && abs(coordC[2] - -0.75) < 0.01
-
-        //             // triangle #2
-        //             abs(coordA[0] - -1.0) < 0.01
-        //             && abs(coordA[1] - -1.0) < 0.01
-        //             && abs(coordA[2] - -1.0) < 0.01
-
-        //             && abs(coordB[0] - -1.0) < 0.01
-        //             && abs(coordB[1] - -1.0) < 0.01
-        //             && abs(coordB[2] - 1.0) < 0.01
-                    
-        //             && abs(coordC[0] - 1.0) < 0.01
-        //             && abs(coordC[1] - -1.0) < 0.01
-        //             && abs(coordC[2] - 1.0) < 0.01
-        //         ) {
-        //             gl_FragColor = vec4(0.0, 0.75, 0.0, 1.0);
-        //         } else {
-        //             gl_FragColor = vec4(0.75, 0.0, 0.0, 1.0);
-        //         }
-
-        //         break;
-        //     }
-        // }
     }
-
-    // void main() {
-    //     vec3 coordA = getValueFromTexture(0.0).rgb;
-    //     vec3 coordB = getValueFromTexture(1.0).rgb;
-    //     vec3 coordC = getValueFromTexture(2.0).rgb;
-
-    //     Triangle triangle = Triangle(coordA, coordB, coordC);
-
-    //     // simple test to check if trinagle has ANY coordinates
-    //     if (
-    //         coordA[0] > 0.0 || coordA[1] > 0.0 || coordA[2] > 0.0
-    //         || coordB[0] > 0.0 || coordB[1] > 0.0 || coordB[2] > 0.0
-    //         || coordC[0] > 0.0 || coordC[1] > 0.0 || coordC[2] > 0.0
-    //     ) {
-    //         gl_FragColor = vec4(0.0, 0.75, 0.0, 1.0);
-    //     } else {
-    //         gl_FragColor = vec4(0.75, 0.0, 0.0, 1.0);
-    //     }
-    // }
 `;
 
 let renderer: LH.Renderer;
@@ -345,6 +279,8 @@ var lastTick: number = Date.now();
 var fps: number = 0;
 var elapsedTime = 0;
 var frameCount = 0;
+
+var primitiveCount = 0;
 
 window.onload = function() {
     renderer = new LH.Renderer();
@@ -356,9 +292,11 @@ window.onload = function() {
     // TODO: always use requestAnimationFrame() over setInterval()
     //setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
 
-    var fpsOut = document.getElementById('fps');
+    var fpsLabel = document.getElementById('fps');
+    var primitiveCountLabel = document.getElementById('primitiveCount');
     setInterval(function() {
-        fpsOut.innerHTML = fps.toFixed(1) + " fps";
+        fpsLabel.innerHTML = fps.toFixed(1) + " fps";
+        primitiveCountLabel.innerHTML = primitiveCount + " primitives loaded";
     }, 200);
 }
 
