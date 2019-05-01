@@ -66,7 +66,7 @@ namespace LH {
                         triangleList[i * 3 * 3 + 8] = uniforms.triangleData[i].c[2];
                     }
 
-                    // console.log(triangleList.length);
+                    // console.log(uniforms.totalTriangles);
                     // console.log(triangleList);
 
                     let triangleDataTexture = gl.createTexture();
@@ -86,7 +86,7 @@ namespace LH {
                     //     console.log('bbs');
                     // }
 
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
 
                     gl.uniform1i(triangleDataLocation, 1);
 
