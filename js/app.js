@@ -518,6 +518,11 @@ var LH;
     }());
     LH.GLBuffer = GLBuffer;
 })(LH || (LH = {}));
+// Type definitions for WebGL 2, Editor's Draft Fri Feb 24 16:10:18 2017 -0800
+// Project: https://www.khronos.org/registry/webgl/specs/latest/2.0/
+// Definitions by: Nico Kemnitz <https://github.com/nkemnitz>
+//                 Adrian Blumer <https://github.com/karhu>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 var LH;
 (function (LH) {
     var GLUtilities = /** @class */ (function () {
@@ -528,8 +533,8 @@ var LH;
             if (canvas === undefined) {
                 throw new Error("Cannot find canvas element by id: " + canvasId);
             }
+            // use WebGL 2.0
             LH.gl = canvas.getContext("webgl2");
-            // gl = canvas.getContext("webgl");
             if (LH.gl === undefined) {
                 throw new Error("Unable to initialize WebGL!");
             }

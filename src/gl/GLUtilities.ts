@@ -1,6 +1,6 @@
 namespace LH {
     
-    export var gl: WebGLRenderingContext;
+    export var gl: WebGL2RenderingContext;
 
     export class GLUtilities {
 
@@ -11,8 +11,9 @@ namespace LH {
                 throw new Error("Cannot find canvas element by id: " + canvasId);
             }
 
+            // use WebGL 2.0
             gl = canvas.getContext("webgl2");
-            // gl = canvas.getContext("webgl");
+
             if (gl === undefined) {
                 throw new Error("Unable to initialize WebGL!");
             }
