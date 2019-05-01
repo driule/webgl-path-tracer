@@ -107,7 +107,7 @@ var LH;
             this._pathTracer = new LH.PathTracer([this._canvas.width, this._canvas.height]);
             this._angleX = 0;
             this._angleY = 0;
-            this._zoomZ = 2.5;
+            this._zoomZ = 40.0;
             this._eye = glMatrix.vec3.create();
         }
         Renderer.prototype.start = function () {
