@@ -11,10 +11,13 @@ namespace LH {
                 throw new Error("Cannot find canvas element by id: " + canvasId);
             }
 
-            gl = canvas.getContext("webgl");
+            gl = canvas.getContext("webgl2");
+            // gl = canvas.getContext("webgl");
             if (gl === undefined) {
                 throw new Error("Unable to initialize WebGL!");
             }
+
+            console.log(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
 
             return canvas;
         }

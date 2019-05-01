@@ -39,8 +39,8 @@ var tracerVertexSource = `
 var tracerFragmentSource = `
     precision highp float;
 
-    #define MAX_SPHERES 128
-    #define MAX_TRIANGLES 128
+    #define MAX_SPHERES 50
+    #define MAX_TRIANGLES 10000
     #define BOUNCES 5
     #define EPSILON 0.0001
     #define INFINITY 10000.0
@@ -69,6 +69,9 @@ var tracerFragmentSource = `
     uniform float timeSinceStart;
     uniform sampler2D texture;
 
+    uniform float triangleDataTextureSize;
+    uniform sampler2D triangleDataTexture;
+
     // geometry
     uniform Light light;
 
@@ -76,9 +79,18 @@ var tracerFragmentSource = `
     uniform Sphere spheres[MAX_SPHERES];
 
     uniform int totalTriangles;
-    uniform Triangle triangles[MAX_TRIANGLES];
+    // uniform Triangle triangles[MAX_TRIANGLES];
 
     varying vec3 initialRay;
+
+    // vec2 textureSize = vec2(triangleDataTextureSize, triangleDataTextureSize);
+    vec3 getValueFromTexture(float index) {
+        float column = mod(index, triangleDataTextureSize);
+        float row = floor(index / triangleDataTextureSize);
+        vec2 uv = vec2((column + 0.5) / triangleDataTextureSize, (row + 0.5) / triangleDataTextureSize);
+
+        return texture2D(triangleDataTexture, uv).rgb;
+     }
 
     float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
         vec3 toSphere = origin - sphere.center;
@@ -178,8 +190,14 @@ var tracerFragmentSource = `
 
         for (int i = 0; i < MAX_TRIANGLES; i++) {
             if (i >= totalTriangles) break;
+
+            vec3 coordA = getValueFromTexture(float(i));
+            vec3 coordB = getValueFromTexture(float(i + 1));
+            vec3 coordC = getValueFromTexture(float(i + 2));
+            Triangle triangle = Triangle(coordA, coordB, coordC);
             
-            float tTriangle = intersectTriangle(origin, ray, triangles[i]);
+            float tTriangle = intersectTriangle(origin, ray, triangle);
+            // float tTriangle = intersectTriangle(origin, ray, triangles[i]);
             if (tTriangle < 1.0) return 0.0;
         }
         
@@ -212,12 +230,19 @@ var tracerFragmentSource = `
 
             for (int i = 0; i < MAX_TRIANGLES; i++) {
                 if (i >= totalTriangles) break;
-                
-                float tTriangle = intersectTriangle(origin, ray, triangles[i]);
+
+                vec3 coordA = getValueFromTexture(float(i));
+                vec3 coordB = getValueFromTexture(float(i + 1));
+                vec3 coordC = getValueFromTexture(float(i + 2));
+                Triangle triangle = Triangle(coordA, coordB, coordC);
+
+                float tTriangle = intersectTriangle(origin, ray, triangle);
+                // float tTriangle = intersectTriangle(origin, ray, triangles[i]);
                 if (tTriangle < t) {
                     t = tTriangle;
                     hit = origin + ray * t;
-                    normal = getTriangleNormal(hit, triangles[i]);
+                    // normal = getTriangleNormal(hit, triangles[i]);
+                    normal = getTriangleNormal(hit, triangle);
                     surfaceColor = vec3(0.25, 0.00, 0.00);
                 }
             }
@@ -250,7 +275,36 @@ var tracerFragmentSource = `
     void main() {
         vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;
         gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);
+
+        // float test = texelFetch(triangleDataTexture, ivec2(2,2), 0);
+
+        // vec4 x = getValueFromTexture(0.0);
+        // vec4 x = texture2D(triangleDataTexture, vec2(0.0, 0.0));
+        // if (x[0] > 0.0 || x[1] > 0.0 || x[2] > 0.0) {
+        //     gl_FragColor = vec4(0.0, 0.75, 0.0, 1.0);
+        // } else {
+        //     gl_FragColor = vec4(0.75, 0.0, 0.0, 1.0);
+        // }
     }
+
+    // void main() {
+    //     vec3 coordA = getValueFromTexture(0.0).rgb;
+    //     vec3 coordB = getValueFromTexture(1.0).rgb;
+    //     vec3 coordC = getValueFromTexture(2.0).rgb;
+
+    //     Triangle triangle = Triangle(coordA, coordB, coordC);
+
+    //     // simple test to check if trinagle has ANY coordinates
+    //     if (
+    //         coordA[0] > 0.0 || coordA[1] > 0.0 || coordA[2] > 0.0
+    //         || coordB[0] > 0.0 || coordB[1] > 0.0 || coordB[2] > 0.0
+    //         || coordC[0] > 0.0 || coordC[1] > 0.0 || coordC[2] > 0.0
+    //     ) {
+    //         gl_FragColor = vec4(0.0, 0.75, 0.0, 1.0);
+    //     } else {
+    //         gl_FragColor = vec4(0.75, 0.0, 0.0, 1.0);
+    //     }
+    // }
 `;
 
 let renderer: LH.Renderer;

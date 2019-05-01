@@ -26,10 +26,10 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            let spheres = this.createSpheres();
+            let spheres = [];this.createSpheres();
             let triangles = this.createTriangles();
-            //let triangles = this.loadObject('assets/cube.obj');
-            let light: Light = new Light([1.25, 1.25, 0.25], 0.25, 5.0);
+            // let triangles = this.loadObject('assets/teddy.obj');
+            let light: Light = new Light([2.25, 1.75, 0.25], 0.25, 5000.0);
             this._pathTracer.setObjects(spheres, triangles, light);
 
             this.calculateViewProjection();
@@ -179,7 +179,7 @@ namespace LH {
             for (let i = 0; i < primitivesCount; i++) {
                 let a = meshVertices[i * 3];
                 let b = meshVertices[i * 3 + 1];
-                let c = meshVertices[i * 3 + 1];
+                let c = meshVertices[i * 3 + 2];
 
                 triangles.push(new Triangle(a, b, c));
             }

@@ -26,6 +26,7 @@ namespace LH {
         
             // create textures
             var type = gl.getExtension('OES_texture_float') ? gl.FLOAT : gl.UNSIGNED_BYTE;
+            // console.log('type: ' + type);
             this._textures = [];
             for (var i = 0; i < 2; i++) {
                 this._textures.push(gl.createTexture());
@@ -81,17 +82,24 @@ namespace LH {
             uniforms.light = this._light;
             uniforms.spheres = this._spheres;
             uniforms.totalSpheres = this._spheres.length;
-            uniforms.triangles = this._triangles;
+            // uniforms.triangles = this._triangles;
             uniforms.totalTriangles = this._triangles.length;
+            // console.log('total triangles: ' + uniforms.totalTriangles);
+
+            // ToDo:
+            uniforms.triangleDataTextureSize = 256;
+            uniforms.triangleData = this._triangles;
           
             // set uniforms
             this._tracerShader.use();
-            this._tracerShader.setUniforms(uniforms);
-          
+
             // render to texture
+            gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
             gl.bindFramebuffer(gl.FRAMEBUFFER, this._framebuffer);
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._textures[1], 0);
+
+            this._tracerShader.setUniforms(uniforms);
 
             this._vertexBuffer.upload();
             this._vertexBuffer.draw();
