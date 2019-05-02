@@ -28,8 +28,8 @@ namespace LH {
             // create scene
             let triangles = this.createTriangles();
             // let triangles = this.loadObject('assets/teddy.obj');
-            let light: Light = new Light([12.25, 15.75, 0.25], 0.75, 5.0);
-            this._pathTracer.setObjects(triangles, light);
+            let lights: Light[] = [new Light([12.25, 15.75, 0.25], 0.75, 5.0)];
+            this._pathTracer.setObjects(triangles, lights);
 
             this.calculateViewProjection();
 

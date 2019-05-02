@@ -47,7 +47,7 @@ namespace LH {
 
                     let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
                     for (let i = 0; i < uniforms.totalTriangles; i++) {
-                        triangleList[i * 3 * 3] = uniforms.triangles[i].a[0];
+                        triangleList[i * 3 * 3 + 0] = uniforms.triangles[i].a[0];
                         triangleList[i * 3 * 3 + 1] = uniforms.triangles[i].a[1];
                         triangleList[i * 3 * 3 + 2] = uniforms.triangles[i].a[2];
 
@@ -77,15 +77,31 @@ namespace LH {
                 }
 
                 // specific case for light
-                if (name.toString() === "light") {
-                    let centerLocation = gl.getUniformLocation(this._program, "light.position");
-                    gl.uniform3fv(centerLocation, new Float32Array([uniforms.light.position[0], uniforms.light.position[1], uniforms.light.position[2]]));
+                if (name.toString() === "lights") {
+                    let lightList = new Float32Array(uniforms.lightDataTextureSize * uniforms.lightDataTextureSize * 3);
+                    for (let i = 0; i < uniforms.totalLights; i++) {
+                        lightList[i * 3 * 3 + 0] = uniforms.lights[i].position[0];
+                        lightList[i * 3 * 3 + 1] = uniforms.lights[i].position[1];
+                        lightList[i * 3 * 3 + 2] = uniforms.lights[i].position[2];
 
-                    let radiusLocation = gl.getUniformLocation(this._program, "light.radius");
-                    gl.uniform1f(radiusLocation, uniforms.light.radius);
+                        lightList[i * 3 * 3 + 3] = uniforms.lights[i].radius;
+                        lightList[i * 3 * 3 + 4] = uniforms.lights[i].intensity;
+                        lightList[i * 3 * 3 + 5] = 0.0;
+                    }
 
-                    let intensityLocation = gl.getUniformLocation(this._program, "light.intensity");
-                    gl.uniform1f(intensityLocation, uniforms.light.intensity);
+                    gl.activeTexture(gl.TEXTURE2);
+                    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.lightDataTextureSize, uniforms.lightDataTextureSize, 0, gl.RGB, gl.FLOAT, lightList);
+                    
+                    let lightDataLocation = gl.getUniformLocation(this._program, "lightDataTexture");
+                    gl.uniform1i(lightDataLocation, 2);
+
                     continue;
                 }
 
@@ -111,7 +127,8 @@ namespace LH {
                 var floatUniforms = [
                     "timeSinceStart",
                     "textureWeight",
-                    "triangleDataTextureSize"
+                    "triangleDataTextureSize",
+                    "lightDataTextureSize"
                 ];
         
                 let value = uniforms[name];

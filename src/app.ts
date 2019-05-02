@@ -69,20 +69,41 @@ var tracerFragmentSource = `
     uniform sampler2D texture;
 
     // geometry
-    uniform Light light;
-
     uniform int totalTriangles;
     uniform float triangleDataTextureSize;
     uniform sampler2D triangleDataTexture;
 
+    uniform int totalLights;
+    uniform float lightDataTextureSize;
+    uniform sampler2D lightDataTexture;
+
     varying vec3 initialRay;
 
-    vec3 getValueFromTexture(float index) {
-        float column = mod(index, triangleDataTextureSize);
-        float row = floor(index / triangleDataTextureSize);
-        vec2 uv = vec2((column + 0.5) / triangleDataTextureSize, (row + 0.5) / triangleDataTextureSize);
+    vec3 getValueFromTexture(sampler2D texture, float index, float size) {
+        float column = mod(index, size);
+        float row = floor(index / size);
 
-        return texture2D(triangleDataTexture, uv).rgb;
+        vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);
+
+        return texture2D(texture, uv).rgb;
+     }
+
+     Triangle fetchTriangle(int id) {
+         vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3), triangleDataTextureSize);
+         vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);
+         vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);
+         
+         return Triangle(coordA, coordB, coordC);
+     }
+
+     Light fetchLight(int id) {
+         vec3 position = getValueFromTexture(lightDataTexture, float(id * 3), lightDataTextureSize);
+         vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 3 + 1), lightDataTextureSize);
+
+         float radius = featureVector[0];
+         float intensity = featureVector[1];
+         
+         return Light(position, radius, intensity);
      }
 
     float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
@@ -172,25 +193,25 @@ var tracerFragmentSource = `
     float getShadowIntensity(vec3 origin, vec3 ray) {
         for (int i = 0; i < MAX_TRIANGLES; i++) {
             if (i >= totalTriangles) break;
-
-            vec3 coordA = getValueFromTexture(float(i * 3));
-            vec3 coordB = getValueFromTexture(float(i * 3 + 1));
-            vec3 coordC = getValueFromTexture(float(i * 3 + 2));
-            Triangle triangle = Triangle(coordA, coordB, coordC);
             
-            float tTriangle = intersectTriangle(origin, ray, triangle);
+            float tTriangle = intersectTriangle(
+                origin,
+                ray,
+                fetchTriangle(i)
+            );
             if (tTriangle < 1.0) return 0.0;
         }
         
         return 1.0;
     }
 
-    vec3 calculateColor(vec3 origin, vec3 ray, Light light) {
+    vec3 calculateColor(vec3 origin, vec3 ray) {
         vec3 accumulatedColor = vec3(0.0);
         vec3 surfaceColor = vec3(0.75);
         vec3 lightColor = vec3(1.0, 1.0, 0.85);
         vec3 colorMask = vec3(1.0);
 
+        Light light = fetchLight(0);
         Sphere sphericalLight = Sphere(light.position, light.radius);
         
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
@@ -201,11 +222,7 @@ var tracerFragmentSource = `
             for (int i = 0; i < MAX_TRIANGLES; i++) {
                 if (i >= totalTriangles) break;
 
-                vec3 coordA = getValueFromTexture(float(i * 3));
-                vec3 coordB = getValueFromTexture(float(i * 3 + 1));
-                vec3 coordC = getValueFromTexture(float(i * 3 + 2));
-                Triangle triangle = Triangle(coordA, coordB, coordC);
-
+                Triangle triangle = fetchTriangle(i);
                 float tTriangle = intersectTriangle(origin, ray, triangle);
                 if (tTriangle < t) {
                     t = tTriangle;
@@ -242,7 +259,7 @@ var tracerFragmentSource = `
 
     void main() {
         vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;
-        gl_FragColor = vec4(mix(calculateColor(eye, initialRay, light), texture, textureWeight), 1.0);
+        gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
     }
 `;
 

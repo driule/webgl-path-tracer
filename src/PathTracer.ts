@@ -15,7 +15,7 @@ namespace LH {
         private _sampleCount: number;
 
         private _triangles: Triangle[];
-        private _light: Light;
+        private _lights: Light[];
 
         public constructor(resolution: any) {
             this._resolution = resolution;
@@ -55,7 +55,7 @@ namespace LH {
             ]);
             this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
         
-            this._light = null;
+            this._lights = [];
             this._triangles = [];
         }
           
@@ -76,12 +76,15 @@ namespace LH {
             uniforms.timeSinceStart = timeSinceStart;
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
-            uniforms.light = this._light;
-
             // triangle data
             uniforms.triangles = this._triangles;
             uniforms.totalTriangles = this._triangles.length;
             uniforms.triangleDataTextureSize = 512;
+
+            // light data
+            uniforms.lights = this._lights;
+            uniforms.totalLights = this._lights.length;
+            uniforms.lightDataTextureSize = 16;
           
             // set uniforms
             this._tracerShader.use();
@@ -111,9 +114,9 @@ namespace LH {
             this._vertexBuffer.draw();
         }
 
-        public setObjects(triangles: Triangle[], light: Light): void {
+        public setObjects(triangles: Triangle[], lights: Light[]): void {
             this._triangles = triangles;
-            this._light = light;
+            this._lights = lights;
 
             this.restart();
         }
