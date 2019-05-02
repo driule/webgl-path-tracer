@@ -561,16 +561,6 @@ var LH;
                     LH.gl.uniform1i(triangleDataLocation, 1);
                     continue;
                 }
-                // specific case for spheres
-                if (name_1.toString() === "spheres") {
-                    for (var i = 0; i < uniforms.spheres.length; i++) {
-                        var centerLocation = LH.gl.getUniformLocation(this._program, "spheres[" + i + "].center");
-                        LH.gl.uniform3fv(centerLocation, new Float32Array([uniforms.spheres[i].center[0], uniforms.spheres[i].center[1], uniforms.spheres[i].center[2]]));
-                        var radiusLocation = LH.gl.getUniformLocation(this._program, "spheres[" + i + "].radius");
-                        LH.gl.uniform1f(radiusLocation, uniforms.spheres[i].radius);
-                    }
-                    continue;
-                }
                 // specific case for light
                 if (name_1.toString() === "light") {
                     var centerLocation = LH.gl.getUniformLocation(this._program, "light.position");
@@ -597,7 +587,6 @@ var LH;
                 ];
                 var matrix4Uniforms = [];
                 var intUniforms = [
-                    "totalSpheres",
                     "totalTriangles"
                 ];
                 var floatUniforms = [
