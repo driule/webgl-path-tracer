@@ -5,7 +5,7 @@
 - [+] Initiated *npm* project, all dependencies and typings controlled via *npm* package manager
 - [+] Randomize light based on {time, pixel coordinates, loop iteration} seed
 
-## ToDo
+### ToDo
 - [-] Generalize uniforms passing to the shader (avoid hardcoding by name); initialize dataTexture uniform type or smth.
 - [-] BVH
 - [-] Initialize materials
