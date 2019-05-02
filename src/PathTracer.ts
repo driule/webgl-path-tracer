@@ -14,7 +14,6 @@ namespace LH {
 
         private _sampleCount: number;
 
-        private _spheres: Sphere[];
         private _triangles: Triangle[];
         private _light: Light;
 
@@ -57,7 +56,6 @@ namespace LH {
             this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
         
             this._light = null;
-            this._spheres = [];
             this._triangles = [];
         }
           
@@ -79,8 +77,6 @@ namespace LH {
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
             uniforms.light = this._light;
-            uniforms.spheres = this._spheres;
-            uniforms.totalSpheres = this._spheres.length;
 
             // triangle data
             uniforms.triangles = this._triangles;
@@ -115,8 +111,7 @@ namespace LH {
             this._vertexBuffer.draw();
         }
 
-        public setObjects(spheres: Sphere[], triangles: Triangle[], light: Light): void {
-            this._spheres = spheres;
+        public setObjects(triangles: Triangle[], light: Light): void {
             this._triangles = triangles;
             this._light = light;
 

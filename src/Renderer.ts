@@ -26,15 +26,14 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            let spheres = this.createSpheres();
             let triangles = this.createTriangles();
             // let triangles = this.loadObject('assets/teddy.obj');
             let light: Light = new Light([12.25, 15.75, 0.25], 0.75, 5.0);
-            this._pathTracer.setObjects(spheres, triangles, light);
+            this._pathTracer.setObjects(triangles, light);
 
             this.calculateViewProjection();
 
-            primitiveCount = spheres.length + triangles.length;
+            primitiveCount = triangles.length;
 
             //var startTime = Date.now();
             //this.tick((Date.now() - startTime) * 0.001);
@@ -110,17 +109,6 @@ namespace LH {
         //
         // scene objects
         //
-        private createSpheres() {
-            let objects = [];
-
-            for (let i = 0; i < 30; i++) {
-                objects.push(new Sphere(glMatrix.vec3.fromValues(i - 3, -0.75, 0), 0.33));
-                objects.push(new Sphere(glMatrix.vec3.fromValues(i - 3, -0.10, 0), 0.30));
-                objects.push(new Sphere(glMatrix.vec3.fromValues(i - 3, 0.45, 0), 0.25));
-            }
-        
-            return objects;
-        }
 
         private createTriangles() {
             let objects = [];
