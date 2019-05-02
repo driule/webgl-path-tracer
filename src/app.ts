@@ -257,10 +257,11 @@ var tracerFragmentSource = `
             for (int i = 0; i < MAX_LIGHTS; i++) {
                 if (i >= totalLights) break;
 
-                float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart);
-                if (randomValue > float(1.0 / float(totalLights))) {
+                // use loop index as a seed to get different number for each iteration
+                float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
+                if (randomValue < float(1.0 / float(totalLights))) {
 
-                    // test randomization
+                    // test randomization by creating the noise
                     // if (i == 0) {
                     //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
                     // }
