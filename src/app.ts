@@ -262,7 +262,7 @@ var tracerFragmentSource = `
 
                     // test randomization
                     // if (i == 0) {
-                    //     gl_FragColor = vec4(0.25, 0.0, 0.0, 1.0);
+                    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
                     // }
                     // if (i == 1) {
                     //     gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
@@ -275,6 +275,7 @@ var tracerFragmentSource = `
                     break;
                 }
             }
+            // light = fetchLight(2);
 
             vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
             float diffuse = max(0.0, dot(normalize(toLight), normal));

@@ -29,8 +29,8 @@ namespace LH {
             // let triangles = this.createTriangles();
             let triangles = this.loadObject('assets/teddy.obj');
             let lights: Light[] = [
+                new Light([0.0, 5.75, 20.25], 0.25, 15.0),
                 new Light([20.25, 22.75, 0.25], 1.5, 50.0),
-                new Light([0.0, 5.75, 20.25], 0.25, 1550.0),
                 new Light([-20.25, 20.75, 0.25], 0.15, 75.0)
             ];
             this._pathTracer.setObjects(triangles, lights);
