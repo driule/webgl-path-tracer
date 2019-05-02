@@ -252,7 +252,6 @@ var LH;
     }());
     LH.Renderer = Renderer;
 })(LH || (LH = {}));
-// declare var glMatrix: any;
 // vertex shader for drawing a textured quad
 var renderVertexSource = "\n    attribute vec3 vertex;\n    varying vec2 texCoord;\n\n    void main() {\n        texCoord = vertex.xy * 0.5 + 0.5;\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
 // fragment shader for drawing a textured quad
