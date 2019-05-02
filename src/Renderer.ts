@@ -17,7 +17,7 @@ namespace LH {
 
             this._angleX = 0;
             this._angleY = 0;
-            this._zoomZ = 2.5;
+            this._zoomZ = 40.0;
             this._eye = glMatrix.vec3.create();
         }
 
@@ -26,9 +26,13 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            let triangles = this.createTriangles();
-            // let triangles = this.loadObject('assets/teddy.obj');
-            let lights: Light[] = [new Light([12.25, 15.75, 0.25], 0.75, 5.0)];
+            // let triangles = this.createTriangles();
+            let triangles = this.loadObject('assets/teddy.obj');
+            let lights: Light[] = [
+                new Light([20.25, 22.75, 0.25], 1.5, 50.0),
+                new Light([0.0, 5.75, 20.25], 0.25, 1550.0),
+                new Light([-20.25, 20.75, 0.25], 0.15, 75.0)
+            ];
             this._pathTracer.setObjects(triangles, lights);
 
             this.calculateViewProjection();

@@ -40,6 +40,7 @@ var tracerFragmentSource = `
     precision highp float;
 
     #define MAX_TRIANGLES 10000
+    #define MAX_LIGHTS 256
     #define BOUNCES 5
     #define EPSILON 0.0001
     #define INFINITY 10000.0
@@ -211,8 +212,8 @@ var tracerFragmentSource = `
         vec3 lightColor = vec3(1.0, 1.0, 0.85);
         vec3 colorMask = vec3(1.0);
 
-        Light light = fetchLight(0);
-        Sphere sphericalLight = Sphere(light.position, light.radius);
+        Light light;// = fetchLight(0);
+        Sphere sphericalLight;// = Sphere(light.position, light.radius);
         
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
             float t = INFINITY;
@@ -232,16 +233,47 @@ var tracerFragmentSource = `
                 }
             }
 
-            float tLight = intersectSphere(origin, ray, sphericalLight);
-            if (tLight < t) {
-                accumulatedColor += colorMask * lightColor;
-                break;
+            float tLight = INFINITY;
+            for (int i = 0; i < MAX_LIGHTS; i++) {
+                if (i >= totalLights) break;
+
+                light = fetchLight(i);
+                sphericalLight = Sphere(light.position, light.radius);
+
+                tLight = intersectSphere(origin, ray, sphericalLight);
+                
+                if (tLight < t) {
+                    accumulatedColor += colorMask * lightColor;
+                    break;
+                }
             }
             
-            if (t == INFINITY) {
+            if (t == INFINITY || tLight < t) {
                 break;
             } else {
                 ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
+            }
+
+            for (int i = 0; i < MAX_LIGHTS; i++) {
+                if (i >= totalLights) break;
+
+                float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart);
+                if (randomValue > float(1.0 / float(totalLights))) {
+
+                    // test randomization
+                    // if (i == 0) {
+                    //     gl_FragColor = vec4(0.25, 0.0, 0.0, 1.0);
+                    // }
+                    // if (i == 1) {
+                    //     gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+                    // }
+                    // if (i == 2) {
+                    //     gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+                    // }
+
+                    light = fetchLight(i);
+                    break;
+                }
             }
 
             vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;

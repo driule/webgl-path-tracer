@@ -122,7 +122,8 @@ namespace LH {
                 var matrix4Uniforms = [
                 ];
                 var intUniforms = [
-                    "totalTriangles"
+                    "totalTriangles",
+                    "totalLights"
                 ];
                 var floatUniforms = [
                     "timeSinceStart",
