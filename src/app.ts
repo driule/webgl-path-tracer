@@ -206,14 +206,27 @@ var tracerFragmentSource = `
         return 1.0;
     }
 
+    Light getRandomLight() {
+        for (int i = 0; i < MAX_LIGHTS; i++) {
+
+            // use loop index as a seed to get different number for each iteration
+            float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
+
+            if (randomValue < float(1.0 / float(totalLights))) {
+                return fetchLight(i);
+            }
+        }
+
+        return fetchLight(0);
+    }
+
     vec3 calculateColor(vec3 origin, vec3 ray) {
         vec3 accumulatedColor = vec3(0.0);
         vec3 surfaceColor = vec3(0.75);
         vec3 lightColor = vec3(1.0, 1.0, 0.85);
         vec3 colorMask = vec3(1.0);
 
-        Light light;// = fetchLight(0);
-        Sphere sphericalLight;// = Sphere(light.position, light.radius);
+        Light light;
         
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
             float t = INFINITY;
@@ -238,9 +251,7 @@ var tracerFragmentSource = `
                 if (i >= totalLights) break;
 
                 light = fetchLight(i);
-                sphericalLight = Sphere(light.position, light.radius);
-
-                tLight = intersectSphere(origin, ray, sphericalLight);
+                tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
                 
                 if (tLight < t) {
                     accumulatedColor += colorMask * lightColor;
@@ -254,29 +265,7 @@ var tracerFragmentSource = `
                 ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
             }
 
-            for (int i = 0; i < MAX_LIGHTS; i++) {
-                if (i >= totalLights) break;
-
-                // use loop index as a seed to get different number for each iteration
-                float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
-                if (randomValue < float(1.0 / float(totalLights))) {
-
-                    // test randomization by creating the noise
-                    // if (i == 0) {
-                    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-                    // }
-                    // if (i == 1) {
-                    //     gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-                    // }
-                    // if (i == 2) {
-                    //     gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-                    // }
-
-                    light = fetchLight(i);
-                    break;
-                }
-            }
-            // light = fetchLight(2);
+            light = getRandomLight();
 
             vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
             float diffuse = max(0.0, dot(normalize(toLight), normal));
