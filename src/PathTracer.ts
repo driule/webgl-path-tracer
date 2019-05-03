@@ -81,6 +81,13 @@ namespace LH {
             uniforms.totalTriangles = this._triangles.length;
             uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._triangles.length * 3));
 
+            let bvh: BVH = new BVH();
+            bvh.build(this._triangles);
+
+            // console.log(bvh.root.min, bvh.root.max);
+
+            uniforms.bvh = bvh;
+
             // light data
             uniforms.lights = this._lights;
             uniforms.totalLights = this._lights.length;
