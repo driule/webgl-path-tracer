@@ -79,12 +79,12 @@ namespace LH {
             // triangle data
             uniforms.triangles = this._triangles;
             uniforms.totalTriangles = this._triangles.length;
-            uniforms.triangleDataTextureSize = 512;
+            uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._triangles.length * 3));
 
             // light data
             uniforms.lights = this._lights;
             uniforms.totalLights = this._lights.length;
-            uniforms.lightDataTextureSize = 16;
+            uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._lights.length * 2));
           
             // set uniforms
             this._tracerShader.use();
