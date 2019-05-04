@@ -96,6 +96,7 @@ namespace LH {
             // console.log(uniforms.totalBvhNodes);
 
             uniforms.triangleIndices = bvh.triangleIndices;
+            // console.log(uniforms.triangleIndices);exit();
             uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
 
             // light data

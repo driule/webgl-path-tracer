@@ -96,6 +96,9 @@ var tracerFragmentSource = `
     uniform float lightDataTextureSize;
     uniform sampler2D lightDataTexture;
 
+    int stackPointer;
+    BoundingBox stack[STACK_SIZE];
+
     varying vec3 initialRay;
 
     vec3 getValueFromTexture(sampler2D texture, float index, float size) {
@@ -126,20 +129,6 @@ var tracerFragmentSource = `
      }
 
      BoundingBox fetchBoundingBox(int id) {
-
-        // if (id == 0) {
-        //     BoundingBox boundingBox;
-        //     boundingBox.min = vec3(-10.0, -10.0, -10.0);
-        //     boundingBox.max = vec3(10.0, 10.0, 10.0);;
-        //     boundingBox.isLeaf = true;
-        //     boundingBox.first = 0;
-        //     boundingBox.count = 1;
-        //     boundingBox.left = 0;
-        //     boundingBox.right = 0;
-
-        //     return boundingBox;
-        // }
-
         vec3 min = getValueFromTexture(bvhDataTexture, float(id * 4 + 0), bvhDataTextureSize);
         vec3 max = getValueFromTexture(bvhDataTexture, float(id * 4 + 1), bvhDataTextureSize);
         vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);
@@ -148,10 +137,7 @@ var tracerFragmentSource = `
         BoundingBox boundingBox;
         boundingBox.min = min;
         boundingBox.max = max;
-        boundingBox.isLeaf = bool(int(data[0])); // fix float to bool conversion
-        // if (boundingBox.isLeaf) {
-        //     gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-        // }
+        boundingBox.isLeaf = bool(int(data[0]));
         boundingBox.first = int(data[1]);
         boundingBox.count = int(data[2]);
         boundingBox.left = int(children[0]);
@@ -216,9 +202,9 @@ var tracerFragmentSource = `
         );
     }
 
-    bool isIntersectingBoundingBox(vec3 origin, vec3 ray, BoundingBox boundingBox)
+    bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox boundingBox)
     {
-        vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
+        // vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
         float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;
 
@@ -254,11 +240,12 @@ var tracerFragmentSource = `
         // return tmax >= tmin && tmax >= 0.0;
     }
 
-    BoundingBox pop(BoundingBox stack[STACK_SIZE], int stackPointer) {
-        
+    BoundingBox pop() {
+        stackPointer = stackPointer - 1;
+
         BoundingBox node;
         for (int i = 0; i < STACK_SIZE; i++) {
-            if (i == stackPointer - 1) {
+            if (i == stackPointer) {
                 node = stack[i];
                 break;
             }
@@ -267,10 +254,12 @@ var tracerFragmentSource = `
         return node;
     }
     
-    void push(inout BoundingBox[STACK_SIZE] stack, int stackPointer, BoundingBox node) {
+    void push(BoundingBox node) {
         for (int i = 0; i < STACK_SIZE; i++) {
             if (i == stackPointer) stack[i] = node;
         }
+
+        stackPointer = stackPointer + 1;
     }
 
     // intersect bounding box test
@@ -285,26 +274,28 @@ var tracerFragmentSource = `
     // traverse BVH to perform ray-primitive intersection
     int intersectPrimitives(vec3 origin, vec3 ray)
     {
+        vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
+
         float t = INFINITY;
         int triangleId = 0;
 
         // ToDo: check size
-        int stackPointer = 0;
-        BoundingBox stack[STACK_SIZE];
+        stackPointer = 0;
+        // BoundingBox stack[STACK_SIZE];
 
+        // start traversing from root
         BoundingBox node = fetchBoundingBox(0);
-        push(stack, stackPointer, node);
-        stackPointer = stackPointer + 1;
+        push(node);
 
         for (int i = 0; i < MAX_ITERATIONS; i++) {
+            // if (i == 100) break;
 
             // if stack is empty, stop traversing
             if (stackPointer <= 0) break;
 
-            node = pop(stack, stackPointer);
-            stackPointer = stackPointer - 1;
+            node = pop();
 
-            if (!isIntersectingBoundingBox(origin, ray, node)) continue;
+            if (!isIntersectingBoundingBox(origin, invertedRay, node)) continue;
             
             if (node.isLeaf) {
                 // intersect triangles inside the node
@@ -323,11 +314,8 @@ var tracerFragmentSource = `
             } else {
                 // traverse left and right; push left and right nodes to the stack
                 
-                push(stack, stackPointer, fetchBoundingBox(node.left));
-                stackPointer = stackPointer + 1;
-
-                push(stack, stackPointer, fetchBoundingBox(node.right));
-                stackPointer = stackPointer + 1;
+                push(fetchBoundingBox(node.left));
+                push(fetchBoundingBox(node.right));
             }
         }
 
