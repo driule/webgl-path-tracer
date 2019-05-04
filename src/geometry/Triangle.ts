@@ -21,7 +21,7 @@ namespace LH {
             let maxY = Math.max(Math.max(this.a[1], this.b[1]), this.c[1]);
             let maxZ = Math.max(Math.max(this.a[2], this.b[2]), this.a[2]);
         
-            this._boundingBox = new BoundingBox();
+            this._boundingBox = new BoundingBox(0);
             this._boundingBox.min = [minX, minY, minZ];
             this._boundingBox.max = [maxX, maxY, maxZ];
             this._boundingBox.calculateCenter();

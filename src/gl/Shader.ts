@@ -80,13 +80,13 @@ namespace LH {
                 if (name.toString() === "lights") {
                     let lightList = new Float32Array(uniforms.lightDataTextureSize * uniforms.lightDataTextureSize * 3);
                     for (let i = 0; i < uniforms.totalLights; i++) {
-                        lightList[i * 3 * 3 + 0] = uniforms.lights[i].position[0];
-                        lightList[i * 3 * 3 + 1] = uniforms.lights[i].position[1];
-                        lightList[i * 3 * 3 + 2] = uniforms.lights[i].position[2];
+                        lightList[i * 3 * 2 + 0] = uniforms.lights[i].position[0];
+                        lightList[i * 3 * 2 + 1] = uniforms.lights[i].position[1];
+                        lightList[i * 3 * 2 + 2] = uniforms.lights[i].position[2];
 
-                        lightList[i * 3 * 3 + 3] = uniforms.lights[i].radius;
-                        lightList[i * 3 * 3 + 4] = uniforms.lights[i].intensity;
-                        lightList[i * 3 * 3 + 5] = 0.0;
+                        lightList[i * 3 * 2 + 3] = uniforms.lights[i].radius;
+                        lightList[i * 3 * 2 + 4] = uniforms.lights[i].intensity;
+                        lightList[i * 3 * 2 + 5] = 0.0;
                     }
 
                     gl.activeTexture(gl.TEXTURE2);
@@ -101,6 +101,72 @@ namespace LH {
                     
                     let lightDataLocation = gl.getUniformLocation(this._program, "lightDataTexture");
                     gl.uniform1i(lightDataLocation, 2);
+
+                    continue;
+                }
+
+                // specific case for BVH
+                if (name.toString() == "bvh") {
+                    let bvhNodeDataList = new Float32Array(uniforms.lightDataTextureSize * uniforms.lightDataTextureSize * 3);
+                    for (let i = 0; i < uniforms.totalBvhNodes; i++) {
+                        bvhNodeDataList[i * 3 * 4 + 0] = uniforms.bvhNodeList[i].min[0];
+                        bvhNodeDataList[i * 3 * 4 + 1] = uniforms.bvhNodeList[i].min[1];
+                        bvhNodeDataList[i * 3 * 4 + 2] = uniforms.bvhNodeList[i].min[2];
+
+                        bvhNodeDataList[i * 3 * 4 + 3] = uniforms.bvhNodeList[i].max[0];
+                        bvhNodeDataList[i * 3 * 4 + 4] = uniforms.bvhNodeList[i].max[1];
+                        bvhNodeDataList[i * 3 * 4 + 5] = uniforms.bvhNodeList[i].max[2];
+
+                        bvhNodeDataList[i * 3 * 4 + 6] = uniforms.bvhNodeList[i].isLeaf;
+                        bvhNodeDataList[i * 3 * 4 + 7] = uniforms.bvhNodeList[i].first;
+                        bvhNodeDataList[i * 3 * 4 + 8] = uniforms.bvhNodeList[i].count;
+
+                        bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
+                        bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
+                        bvhNodeDataList[i * 3 * 4 + 11] = 0.0;
+                    }
+
+                    gl.activeTexture(gl.TEXTURE3);
+                    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.bvhDataTextureSize, uniforms.bvhDataTextureSize, 0, gl.RGB, gl.FLOAT, bvhNodeDataList);
+                    
+                    let bvhDataLocation = gl.getUniformLocation(this._program, "bvhDataTexture");
+                    gl.uniform1i(bvhDataLocation, 3);
+
+                    continue;
+                }
+
+                // specific case for triangle indices
+                if (name.toString() == "triangleIndices") {
+                    let triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
+                    // triangleIndices = Uint32Array.from(uniforms.triangleIndices);
+                    for (let i = 0; i < uniforms.triangleIndices.length; i++) {
+                        triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
+                        triangleIndices[i * 3 + 1] = 0;
+                        triangleIndices[i * 3 + 2] = 0;
+                    }
+                    // console.log(uniforms.triangleIndices.length);
+                    // console.log(uniforms.triangleIndicesDataTextureSize);
+
+                    gl.activeTexture(gl.TEXTURE4);
+                    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, triangleIndices);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleIndices);
+                    
+                    let triangleIndicesDataLocation = gl.getUniformLocation(this._program, "triangleIndicesDataTexture");
+                    gl.uniform1i(triangleIndicesDataLocation, 4);
 
                     continue;
                 }
@@ -123,12 +189,15 @@ namespace LH {
                 ];
                 var intUniforms = [
                     "totalTriangles",
+                    "totalBvhNodes",
                     "totalLights"
                 ];
                 var floatUniforms = [
                     "timeSinceStart",
                     "textureWeight",
                     "triangleDataTextureSize",
+                    "bvhDataTextureSize",
+                    "triangleIndicesDataTextureSize",
                     "lightDataTextureSize"
                 ];
         

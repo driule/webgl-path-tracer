@@ -54,10 +54,15 @@ var LH;
             uniforms.triangles = this._triangles;
             uniforms.totalTriangles = this._triangles.length;
             uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._triangles.length * 3));
+            // BVH data
             var bvh = new LH.BVH();
             bvh.build(this._triangles);
-            // console.log(bvh.root.min, bvh.root.max);
-            uniforms.bvh = bvh;
+            uniforms.bvhNodeList = bvh.nodeStack;
+            uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
+            // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units
+            uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(bvh.nodeStack.length * 4));
+            uniforms.triangleIndices = bvh.triangleIndices;
+            uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
             // light data
             uniforms.lights = this._lights;
             uniforms.totalLights = this._lights.length;
@@ -255,7 +260,7 @@ var renderVertexSource = "\n    attribute vec3 vertex;\n    varying vec2 texCoor
 var renderFragmentSource = "\n    precision highp float;\n\n    varying vec2 texCoord;\n    uniform sampler2D texture;\n\n    void main() {\n        gl_FragColor = texture2D(texture, texCoord);\n    }\n";
 // vertex shader, interpolate ray per-pixel
 var tracerVertexSource = "\n    attribute vec3 vertex;\n    uniform vec3 eye, ray00, ray01, ray10, ray11;\n    varying vec3 initialRay;\n\n    void main() {\n        vec2 percent = vertex.xy * 0.5 + 0.5;\n        initialRay = mix(mix(ray00, ray01, percent.y), mix(ray10, ray11, percent.y), percent.x);\n        gl_Position = vec4(vertex, 1.0);\n    }\n";
-var tracerFragmentSource = "\n    precision highp float;\n\n    #define MAX_TRIANGLES 10000\n    #define MAX_LIGHTS 256\n    #define BOUNCES 5\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    struct Triangle\n    {\n        vec3 a, b, c;\n    };\n\n    struct Light\n    {\n        vec3 position;\n        float radius;\n        float intensity;\n    };\n\n    uniform vec2 resolution;\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n\n    // geometry\n    uniform int totalTriangles;\n    uniform float triangleDataTextureSize;\n    uniform sampler2D triangleDataTexture;\n\n    uniform int totalLights;\n    uniform float lightDataTextureSize;\n    uniform sampler2D lightDataTexture;\n\n    varying vec3 initialRay;\n\n    vec3 getValueFromTexture(sampler2D texture, float index, float size) {\n        float column = mod(index, size);\n        float row = floor(index / size);\n\n        vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);\n\n        return texture2D(texture, uv).rgb;\n     }\n\n     Triangle fetchTriangle(int id) {\n         vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3), triangleDataTextureSize);\n         vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);\n         vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);\n         \n         return Triangle(coordA, coordB, coordC);\n     }\n\n     Light fetchLight(int id) {\n         vec3 position = getValueFromTexture(lightDataTexture, float(id * 3), lightDataTextureSize);\n         vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 3 + 1), lightDataTextureSize);\n\n         float radius = featureVector[0];\n         float intensity = featureVector[1];\n         \n         return Light(position, radius, intensity);\n     }\n\n    float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {\n        vec3 toSphere = origin - sphere.center;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t >= EPSILON) return t;\n        }\n\n        return INFINITY;\n    }\n\n    float intersectTriangle(vec3 origin, vec3 ray, Triangle triangle) {\n        float t, u, v;\n\n        vec3 ab = triangle.b - triangle.a;\n        vec3 ac = triangle.c - triangle.a;\n        vec3 pvec = cross(ray, ac);\n        float det = dot(ab, pvec);\n    \n        float invDet = 1.0 / det;\n    \n        vec3 tvec = origin - triangle.a;\n        u = dot(tvec, pvec) * invDet;\n    \n        if (u < 0.0 || u > 1.0) return INFINITY;\n    \n        vec3 qvec = cross(tvec, ab);\n        v = dot(ray, qvec) * invDet;\n        if (v < 0.0 || u + v > 1.0) return INFINITY;\n    \n        t = dot(ac, qvec) * invDet;\n        if (t >= EPSILON)\n        {\n            return t;\n        }\n\n        return INFINITY;\n    }\n\n    vec3 getTriangleNormal(vec3 hit, Triangle triangle) {\n        return normalize(\n            cross(triangle.a - triangle.b, triangle.b - triangle.c)\n        );\n    }\n\n    float random(vec3 scale, float seed) {\n        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n    }\n\n    vec3 cosineWeightedDirection(float seed, vec3 normal) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float r = sqrt(u);\n        float angle = 6.283185307179586 * v;\n\n        vec3 sdir, tdir;\n        if (abs(normal.x) < 0.5) {\n            sdir = cross(normal, vec3(1, 0, 0));\n        } else {\n            sdir = cross(normal, vec3(0, 1, 0));\n        }\n        tdir = cross(normal, sdir);\n\n        return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;\n    }\n\n    vec3 uniformlyRandomDirection(float seed) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float z = 1.0 - 2.0 * u;\n        float r = sqrt(1.0 - z * z);\n        float angle = 6.283185307179586 * v;\n\n        return vec3(r * cos(angle), r * sin(angle), z);\n    }\n\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n\n    float getShadowIntensity(vec3 origin, vec3 ray) {\n        for (int i = 0; i < MAX_TRIANGLES; i++) {\n            if (i >= totalTriangles) break;\n            \n            float tTriangle = intersectTriangle(\n                origin,\n                ray,\n                fetchTriangle(i)\n            );\n            if (tTriangle < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n\n    Light getRandomLight() {\n        for (int i = 0; i < MAX_LIGHTS; i++) {\n\n            // use loop index as a seed to get different number for each iteration\n            float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));\n\n            if (randomValue < float(1.0 / float(totalLights))) {\n                return fetchLight(i);\n            }\n        }\n\n        return fetchLight(0);\n    }\n\n    vec3 calculateColor(vec3 origin, vec3 ray) {\n        vec3 accumulatedColor = vec3(0.0);\n        vec3 surfaceColor = vec3(0.75);\n        vec3 lightColor = vec3(1.0, 1.0, 0.85);\n        vec3 colorMask = vec3(1.0);\n\n        Light light;\n        \n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_TRIANGLES; i++) {\n                if (i >= totalTriangles) break;\n\n                Triangle triangle = fetchTriangle(i);\n                float tTriangle = intersectTriangle(origin, ray, triangle);\n                if (tTriangle < t) {\n                    t = tTriangle;\n                    hit = origin + ray * t;\n                    normal = getTriangleNormal(hit, triangle);\n                    surfaceColor = vec3(0.25, 0.00, 0.00);\n                }\n            }\n\n            float tLight = INFINITY;\n            for (int i = 0; i < MAX_LIGHTS; i++) {\n                if (i >= totalLights) break;\n\n                light = fetchLight(i);\n                tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));\n                \n                if (tLight < t) {\n                    accumulatedColor += colorMask * lightColor;\n                    break;\n                }\n            }\n            \n            if (t == INFINITY || tLight < t) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n\n            light = getRandomLight();\n\n            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);\n            \n            colorMask *= surfaceColor;\n            accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity);\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n\n    void main() {\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);\n    }\n";
+var tracerFragmentSource = "\n    precision highp float;\n\n    #define MAX_TRIANGLES 10000\n    #define MAX_LIGHTS 256\n    #define MAX_ITERATIONS 10000\n    #define BOUNCES 2\n    #define EPSILON 0.0001\n    #define INFINITY 10000.0\n    #define STACK_SIZE 64\n\n    struct Sphere\n    {\n        vec3 center;\n        float radius;\n    };\n\n    struct Triangle\n    {\n        vec3 a, b, c;\n    };\n\n    struct Light\n    {\n        vec3 position;\n        float radius;\n        float intensity;\n    };\n\n    struct BoundingBox\n    {\n        vec3 min, max;\n        bool isLeaf;\n        int first, count;\n        int left, right;\n    };\n\n    uniform vec2 resolution;\n    uniform vec3 eye;\n    uniform float textureWeight;\n    uniform float timeSinceStart;\n    uniform sampler2D texture;\n\n    // geometry\n    uniform int totalTriangles;\n    uniform float triangleDataTextureSize;\n    uniform sampler2D triangleDataTexture;\n\n    // bvh\n    uniform int totalBvhNodes;\n    uniform float bvhDataTextureSize;\n    uniform sampler2D bvhDataTexture;\n\n    uniform float triangleIndicesDataTextureSize;\n    uniform sampler2D triangleIndicesDataTexture;\n\n    uniform int totalLights;\n    uniform float lightDataTextureSize;\n    uniform sampler2D lightDataTexture;\n\n    varying vec3 initialRay;\n\n    vec3 getValueFromTexture(sampler2D texture, float index, float size) {\n        float column = mod(index, size);\n        float row = floor(index / size);\n\n        vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);\n\n        return texture2D(texture, uv).rgb;\n     }\n\n     Triangle fetchTriangle(int id) {\n         vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3 + 0), triangleDataTextureSize);\n         vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);\n         vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);\n         \n         return Triangle(coordA, coordB, coordC);\n     }\n\n     Light fetchLight(int id) {\n         vec3 position = getValueFromTexture(lightDataTexture, float(id * 2), lightDataTextureSize);\n         vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 2 + 1), lightDataTextureSize);\n\n         float radius = featureVector[0];\n         float intensity = featureVector[1];\n         \n         return Light(position, radius, intensity);\n     }\n\n     BoundingBox fetchBoundingBox(int id) {\n        vec3 min = getValueFromTexture(bvhDataTexture, float(id * 4 + 0), bvhDataTextureSize);\n        vec3 max = getValueFromTexture(bvhDataTexture, float(id * 4 + 1), bvhDataTextureSize);\n        vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);\n        vec3 children = getValueFromTexture(bvhDataTexture, float(id * 4 + 3), bvhDataTextureSize);\n\n        BoundingBox boundingBox;\n        boundingBox.min = min;\n        boundingBox.max = max;\n        boundingBox.isLeaf = bool(data[0]);\n        boundingBox.first = int(data[1]);\n        boundingBox.count = int(data[2]);\n        boundingBox.left = int(children[0]);\n        boundingBox.right = int(children[1]);\n\n        return boundingBox;\n     }\n\n     int fetchTriangleIndex(int id) {\n         vec3 triangleIndex = getValueFromTexture(triangleIndicesDataTexture, float(id), triangleIndicesDataTextureSize);\n\n         return int(triangleIndex.x);\n     }\n\n    float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {\n        vec3 toSphere = origin - sphere.center;\n        float a = dot(ray, ray);\n        float b = 2.0 * dot(toSphere, ray);\n        float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;\n        float discriminant = b * b - 4.0 * a * c;\n\n        if (discriminant > 0.0) {\n            float t = (-b - sqrt(discriminant)) / (2.0 * a);\n            if (t >= EPSILON) return t;\n        }\n\n        return INFINITY;\n    }\n\n    float intersectTriangle(vec3 origin, vec3 ray, Triangle triangle) {\n        float t, u, v;\n\n        vec3 ab = triangle.b - triangle.a;\n        vec3 ac = triangle.c - triangle.a;\n        vec3 pvec = cross(ray, ac);\n        float det = dot(ab, pvec);\n    \n        float invDet = 1.0 / det;\n    \n        vec3 tvec = origin - triangle.a;\n        u = dot(tvec, pvec) * invDet;\n    \n        if (u < 0.0 || u > 1.0) return INFINITY;\n    \n        vec3 qvec = cross(tvec, ab);\n        v = dot(ray, qvec) * invDet;\n        if (v < 0.0 || u + v > 1.0) return INFINITY;\n    \n        t = dot(ac, qvec) * invDet;\n        if (t >= EPSILON)\n        {\n            return t;\n        }\n\n        return INFINITY;\n    }\n\n    // ToDo: remove hit as an argument (?)\n    vec3 getTriangleNormal(vec3 hit, Triangle triangle) {\n        return normalize(\n            cross(triangle.a - triangle.b, triangle.b - triangle.c)\n        );\n    }\n\n    bool isIntersectingBoundingBox(vec3 origin, vec3 ray, BoundingBox boundingBox)\n    {\n        vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);\n\n        float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;\n\n        txmin = (boundingBox.min.x - origin.x) * invertedDirection.x;\n        txmax = (boundingBox.max.x - origin.x) * invertedDirection.x;\n\n        tymin = (boundingBox.min.y - origin.y) * invertedDirection.y;\n        tymax = (boundingBox.max.y - origin.y) * invertedDirection.y;\n\n        tzmin = (boundingBox.min.z - origin.z) * invertedDirection.z;\n        tzmax = (boundingBox.max.z - origin.z) * invertedDirection.z;\n\n        tmin = min(txmin, txmax);\n        tmax = max(txmin, txmax);\n\n        tmin = max(tmin, min(tymin, tymax));\n        tmax = min(tmax, max(tymin, tymax));\n\n        tmin = max(tmin, min(tzmin, tzmax));\n        tmax = min(tmax, max(tzmin, tzmax));\n\n        // ToDo: check\n        // early out\n        // if (tmin > ray->t)\n        //     return false;\n\n        // ToDo: use EPSILON (?)\n        return tmax >= tmin && tmax >= 0.0;\n    }\n\n    BoundingBox pop(BoundingBox stack[STACK_SIZE], int id) {\n        BoundingBox node;\n        for (int i = 0; i < STACK_SIZE; i++) {\n            if (i == id) {\n                node = stack[i];\n                break;\n            }\n        }\n\n        return node;\n    }\n    \n    void push(inout BoundingBox[STACK_SIZE] stack, int id, BoundingBox node) {\n        for (int i = 0; i < STACK_SIZE; i++) {\n            if (i == id) stack[i] = node;\n        }\n    }\n\n    // traverse BVH to perform ray-primitive intersection\n    int intersectPrimitives(vec3 origin, vec3 ray)\n    {\n        float t = INFINITY;\n        int triangleId = 0;\n\n        // ToDo: check size\n        int stackPointer = 0;\n        BoundingBox stack[STACK_SIZE];\n\n        // push node\n        BoundingBox node = fetchBoundingBox(0); // fecth root\n        // stack[stackPointer] = node;\n        push(stack, stackPointer, node);\n\n        for (int i = 0; i < MAX_ITERATIONS; i++) {\n\n            // if stack is empty, stop traversing\n            if (stackPointer < 0) break;\n\n            // pop node\n            // node = stack[stackPointer];\n            node = pop(stack, stackPointer);\n            stackPointer--;\n\n            if (!isIntersectingBoundingBox(origin, ray, node)) continue;\n\n            if (node.isLeaf) {\n                // ToDo: intersect triangles inside the node\n\n                for (int j = 0; j < MAX_TRIANGLES; j++) {\n                    if (node.first + j >= node.first + node.count) break;\n    \n                    int index = fetchTriangleIndex(node.first + j);\n                    Triangle triangle = fetchTriangle(index);\n                    float tTriangle = intersectTriangle(origin, ray, triangle);\n                    if (tTriangle < t) {\n                        t = tTriangle;\n                        triangleId = index;\n                    }\n                }\n            } else {\n                // ToDo: traverse left and right\n\n                // push left and right nodes to the stack\n                stackPointer++;\n                // stack[stackPointer] = fetchBoundingBox(node.left);\n                push(stack, stackPointer, fetchBoundingBox(node.left));\n                stackPointer++;\n                // stack[stackPointer] = fetchBoundingBox(node.right);\n                push(stack, stackPointer, fetchBoundingBox(node.right));\n            }\n        }\n\n        // return t;\n        return triangleId;\n    }\n\n    float random(vec3 scale, float seed) {\n        return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);\n    }\n\n    vec3 cosineWeightedDirection(float seed, vec3 normal) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float r = sqrt(u);\n        float angle = 6.283185307179586 * v;\n\n        vec3 sdir, tdir;\n        if (abs(normal.x) < 0.5) {\n            sdir = cross(normal, vec3(1, 0, 0));\n        } else {\n            sdir = cross(normal, vec3(0, 1, 0));\n        }\n        tdir = cross(normal, sdir);\n\n        return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;\n    }\n\n    vec3 uniformlyRandomDirection(float seed) {\n        float u = random(vec3(12.9898, 78.233, 151.7182), seed);\n        float v = random(vec3(63.7264, 10.873, 623.6736), seed);\n        float z = 1.0 - 2.0 * u;\n        float r = sqrt(1.0 - z * z);\n        float angle = 6.283185307179586 * v;\n\n        return vec3(r * cos(angle), r * sin(angle), z);\n    }\n\n    vec3 uniformlyRandomVector(float seed) {\n        return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));\n    }\n\n    float getShadowIntensity(vec3 origin, vec3 ray) {\n        for (int i = 0; i < MAX_TRIANGLES; i++) {\n            if (i >= totalTriangles) break;\n            \n            float tTriangle = intersectTriangle(\n                origin,\n                ray,\n                fetchTriangle(i)\n            );\n            if (tTriangle < 1.0) return 0.0;\n        }\n        \n        return 1.0;\n    }\n\n    Light getRandomLight() {\n        for (int i = 0; i < MAX_LIGHTS; i++) {\n\n            // use loop index as a seed to get different number for each iteration\n            float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));\n\n            if (randomValue < float(1.0 / float(totalLights))) {\n                return fetchLight(i);\n            }\n        }\n\n        return fetchLight(0);\n    }\n\n    vec3 calculateColor(vec3 origin, vec3 ray) {\n        vec3 accumulatedColor = vec3(0.0);\n        vec3 surfaceColor = vec3(0.75);\n        vec3 lightColor = vec3(1.0, 1.0, 0.85);\n        vec3 colorMask = vec3(1.0);\n\n        Light light;\n        \n        for (int bounce = 0; bounce < BOUNCES; bounce++) {\n            float t = INFINITY;\n            vec3 normal;\n            vec3 hit = origin + ray * t;\n\n            for (int i = 0; i < MAX_TRIANGLES; i++) {\n                if (i >= totalTriangles) break;\n\n                Triangle triangle = fetchTriangle(i);\n                float tTriangle = intersectTriangle(origin, ray, triangle);\n                if (tTriangle < t) {\n                    t = tTriangle;\n                    hit = origin + ray * t;\n                    normal = getTriangleNormal(hit, triangle);\n                    surfaceColor = vec3(0.25, 0.00, 0.00);\n                }\n            }\n\n            // int triangleId = intersectPrimitives(origin, ray);\n            // Triangle triangle = fetchTriangle(triangleId);\n            // float tTriangle = intersectTriangle(origin, ray, triangle);\n            // if (tTriangle < t) {\n            //     t = tTriangle;\n            //     hit = origin + ray * t;\n            //     normal = getTriangleNormal(hit, triangle);\n            //     surfaceColor = vec3(0.25, 0.00, 0.00);\n            // }\n\n            float tLight = INFINITY;\n            for (int i = 0; i < MAX_LIGHTS; i++) {\n                if (i >= totalLights) break;\n\n                light = fetchLight(i);\n                tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));\n                \n                if (tLight < t) {\n                    accumulatedColor += colorMask * lightColor;\n                    break;\n                }\n            }\n            \n            if (t == INFINITY || tLight < t) {\n                break;\n            } else {\n                ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);\n            }\n\n            light = getRandomLight();\n\n            vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;\n            float diffuse = max(0.0, dot(normalize(toLight), normal));\n            float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);\n            \n            colorMask *= surfaceColor;\n            accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity);\n            \n            origin = hit;\n        }\n        \n        return accumulatedColor;\n    }\n\n    void main() {\n        vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;\n        gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);\n    }\n";
 var renderer;
 // fps measurement
 var lastTick = Date.now();
@@ -315,15 +320,31 @@ var LH;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(BVH.prototype, "triangleIndices", {
+            get: function () {
+                return this._triangleIndices;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(BVH.prototype, "nodeStack", {
+            get: function () {
+                return this._nodeStack;
+            },
+            enumerable: true,
+            configurable: true
+        });
         BVH.prototype.build = function (triangles) {
+            this._nodeStack = [];
             this._triangles = triangles;
             this._triangleIndices = new Array(this._triangles.length);
             for (var i = 0; i < this._triangles.length; i++) {
                 this._triangleIndices[i] = i;
             }
-            this._root = new LH.BoundingBox();
+            this._root = new LH.BoundingBox(0);
             this._root.first = 0;
             this._root.count = this._triangles.length;
+            this._nodeStack.push(this._root);
             this.calculateBounds(this.root);
             this.subdivide(this.root, 0);
         };
@@ -349,8 +370,10 @@ var LH;
                 node.isLeaf = true;
                 return;
             }
-            node.left = new LH.BoundingBox();
-            node.right = new LH.BoundingBox();
+            node.left = new LH.BoundingBox(this._nodeStack.length);
+            this._nodeStack.push(node.left);
+            node.right = new LH.BoundingBox(this._nodeStack.length);
+            this._nodeStack.push(node.right);
             this.partition(node);
             depth++;
             this.subdivide(node.left, depth);
@@ -458,14 +481,16 @@ var LH;
 var LH;
 (function (LH) {
     var BoundingBox = /** @class */ (function () {
-        function BoundingBox() {
+        function BoundingBox(id) {
+            this._id = id;
         }
-        // public constructor() {
-        // }
-        // public constructor(min: any, max: any) {
-        //     this.min = min;
-        //     this.max = max;
-        // }
+        Object.defineProperty(BoundingBox.prototype, "id", {
+            get: function () {
+                return this._id;
+            },
+            enumerable: true,
+            configurable: true
+        });
         BoundingBox.prototype.calculateSurfaceArea = function () {
             var diagonal = glMatrix.vec3.subtract([], this.max, this.min);
             diagonal = [Math.abs(diagonal[0]), Math.abs(diagonal[1]), Math.abs(diagonal[2])];
@@ -525,7 +550,7 @@ var LH;
             var maxX = Math.max(Math.max(this.a[0], this.b[0]), this.c[0]);
             var maxY = Math.max(Math.max(this.a[1], this.b[1]), this.c[1]);
             var maxZ = Math.max(Math.max(this.a[2], this.b[2]), this.a[2]);
-            this._boundingBox = new LH.BoundingBox();
+            this._boundingBox = new LH.BoundingBox(0);
             this._boundingBox.min = [minX, minY, minZ];
             this._boundingBox.max = [maxX, maxY, maxZ];
             this._boundingBox.calculateCenter();
@@ -769,12 +794,12 @@ var LH;
                 if (name_1.toString() === "lights") {
                     var lightList = new Float32Array(uniforms.lightDataTextureSize * uniforms.lightDataTextureSize * 3);
                     for (var i = 0; i < uniforms.totalLights; i++) {
-                        lightList[i * 3 * 3 + 0] = uniforms.lights[i].position[0];
-                        lightList[i * 3 * 3 + 1] = uniforms.lights[i].position[1];
-                        lightList[i * 3 * 3 + 2] = uniforms.lights[i].position[2];
-                        lightList[i * 3 * 3 + 3] = uniforms.lights[i].radius;
-                        lightList[i * 3 * 3 + 4] = uniforms.lights[i].intensity;
-                        lightList[i * 3 * 3 + 5] = 0.0;
+                        lightList[i * 3 * 2 + 0] = uniforms.lights[i].position[0];
+                        lightList[i * 3 * 2 + 1] = uniforms.lights[i].position[1];
+                        lightList[i * 3 * 2 + 2] = uniforms.lights[i].position[2];
+                        lightList[i * 3 * 2 + 3] = uniforms.lights[i].radius;
+                        lightList[i * 3 * 2 + 4] = uniforms.lights[i].intensity;
+                        lightList[i * 3 * 2 + 5] = 0.0;
                     }
                     LH.gl.activeTexture(LH.gl.TEXTURE2);
                     LH.gl.bindTexture(LH.gl.TEXTURE_2D, LH.gl.createTexture());
@@ -785,6 +810,57 @@ var LH;
                     LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB16F, uniforms.lightDataTextureSize, uniforms.lightDataTextureSize, 0, LH.gl.RGB, LH.gl.FLOAT, lightList);
                     var lightDataLocation = LH.gl.getUniformLocation(this._program, "lightDataTexture");
                     LH.gl.uniform1i(lightDataLocation, 2);
+                    continue;
+                }
+                // specific case for BVH
+                if (name_1.toString() == "bvh") {
+                    var bvhNodeDataList = new Float32Array(uniforms.lightDataTextureSize * uniforms.lightDataTextureSize * 3);
+                    for (var i = 0; i < uniforms.totalBvhNodes; i++) {
+                        bvhNodeDataList[i * 3 * 4 + 0] = uniforms.bvhNodeList[i].min[0];
+                        bvhNodeDataList[i * 3 * 4 + 1] = uniforms.bvhNodeList[i].min[1];
+                        bvhNodeDataList[i * 3 * 4 + 2] = uniforms.bvhNodeList[i].min[2];
+                        bvhNodeDataList[i * 3 * 4 + 3] = uniforms.bvhNodeList[i].max[0];
+                        bvhNodeDataList[i * 3 * 4 + 4] = uniforms.bvhNodeList[i].max[1];
+                        bvhNodeDataList[i * 3 * 4 + 5] = uniforms.bvhNodeList[i].max[2];
+                        bvhNodeDataList[i * 3 * 4 + 6] = uniforms.bvhNodeList[i].isLeaf;
+                        bvhNodeDataList[i * 3 * 4 + 7] = uniforms.bvhNodeList[i].first;
+                        bvhNodeDataList[i * 3 * 4 + 8] = uniforms.bvhNodeList[i].count;
+                        bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
+                        bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
+                        bvhNodeDataList[i * 3 * 4 + 11] = 0.0;
+                    }
+                    LH.gl.activeTexture(LH.gl.TEXTURE3);
+                    LH.gl.bindTexture(LH.gl.TEXTURE_2D, LH.gl.createTexture());
+                    LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MIN_FILTER, LH.gl.NEAREST);
+                    LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MAG_FILTER, LH.gl.NEAREST);
+                    LH.gl.texParameterf(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_WRAP_S, LH.gl.CLAMP_TO_EDGE);
+                    LH.gl.texParameterf(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_WRAP_T, LH.gl.CLAMP_TO_EDGE);
+                    LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB16F, uniforms.bvhDataTextureSize, uniforms.bvhDataTextureSize, 0, LH.gl.RGB, LH.gl.FLOAT, bvhNodeDataList);
+                    var bvhDataLocation = LH.gl.getUniformLocation(this._program, "bvhDataTexture");
+                    LH.gl.uniform1i(bvhDataLocation, 3);
+                    continue;
+                }
+                // specific case for triangle indices
+                if (name_1.toString() == "triangleIndices") {
+                    var triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
+                    // triangleIndices = Uint32Array.from(uniforms.triangleIndices);
+                    for (var i = 0; i < uniforms.triangleIndices.length; i++) {
+                        triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
+                        triangleIndices[i * 3 + 1] = 0;
+                        triangleIndices[i * 3 + 2] = 0;
+                    }
+                    // console.log(uniforms.triangleIndices.length);
+                    // console.log(uniforms.triangleIndicesDataTextureSize);
+                    LH.gl.activeTexture(LH.gl.TEXTURE4);
+                    LH.gl.bindTexture(LH.gl.TEXTURE_2D, LH.gl.createTexture());
+                    LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MIN_FILTER, LH.gl.NEAREST);
+                    LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MAG_FILTER, LH.gl.NEAREST);
+                    LH.gl.texParameterf(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_WRAP_S, LH.gl.CLAMP_TO_EDGE);
+                    LH.gl.texParameterf(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_WRAP_T, LH.gl.CLAMP_TO_EDGE);
+                    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, triangleIndices);
+                    LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB16F, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, LH.gl.RGB, LH.gl.FLOAT, triangleIndices);
+                    var triangleIndicesDataLocation = LH.gl.getUniformLocation(this._program, "triangleIndicesDataTexture");
+                    LH.gl.uniform1i(triangleIndicesDataLocation, 4);
                     continue;
                 }
                 var location_1 = LH.gl.getUniformLocation(this._program, name_1);
@@ -804,12 +880,15 @@ var LH;
                 var matrix4Uniforms = [];
                 var intUniforms = [
                     "totalTriangles",
+                    "totalBvhNodes",
                     "totalLights"
                 ];
                 var floatUniforms = [
                     "timeSinceStart",
                     "textureWeight",
                     "triangleDataTextureSize",
+                    "bvhDataTextureSize",
+                    "triangleIndicesDataTextureSize",
                     "lightDataTextureSize"
                 ];
                 var value = uniforms[name_1];

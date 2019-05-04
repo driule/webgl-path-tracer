@@ -41,9 +41,11 @@ var tracerFragmentSource = `
 
     #define MAX_TRIANGLES 10000
     #define MAX_LIGHTS 256
-    #define BOUNCES 5
+    #define MAX_ITERATIONS 10000
+    #define BOUNCES 2
     #define EPSILON 0.0001
     #define INFINITY 10000.0
+    #define STACK_SIZE 64
 
     struct Sphere
     {
@@ -63,6 +65,14 @@ var tracerFragmentSource = `
         float intensity;
     };
 
+    struct BoundingBox
+    {
+        vec3 min, max;
+        bool isLeaf;
+        int first, count;
+        int left, right;
+    };
+
     uniform vec2 resolution;
     uniform vec3 eye;
     uniform float textureWeight;
@@ -73,6 +83,14 @@ var tracerFragmentSource = `
     uniform int totalTriangles;
     uniform float triangleDataTextureSize;
     uniform sampler2D triangleDataTexture;
+
+    // bvh
+    uniform int totalBvhNodes;
+    uniform float bvhDataTextureSize;
+    uniform sampler2D bvhDataTexture;
+
+    uniform float triangleIndicesDataTextureSize;
+    uniform sampler2D triangleIndicesDataTexture;
 
     uniform int totalLights;
     uniform float lightDataTextureSize;
@@ -90,7 +108,7 @@ var tracerFragmentSource = `
      }
 
      Triangle fetchTriangle(int id) {
-         vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3), triangleDataTextureSize);
+         vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3 + 0), triangleDataTextureSize);
          vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);
          vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);
          
@@ -98,13 +116,37 @@ var tracerFragmentSource = `
      }
 
      Light fetchLight(int id) {
-         vec3 position = getValueFromTexture(lightDataTexture, float(id * 3), lightDataTextureSize);
-         vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 3 + 1), lightDataTextureSize);
+         vec3 position = getValueFromTexture(lightDataTexture, float(id * 2), lightDataTextureSize);
+         vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 2 + 1), lightDataTextureSize);
 
          float radius = featureVector[0];
          float intensity = featureVector[1];
          
          return Light(position, radius, intensity);
+     }
+
+     BoundingBox fetchBoundingBox(int id) {
+        vec3 min = getValueFromTexture(bvhDataTexture, float(id * 4 + 0), bvhDataTextureSize);
+        vec3 max = getValueFromTexture(bvhDataTexture, float(id * 4 + 1), bvhDataTextureSize);
+        vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);
+        vec3 children = getValueFromTexture(bvhDataTexture, float(id * 4 + 3), bvhDataTextureSize);
+
+        BoundingBox boundingBox;
+        boundingBox.min = min;
+        boundingBox.max = max;
+        boundingBox.isLeaf = bool(data[0]);
+        boundingBox.first = int(data[1]);
+        boundingBox.count = int(data[2]);
+        boundingBox.left = int(children[0]);
+        boundingBox.right = int(children[1]);
+
+        return boundingBox;
+     }
+
+     int fetchTriangleIndex(int id) {
+         vec3 triangleIndex = getValueFromTexture(triangleIndicesDataTexture, float(id), triangleIndicesDataTextureSize);
+
+         return int(triangleIndex.x);
      }
 
     float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
@@ -150,10 +192,120 @@ var tracerFragmentSource = `
         return INFINITY;
     }
 
+    // ToDo: remove hit as an argument (?)
     vec3 getTriangleNormal(vec3 hit, Triangle triangle) {
         return normalize(
             cross(triangle.a - triangle.b, triangle.b - triangle.c)
         );
+    }
+
+    bool isIntersectingBoundingBox(vec3 origin, vec3 ray, BoundingBox boundingBox)
+    {
+        vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
+
+        float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;
+
+        txmin = (boundingBox.min.x - origin.x) * invertedDirection.x;
+        txmax = (boundingBox.max.x - origin.x) * invertedDirection.x;
+
+        tymin = (boundingBox.min.y - origin.y) * invertedDirection.y;
+        tymax = (boundingBox.max.y - origin.y) * invertedDirection.y;
+
+        tzmin = (boundingBox.min.z - origin.z) * invertedDirection.z;
+        tzmax = (boundingBox.max.z - origin.z) * invertedDirection.z;
+
+        tmin = min(txmin, txmax);
+        tmax = max(txmin, txmax);
+
+        tmin = max(tmin, min(tymin, tymax));
+        tmax = min(tmax, max(tymin, tymax));
+
+        tmin = max(tmin, min(tzmin, tzmax));
+        tmax = min(tmax, max(tzmin, tzmax));
+
+        // ToDo: check
+        // early out
+        // if (tmin > ray->t)
+        //     return false;
+
+        // ToDo: use EPSILON (?)
+        return tmax >= tmin && tmax >= 0.0;
+    }
+
+    BoundingBox pop(BoundingBox stack[STACK_SIZE], int id) {
+        BoundingBox node;
+        for (int i = 0; i < STACK_SIZE; i++) {
+            if (i == id) {
+                node = stack[i];
+                break;
+            }
+        }
+
+        return node;
+    }
+    
+    void push(inout BoundingBox[STACK_SIZE] stack, int id, BoundingBox node) {
+        for (int i = 0; i < STACK_SIZE; i++) {
+            if (i == id) stack[i] = node;
+        }
+    }
+
+    // traverse BVH to perform ray-primitive intersection
+    int intersectPrimitives(vec3 origin, vec3 ray)
+    {
+        float t = INFINITY;
+        int triangleId = 0;
+
+        // ToDo: check size
+        int stackPointer = 0;
+        BoundingBox stack[STACK_SIZE];
+
+        // push node
+        BoundingBox node = fetchBoundingBox(0); // fecth root
+        // stack[stackPointer] = node;
+        push(stack, stackPointer, node);
+
+        for (int i = 0; i < MAX_ITERATIONS; i++) {
+
+            // if stack is empty, stop traversing
+            if (stackPointer < 0) break;
+
+            // pop node
+            // node = stack[stackPointer];
+            node = pop(stack, stackPointer);
+            stackPointer--;
+
+            if (!isIntersectingBoundingBox(origin, ray, node)) continue;
+
+            if (node.isLeaf) {
+                // ToDo: intersect triangles inside the node
+
+                for (int j = 0; j < MAX_TRIANGLES; j++) {
+                    if (node.first + j >= node.first + node.count) break;
+    
+                    int index = fetchTriangleIndex(node.first + j);
+                    Triangle triangle = fetchTriangle(index);
+                    float tTriangle = intersectTriangle(origin, ray, triangle);
+                    if (tTriangle < t) {
+                        t = tTriangle;
+                        triangleId = index;
+                    }
+                }
+            } else {
+                // ToDo: traverse left and right
+
+                // push left and right nodes to the stack
+                stackPointer++;
+                // stack[stackPointer] = fetchBoundingBox(node.left);
+                push(stack, stackPointer, fetchBoundingBox(node.left));
+                stackPointer++;
+                // stack[stackPointer] = fetchBoundingBox(node.right);
+                push(stack, stackPointer, fetchBoundingBox(node.right));
+            }
+        }
+
+        // return t;
+        return triangleId;
     }
 
     float random(vec3 scale, float seed) {
@@ -245,6 +397,16 @@ var tracerFragmentSource = `
                     surfaceColor = vec3(0.25, 0.00, 0.00);
                 }
             }
+
+            // int triangleId = intersectPrimitives(origin, ray);
+            // Triangle triangle = fetchTriangle(triangleId);
+            // float tTriangle = intersectTriangle(origin, ray, triangle);
+            // if (tTriangle < t) {
+            //     t = tTriangle;
+            //     hit = origin + ray * t;
+            //     normal = getTriangleNormal(hit, triangle);
+            //     surfaceColor = vec3(0.25, 0.00, 0.00);
+            // }
 
             float tLight = INFINITY;
             for (int i = 0; i < MAX_LIGHTS; i++) {

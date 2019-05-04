@@ -2,23 +2,25 @@ namespace LH {
 
     export class BoundingBox {
 
-        public min: any;
-        public max: any;
-        public center: any;
+        private _id: number;
+
+        public min: any; // vec3
+        public max: any; // vec3
+        public center: any; // vec3
 
         public isLeaf: boolean;
         public left: BoundingBox;
         public right: BoundingBox;
-        public first: number
+        public first: number;
         public count: number;
 
-        // public constructor() {
-        // }
+        public constructor(id: number) {
+            this._id = id;
+        }
 
-        // public constructor(min: any, max: any) {
-        //     this.min = min;
-        //     this.max = max;
-        // }
+        public get id(): number {
+            return this._id;
+        }
 
         public calculateSurfaceArea(): number
         {

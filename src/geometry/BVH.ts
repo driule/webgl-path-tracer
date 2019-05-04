@@ -7,21 +7,34 @@ namespace LH {
         private _triangles: Triangle[];
         private _triangleIndices: number[];
 
+        private _nodeStack: BoundingBox[];
+
         public get root(): BoundingBox {
             return this._root;
         }
 
+        public get triangleIndices(): number[] {
+            return this._triangleIndices;
+        }
+
+        public get nodeStack(): BoundingBox[] {
+            return this._nodeStack;
+        }
+
         public build(triangles: Triangle[]): void {
+            this._nodeStack = [];
             this._triangles = triangles;
+
             this._triangleIndices = new Array(this._triangles.length);
             for (let i = 0; i < this._triangles.length; i++)
             {
                 this._triangleIndices[i] = i;
             }
         
-            this._root = new BoundingBox();
+            this._root = new BoundingBox(0);
             this._root.first = 0;
             this._root.count = this._triangles.length;
+            this._nodeStack.push(this._root);
         
             this.calculateBounds(this.root);
             this.subdivide(this.root, 0);
@@ -55,9 +68,12 @@ namespace LH {
                 node.isLeaf = true;
                 return;
             }
+
+            node.left = new BoundingBox(this._nodeStack.length);
+            this._nodeStack.push(node.left);
         
-            node.left = new BoundingBox();
-            node.right = new BoundingBox();
+            node.right = new BoundingBox(this._nodeStack.length);
+            this._nodeStack.push(node.right);
         
             this.partition(node);
         
