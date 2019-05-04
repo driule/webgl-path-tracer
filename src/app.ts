@@ -126,14 +126,28 @@ var tracerFragmentSource = `
      }
 
      BoundingBox fetchBoundingBox(int id) {
+
+        // if (id == 0) {
+        //     BoundingBox boundingBox;
+        //     boundingBox.min = vec3(-10.0, -10.0, -10.0);
+        //     boundingBox.max = vec3(10.0, 10.0, 10.0);;
+        //     boundingBox.isLeaf = true;
+        //     boundingBox.first = 0;
+        //     boundingBox.count = 1;
+        //     boundingBox.left = 0;
+        //     boundingBox.right = 0;
+
+        //     return boundingBox;
+        // }
+
         vec3 min = getValueFromTexture(bvhDataTexture, float(id * 4 + 0), bvhDataTextureSize);
         vec3 max = getValueFromTexture(bvhDataTexture, float(id * 4 + 1), bvhDataTextureSize);
         vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);
         vec3 children = getValueFromTexture(bvhDataTexture, float(id * 4 + 3), bvhDataTextureSize);
 
         BoundingBox boundingBox;
-        boundingBox.min = min;
-        boundingBox.max = max;
+        boundingBox.min = vec3(-10.0, -10.0, -10.0);
+        boundingBox.max = vec3(10.0, 10.0, 10.0);
         boundingBox.isLeaf = bool(data[0]);
         boundingBox.first = int(data[1]);
         boundingBox.count = int(data[2]);
@@ -232,10 +246,10 @@ var tracerFragmentSource = `
         return tmax >= tmin && tmax >= 0.0;
     }
 
-    BoundingBox pop(BoundingBox stack[STACK_SIZE], int id) {
+    BoundingBox pop(BoundingBox stack[STACK_SIZE], int stackPointer) {
         BoundingBox node;
         for (int i = 0; i < STACK_SIZE; i++) {
-            if (i == id) {
+            if (i == stackPointer - 1) {
                 node = stack[i];
                 break;
             }
@@ -244,11 +258,20 @@ var tracerFragmentSource = `
         return node;
     }
     
-    void push(inout BoundingBox[STACK_SIZE] stack, int id, BoundingBox node) {
+    void push(inout BoundingBox[STACK_SIZE] stack, int stackPointer, BoundingBox node) {
         for (int i = 0; i < STACK_SIZE; i++) {
-            if (i == id) stack[i] = node;
+            if (i == stackPointer) stack[i] = node;
         }
     }
+
+    // intersect bounding box test
+    // int intersectPrimitives(vec3 origin, vec3 ray)
+    // {
+    //     if (isIntersectingBoundingBox(origin, ray, fetchBoundingBox(0))) {
+    //         gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    //     };
+    //     return 0;
+    // }
 
     // traverse BVH to perform ray-primitive intersection
     int intersectPrimitives(vec3 origin, vec3 ray)
@@ -260,25 +283,34 @@ var tracerFragmentSource = `
         int stackPointer = 0;
         BoundingBox stack[STACK_SIZE];
 
-        // push node
-        BoundingBox node = fetchBoundingBox(0); // fecth root
-        // stack[stackPointer] = node;
+        BoundingBox node = fetchBoundingBox(0);
         push(stack, stackPointer, node);
+        stackPointer = stackPointer + 1;
 
         for (int i = 0; i < MAX_ITERATIONS; i++) {
 
+            if (i == 2) break;
+
             // if stack is empty, stop traversing
-            if (stackPointer < 0) break;
+            if (stackPointer <= 0) break;
 
-            // pop node
-            // node = stack[stackPointer];
+            if (i == 1) {
+                gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+                break;
+            }
+            // gl_FragColor = vec4(0.0, 0.75, 0.0, 1.0);
+
+            if (i == 1) break;
             node = pop(stack, stackPointer);
-            stackPointer--;
+            stackPointer = stackPointer - 1;
 
-            if (!isIntersectingBoundingBox(origin, ray, node)) continue;
-
+            if (!isIntersectingBoundingBox(origin, ray, node)) {
+                gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+                continue;
+            }
+            
             if (node.isLeaf) {
-                // ToDo: intersect triangles inside the node
+                // intersect triangles inside the node
 
                 for (int j = 0; j < MAX_TRIANGLES; j++) {
                     if (node.first + j >= node.first + node.count) break;
@@ -292,19 +324,16 @@ var tracerFragmentSource = `
                     }
                 }
             } else {
-                // ToDo: traverse left and right
-
-                // push left and right nodes to the stack
-                stackPointer++;
-                // stack[stackPointer] = fetchBoundingBox(node.left);
+                // traverse left and right; push left and right nodes to the stack
+                
                 push(stack, stackPointer, fetchBoundingBox(node.left));
-                stackPointer++;
-                // stack[stackPointer] = fetchBoundingBox(node.right);
+                stackPointer = stackPointer + 1;
+
                 push(stack, stackPointer, fetchBoundingBox(node.right));
+                stackPointer = stackPointer + 1;
             }
         }
 
-        // return t;
         return triangleId;
     }
 
@@ -385,20 +414,30 @@ var tracerFragmentSource = `
             vec3 normal;
             vec3 hit = origin + ray * t;
 
-            for (int i = 0; i < MAX_TRIANGLES; i++) {
-                if (i >= totalTriangles) break;
+            // for (int i = 0; i < MAX_TRIANGLES; i++) {
+            //     if (i >= totalTriangles) break;
 
-                Triangle triangle = fetchTriangle(i);
-                float tTriangle = intersectTriangle(origin, ray, triangle);
-                if (tTriangle < t) {
-                    t = tTriangle;
-                    hit = origin + ray * t;
-                    normal = getTriangleNormal(hit, triangle);
-                    surfaceColor = vec3(0.25, 0.00, 0.00);
-                }
+            //     Triangle triangle = fetchTriangle(i);
+            //     float tTriangle = intersectTriangle(origin, ray, triangle);
+            //     if (tTriangle < t) {
+            //         t = tTriangle;
+            //         hit = origin + ray * t;
+            //         normal = getTriangleNormal(hit, triangle);
+            //         surfaceColor = vec3(0.25, 0.00, 0.00);
+            //     }
+            // }
+
+            int i = intersectPrimitives(origin, ray);
+
+            Triangle triangle = fetchTriangle(i);
+            float tTriangle = intersectTriangle(origin, ray, triangle);
+            if (tTriangle < t) {
+                t = tTriangle;
+                hit = origin + ray * t;
+                normal = getTriangleNormal(hit, triangle);
+                surfaceColor = vec3(0.25, 0.00, 0.00);
             }
 
-            // int triangleId = intersectPrimitives(origin, ray);
             // Triangle triangle = fetchTriangle(triangleId);
             // float tTriangle = intersectTriangle(origin, ray, triangle);
             // if (tTriangle < t) {
@@ -444,7 +483,10 @@ var tracerFragmentSource = `
 
     void main() {
         vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;
-        gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+        // gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+
+        // debug mode
+        vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
     }
 `;
 

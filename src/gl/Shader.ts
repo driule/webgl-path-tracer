@@ -106,8 +106,8 @@ namespace LH {
                 }
 
                 // specific case for BVH
-                if (name.toString() == "bvh") {
-                    let bvhNodeDataList = new Float32Array(uniforms.lightDataTextureSize * uniforms.lightDataTextureSize * 3);
+                if (name.toString() == "bvhNodeList") {
+                    let bvhNodeDataList = new Float32Array(uniforms.bvhDataTextureSize * uniforms.bvhDataTextureSize * 3);
                     for (let i = 0; i < uniforms.totalBvhNodes; i++) {
                         bvhNodeDataList[i * 3 * 4 + 0] = uniforms.bvhNodeList[i].min[0];
                         bvhNodeDataList[i * 3 * 4 + 1] = uniforms.bvhNodeList[i].min[1];
@@ -121,9 +121,15 @@ namespace LH {
                         bvhNodeDataList[i * 3 * 4 + 7] = uniforms.bvhNodeList[i].first;
                         bvhNodeDataList[i * 3 * 4 + 8] = uniforms.bvhNodeList[i].count;
 
-                        bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
-                        bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
-                        bvhNodeDataList[i * 3 * 4 + 11] = 0.0;
+                        if (!uniforms.bvhNodeList[i].isLeaf) {
+                            bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
+                            bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
+                            bvhNodeDataList[i * 3 * 4 + 11] = 0.0;
+                        } else {
+                            bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
+                            bvhNodeDataList[i * 3 * 4 + 10] = 0.0;
+                            bvhNodeDataList[i * 3 * 4 + 11] = 0.0;
+                        }
                     }
 
                     gl.activeTexture(gl.TEXTURE3);

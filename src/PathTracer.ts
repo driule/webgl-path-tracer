@@ -87,6 +87,7 @@ namespace LH {
 
             uniforms.bvhNodeList = bvh.nodeStack;
             uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
+            // console.log("wut?" + uniforms.totalBvhNodes);
 
             // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units
             uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(bvh.nodeStack.length * 4));
