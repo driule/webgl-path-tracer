@@ -16,6 +16,7 @@ namespace LH {
 
         private _triangles: Triangle[];
         private _lights: Light[];
+        private _bvh: BVH;
 
         public constructor(resolution: any) {
             this._resolution = resolution;
@@ -82,8 +83,8 @@ namespace LH {
             uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._triangles.length * 3));
 
             // BVH data
-            let bvh: BVH = new BVH();
-            bvh.build(this._triangles);
+            let bvh: BVH = this._bvh;
+            // bvh.build(this._triangles);
 
             uniforms.bvhNodeList = bvh.nodeStack;
             uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
@@ -91,6 +92,8 @@ namespace LH {
 
             // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units
             uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(bvh.nodeStack.length * 4));
+            // console.log(uniforms.bvhDataTextureSize);
+            // console.log(uniforms.totalBvhNodes);
 
             uniforms.triangleIndices = bvh.triangleIndices;
             uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
@@ -128,9 +131,10 @@ namespace LH {
             this._vertexBuffer.draw();
         }
 
-        public setObjects(triangles: Triangle[], lights: Light[]): void {
+        public setObjects(triangles: Triangle[], lights: Light[], bvh: BVH): void {
             this._triangles = triangles;
             this._lights = lights;
+            this._bvh = bvh;
 
             this.restart();
         }

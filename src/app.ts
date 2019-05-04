@@ -45,7 +45,7 @@ var tracerFragmentSource = `
     #define BOUNCES 2
     #define EPSILON 0.0001
     #define INFINITY 10000.0
-    #define STACK_SIZE 64
+    #define STACK_SIZE 8
 
     struct Sphere
     {
@@ -146,9 +146,12 @@ var tracerFragmentSource = `
         vec3 children = getValueFromTexture(bvhDataTexture, float(id * 4 + 3), bvhDataTextureSize);
 
         BoundingBox boundingBox;
-        boundingBox.min = vec3(-10.0, -10.0, -10.0);
-        boundingBox.max = vec3(10.0, 10.0, 10.0);
-        boundingBox.isLeaf = bool(data[0]);
+        boundingBox.min = min;
+        boundingBox.max = max;
+        boundingBox.isLeaf = bool(int(data[0])); // fix float to bool conversion
+        // if (boundingBox.isLeaf) {
+        //     gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+        // }
         boundingBox.first = int(data[1]);
         boundingBox.count = int(data[2]);
         boundingBox.left = int(children[0]);
@@ -213,7 +216,7 @@ var tracerFragmentSource = `
         );
     }
 
-    bool isIntersectingBoundingBox(vec3 origin, vec3 ray, BoundingBox boundingBox)
+    bool isIntersectingBoundingBox(vec3 origin, vec3 ray, BoundingBox boundingBox, bool dangerous)
     {
         vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
@@ -236,6 +239,12 @@ var tracerFragmentSource = `
 
         tmin = max(tmin, min(tzmin, tzmax));
         tmax = min(tmax, max(tzmin, tzmax));
+        
+        if (tmax >= 0.0 && tmax >= tmin) {
+            gl_FragColor = vec4(0.75, 0.5, 0.0, 1.0);
+            return true;
+        }
+        return false;
 
         // ToDo: check
         // early out
@@ -243,16 +252,21 @@ var tracerFragmentSource = `
         //     return false;
 
         // ToDo: use EPSILON (?)
-        return tmax >= tmin && tmax >= 0.0;
+        // return tmax >= tmin && tmax >= 0.0;
     }
 
     BoundingBox pop(BoundingBox stack[STACK_SIZE], int stackPointer) {
+        
         BoundingBox node;
         for (int i = 0; i < STACK_SIZE; i++) {
             if (i == stackPointer - 1) {
                 node = stack[i];
                 break;
             }
+        }
+        
+        if (stackPointer == 2 && node.left == 1595) {
+            // gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
         }
 
         return node;
@@ -289,27 +303,38 @@ var tracerFragmentSource = `
 
         for (int i = 0; i < MAX_ITERATIONS; i++) {
 
-            if (i == 2) break;
+            // if (i == 3) break;
 
             // if stack is empty, stop traversing
             if (stackPointer <= 0) break;
 
-            if (i == 1) {
-                gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-                break;
+            if (i == 1 && stackPointer == 2) {
+                // gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
             }
-            // gl_FragColor = vec4(0.0, 0.75, 0.0, 1.0);
-
-            if (i == 1) break;
             node = pop(stack, stackPointer);
             stackPointer = stackPointer - 1;
 
-            if (!isIntersectingBoundingBox(origin, ray, node)) {
-                gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+            if (node.left == 1595 && i == 1 && stackPointer == 1 && !node.isLeaf && node.count == 1511 && node.first == 1681) {
+                gl_FragColor = vec4(0.0, 0.5, 0.0, 1.0);
+            }
+
+            bool dangerous = false;
+            if (i == 1) {
+                // break;
+                dangerous = true;
+            }
+            if (!isIntersectingBoundingBox(origin, ray, node, dangerous)) {
+                if (i == 1) {
+                    gl_FragColor = vec4(0.25, 0.0, 0.0, 1.0);
+                    // break;
+                }
                 continue;
+            } else {
+                // gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
             }
             
             if (node.isLeaf) {
+                // if (i == 1) break;
                 // intersect triangles inside the node
 
                 for (int j = 0; j < MAX_TRIANGLES; j++) {
@@ -326,6 +351,11 @@ var tracerFragmentSource = `
             } else {
                 // traverse left and right; push left and right nodes to the stack
                 
+                BoundingBox box = fetchBoundingBox(node.left);
+                if (box.left == 1595) {
+                    // gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
+                }
+                // if (i == 1) break;
                 push(stack, stackPointer, fetchBoundingBox(node.left));
                 stackPointer = stackPointer + 1;
 
@@ -483,10 +513,10 @@ var tracerFragmentSource = `
 
     void main() {
         vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;
-        // gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+        gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
 
         // debug mode
-        vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+        // vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
     }
 `;
 
