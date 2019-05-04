@@ -31,6 +31,7 @@ namespace LH {
 
             let bvh: BVH = new BVH();
             bvh.build(triangles);
+            console.log('bvh size: ' + bvh.nodeStack.length);
 
             let lights: Light[] = [
                 new Light([0.0, 5.75, 20.25], 0.25, 35.0),

@@ -45,7 +45,7 @@ var tracerFragmentSource = `
     #define BOUNCES 2
     #define EPSILON 0.0001
     #define INFINITY 10000.0
-    #define STACK_SIZE 8
+    #define STACK_SIZE 16
 
     struct Sphere
     {
@@ -240,8 +240,7 @@ var tracerFragmentSource = `
         tmin = max(tmin, min(tzmin, tzmax));
         tmax = min(tmax, max(tzmin, tzmax));
         
-        if (tmax >= 0.0 && tmax >= tmin) {
-            gl_FragColor = vec4(0.75, 0.5, 0.0, 1.0);
+        if (tmax >= EPSILON && tmax >= tmin) {
             return true;
         }
         return false;
