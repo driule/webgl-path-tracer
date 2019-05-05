@@ -73,6 +73,12 @@ var tracerFragmentSource = `
         int left, right, id;
     };
 
+    struct Intersection
+    {
+        Triangle triangle;
+        float t;
+    };
+
     uniform vec2 resolution;
     uniform vec3 eye;
     uniform float textureWeight;
@@ -144,10 +150,6 @@ var tracerFragmentSource = `
         boundingBox.right = int(children[1]);
         boundingBox.id = int(children[2]);
 
-        // if (boundingBox.id == id) {
-        //     gl_FragColor = vec4(0.0, 0.0, 0.25, 1.0);
-        // }
-
         return boundingBox;
      }
 
@@ -200,14 +202,13 @@ var tracerFragmentSource = `
         return INFINITY;
     }
 
-    // ToDo: remove hit as an argument (?)
-    vec3 getTriangleNormal(vec3 hit, Triangle triangle) {
+    vec3 getTriangleNormal(Triangle triangle) {
         return normalize(
             cross(triangle.a - triangle.b, triangle.b - triangle.c)
         );
     }
 
-    bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox boundingBox)
+    bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox boundingBox, Intersection intersection)
     {
         // vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
@@ -230,19 +231,15 @@ var tracerFragmentSource = `
 
         tmin = max(tmin, min(tzmin, tzmax));
         tmax = min(tmax, max(tzmin, tzmax));
+
+        if (tmin > intersection.t)
+            return false;
         
-        if (tmax >= EPSILON && tmax >= tmin) {
+        if (tmax >= 0.0 && tmax >= tmin) {
             return true;
         }
+
         return false;
-
-        // ToDo: check
-        // early out
-        // if (tmin > ray->t)
-        //     return false;
-
-        // ToDo: use EPSILON (?)
-        // return tmax >= tmin && tmax >= 0.0;
     }
 
     BoundingBox pop() {
@@ -267,12 +264,6 @@ var tracerFragmentSource = `
         stackPointer = stackPointer + 1;
     }
 
-    struct Intersection
-    {
-        Triangle triangle;
-        float t;
-    };
-
     Intersection intersectPrimitives(vec3 origin, vec3 ray)
     {
         Intersection intersection;
@@ -280,30 +271,23 @@ var tracerFragmentSource = `
 
         vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
-        // push root node to the stack
         stackPointer = 0;
         BoundingBox node = fetchBoundingBox(0);
         push(node);
 
         for (int i = 0; i < MAX_ITERATIONS; i++) {
 
-            // if stack is empty, stop traversing
             if (stackPointer <= 0) break;
 
             node = pop();
 
-            if (!isIntersectingBoundingBox(origin, invertedRay, node)) continue;
+            if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) continue;
             
             if (node.isLeaf) {
-                // intersect triangles inside the node
-
                 for (int counter = 0; counter < MAX_TRIANGLES; counter++) {
                     if (counter > node.count) break;
     
                     int index = fetchTriangleIndex(node.first + counter);
-                    // if (index == 2) {
-                    //     gl_FragColor = vec4(0.0, 0.0, 0.25, 1.0);
-                    // }
                     Triangle triangle = fetchTriangle(index);
                     float tTriangle = intersectTriangle(origin, ray, triangle);
 
@@ -313,8 +297,6 @@ var tracerFragmentSource = `
                     }
                 }
             } else {
-                // traverse left and right; push left and right nodes to the stack
-                
                 push(fetchBoundingBox(node.left));
                 push(fetchBoundingBox(node.right));
             }
@@ -369,9 +351,6 @@ var tracerFragmentSource = `
             );
             if (tTriangle < 1.0) return 0.0;
         }
-
-        // Intersection intersection = intersectPrimitives(origin, ray);
-        // if (intersection.t < 1.0) return 0.0;
         
         return 1.0;
     }
@@ -421,7 +400,7 @@ var tracerFragmentSource = `
             if (intersection.t < t) {
                 t = intersection.t;
                 hit = origin + ray * t;
-                normal = getTriangleNormal(hit, intersection.triangle);
+                normal = getTriangleNormal(intersection.triangle);
                 surfaceColor = vec3(0.25, 0.00, 0.00);
             }
 
