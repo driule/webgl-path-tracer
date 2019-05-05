@@ -43,7 +43,7 @@ var tracerFragmentSource = `#version 300 es
     #define MAX_TRIANGLES 10000
     #define MAX_LIGHTS 256
     #define MAX_ITERATIONS 10000
-    #define BOUNCES 3
+    #define BOUNCES 15
     #define EPSILON 0.0001
     #define INFINITY 10000.0
     #define STACK_SIZE 32
@@ -418,6 +418,8 @@ var tracerFragmentSource = `#version 300 es
             float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);
             
             colorMask *= surfaceColor;
+            
+            //accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity);
             accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity) * energyMultiplier;
             
             float raySurviveProbability = min(1.0, max(max(accumulatedColor.x, accumulatedColor.y), accumulatedColor.z));
