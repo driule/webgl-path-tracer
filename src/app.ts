@@ -46,7 +46,7 @@ var tracerFragmentSource = `#version 300 es
     #define BOUNCES 2
     #define EPSILON 0.0001
     #define INFINITY 10000.0
-    #define STACK_SIZE 16
+    #define STACK_SIZE 32
 
     struct Sphere
     {
@@ -246,25 +246,11 @@ var tracerFragmentSource = `#version 300 es
     BoundingBox pop() {
         stackPointer = stackPointer - 1;
 
-        int node;
-        for (int i = 0; i < STACK_SIZE; i++) {
-            if (i == stackPointer) {
-                node = stack[i];
-                break;
-            }
-        }
-
-        return fetchBoundingBox(node);
+        return fetchBoundingBox(stack[stackPointer]);
     }
     
     void push(int node) {
-        for (int i = 0; i < STACK_SIZE; i++) {
-            if (i == stackPointer) {
-                stack[i] = node;
-                break;
-            }
-        }
-
+        stack[stackPointer] = node;
         stackPointer = stackPointer + 1;
     }
 
@@ -272,25 +258,22 @@ var tracerFragmentSource = `#version 300 es
     {
         Intersection intersection;
         intersection.t = INFINITY;
+        intersection.triangle = fetchTriangle(0);
 
         vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
         stackPointer = 0;
         push(0);
 
-        for (int i = 0; i < MAX_ITERATIONS; i++) {
-
-            if (stackPointer <= 0) break;
-
+        while (true) {
+            if (stackPointer <= 0 || stackPointer >= STACK_SIZE) break;
             BoundingBox node = pop();
 
             if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) continue;
             
             if (node.isLeaf) {
-                for (int counter = 0; counter < MAX_TRIANGLES; counter++) {
-                    if (counter > node.count) break;
-    
-                    int index = fetchTriangleIndex(node.first + counter);
+                for (int i = node.first; i <= node.first + node.count; i++) {
+                    int index = fetchTriangleIndex(i);
                     Triangle triangle = fetchTriangle(index);
                     float tTriangle = intersectTriangle(origin, ray, triangle);
 

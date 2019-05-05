@@ -83,20 +83,13 @@ namespace LH {
             uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._triangles.length * 3));
 
             // BVH data
-            let bvh: BVH = this._bvh;
-            // bvh.build(this._triangles);
-
-            uniforms.bvhNodeList = bvh.nodeStack;
+            uniforms.bvhNodeList = this._bvh.nodeStack;
             uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
-            // console.log("wut?" + uniforms.totalBvhNodes);
 
             // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units
-            uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(bvh.nodeStack.length * 4));
-            // console.log(uniforms.bvhDataTextureSize);
-            // console.log(uniforms.totalBvhNodes);
+            uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._bvh.nodeStack.length * 4));
 
-            uniforms.triangleIndices = bvh.triangleIndices;
-            // console.log(uniforms.triangleIndices);exit();
+            uniforms.triangleIndices = this._bvh.triangleIndices;
             uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
 
             // light data
