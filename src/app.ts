@@ -273,9 +273,12 @@ var tracerFragmentSource = `#version 300 es
             if (!isIntersectingBoundingBox(origin, invertedRay, node)) continue;
             
             if (node.isLeaf) {
+                // visualize leaf bounding boxes
                 // if (true) {
-                //     pixelColor = vec4(1.0, 0.0, 0.0, 1.0);
+                //     pixelColor = pixelColor + vec4(0.0, 0.1, 0.0, 1.0);
                 // }
+
+                // ToDo: check why "i < node.first" crashes
                 for (int i = 0; i < 20; i++) {
                     if (node.first + i >= node.first + node.count) {
                         break;
@@ -418,10 +421,9 @@ var tracerFragmentSource = `#version 300 es
             float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);
             
             colorMask *= surfaceColor;
-            
-            //accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity);
             accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity) * energyMultiplier;
             
+            // Russian-Roulette to determine ray survival probability
             float raySurviveProbability = min(1.0, max(max(accumulatedColor.x, accumulatedColor.y), accumulatedColor.z));
             energyMultiplier = 1.0 / raySurviveProbability;
 

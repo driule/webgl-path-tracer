@@ -15,9 +15,9 @@ namespace LH {
             this._canvas = GLUtilities.initialize("pathTracer");
             this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
 
-            this._angleX = 0;
-            this._angleY = 0;
-            this._zoomZ = 40.0;
+            this._angleX = 0.2;
+            this._angleY = 5.75;
+            this._zoomZ = 75.0;
             this._eye = glMatrix.vec3.create();
         }
 
@@ -112,6 +112,8 @@ namespace LH {
         private restart(): void {
             this._pathTracer.restart();
             this.calculateViewProjection();
+
+            // console.log('angleX: ', this._angleX, '; angleY: ', + this._angleY, '; zoomZ', + this._zoomZ + ';');
         }
         
         //
