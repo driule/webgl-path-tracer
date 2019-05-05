@@ -327,14 +327,8 @@ var tracerFragmentSource = `#version 300 es
     }
 
     float getShadowIntensity(vec3 origin, vec3 ray) {
-        for (int i = 0; i < MAX_TRIANGLES; i++) {
-            if (i >= totalTriangles) break;
-            
-            float tTriangle = intersectTriangle(
-                origin,
-                ray,
-                fetchTriangle(i)
-            );
+        for (int i = 0; i < totalTriangles; i++) {
+            float tTriangle = intersectTriangle(origin, ray, fetchTriangle(i));
             if (tTriangle < 1.0) return 0.0;
         }
         
@@ -342,7 +336,7 @@ var tracerFragmentSource = `#version 300 es
     }
 
     Light getRandomLight() {
-        for (int i = 0; i < MAX_LIGHTS; i++) {
+        for (int i = 0; i < totalLights; i++) {
 
             // use loop index as a seed to get different number for each iteration
             float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
@@ -368,21 +362,18 @@ var tracerFragmentSource = `#version 300 es
             vec3 normal;
             vec3 hit = origin + ray * t;
 
-            // for (int i = 0; i < MAX_TRIANGLES; i++) {
-            //     if (i >= totalTriangles) break;
-
+            // for (int i = 0; i < totalTriangles; i++) {
             //     Triangle triangle = fetchTriangle(i);
             //     float tTriangle = intersectTriangle(origin, ray, triangle);
             //     if (tTriangle < t) {
             //         t = tTriangle;
             //         hit = origin + ray * t;
-            //         normal = getTriangleNormal(hit, triangle);
+            //         normal = getTriangleNormal(triangle);
             //         surfaceColor = vec3(0.25, 0.00, 0.00);
             //     }
             // }
 
             Intersection intersection = intersectPrimitives(origin, ray);
-
             if (intersection.t < t) {
                 t = intersection.t;
                 hit = origin + ray * t;
@@ -391,9 +382,7 @@ var tracerFragmentSource = `#version 300 es
             }
 
             float tLight = INFINITY;
-            for (int i = 0; i < MAX_LIGHTS; i++) {
-                if (i >= totalLights) break;
-
+            for (int i = 0; i < totalLights; i++) {
                 light = fetchLight(i);
                 tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
                 
@@ -403,7 +392,7 @@ var tracerFragmentSource = `#version 300 es
                 }
             }
             
-            if (t == INFINITY || tLight < t) {
+            if (t == INFINITY) {
                 break;
             } else {
                 ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
