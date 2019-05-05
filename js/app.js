@@ -111,15 +111,15 @@ var LH;
             this._pathTracer = new LH.PathTracer([this._canvas.width, this._canvas.height]);
             this._angleX = 0;
             this._angleY = 0;
-            this._zoomZ = 2.5;
+            this._zoomZ = 40.0;
             this._eye = glMatrix.vec3.create();
         }
         Renderer.prototype.start = function () {
             LH.gl.clearColor(0, 0, 0, 1);
             LH.gl.clear(LH.gl.COLOR_BUFFER_BIT | LH.gl.DEPTH_BUFFER_BIT);
             // create scene
-            var triangles = this.createTriangles();
-            // let triangles = this.loadObject('assets/teddy.obj');
+            // let triangles = this.createTriangles();
+            var triangles = this.loadObject('assets/teddy.obj');
             var bvh = new LH.BVH();
             bvh.build(triangles);
             var lights = [
