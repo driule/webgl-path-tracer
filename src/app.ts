@@ -267,19 +267,10 @@ var tracerFragmentSource = `#version 300 es
         push(0);
 
         while (true) {
-
-            // if (stackPointer >= STACK_SIZE) {
-            //     pixelColor = vec4(1.0, 0.0, 0.0, 1.0);break;
-            // }
-
             if (stackPointer <= 0 || stackPointer >= STACK_SIZE) break;
             BoundingBox node = pop();
 
-            if (!isIntersectingBoundingBox(origin, invertedRay, node)) {
-                continue;
-            } else {
-                pixelColor = pixelColor + vec4(0.1 * float(stackPointer), 0.0, 0.1, 1.0); // visualize bounding boxes
-            }
+            if (!isIntersectingBoundingBox(origin, invertedRay, node)) continue;
             
             if (node.isLeaf) {
                 for (int i = 0; i < 20; i++) {
@@ -289,15 +280,10 @@ var tracerFragmentSource = `#version 300 es
 
                     int index = fetchTriangleIndex(node.first + i);
 
-                    // if (node.id == 2 && index == 1) {
-                    //     pixelColor = vec4(1.0, 0.0, 0.0, 1.0);break;
-                    // }
-
                     Triangle triangle = fetchTriangle(index);
                     float tTriangle = intersectTriangle(origin, ray, triangle);
 
                     if (tTriangle < intersection.t) {
-                        // pixelColor = pixelColor + vec4(0.0, 0.2, 0.0, 1.0);
                         intersection.t = tTriangle;
                         intersection.triangle = triangle;
                     }
@@ -412,7 +398,6 @@ var tracerFragmentSource = `#version 300 es
                 }
             }
             
-            // if (t == INFINITY) {
             if (abs(t - INFINITY) < EPSILON) {
                 break;
             } else {

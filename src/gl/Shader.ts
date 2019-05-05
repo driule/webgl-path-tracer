@@ -124,7 +124,6 @@ namespace LH {
                         if (!uniforms.bvhNodeList[i].isLeaf) {
                             bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                             bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
-                            // console.log(uniforms.bvhNodeList); exit();
                         } else {
                             bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
                             bvhNodeDataList[i * 3 * 4 + 10] = 0.0;

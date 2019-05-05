@@ -37,9 +37,6 @@ namespace LH {
                 new Light([20.25, 22.75, 0.25], 1.5, 10.0),
                 new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
-
-            console.log(bvh.triangleIndices);
-            console.log(bvh.nodeStack);
             this._pathTracer.setObjects(triangles, lights, bvh);
 
             this.calculateViewProjection();

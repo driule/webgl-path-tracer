@@ -97,10 +97,8 @@ namespace LH {
             }
         
             let binCount = 10;
-            // std::vector<int>* bins = new std::vector<int>[binCount];
             let bins: number[][] = [];
 
-            // let binWidth = (node.max - node.min) / binCount; // gl-matrix
             let binWidth = glMatrix.vec3.subtract([], node.max, node.min);
             binWidth[0] = Math.floor(binWidth[0] / binCount);
             binWidth[1] = Math.floor(binWidth[1] / binCount);
@@ -112,7 +110,6 @@ namespace LH {
         
             for (let axis = 0; axis < 3; axis++)
             {
-                // for (let i = 0; i < binCount; i++) bins[i].clear();
                 for (let i = 0; i < binCount; i++) bins[i] = [];
         
                 // divide objects to bins
@@ -124,12 +121,7 @@ namespace LH {
                     else if (axis == 1)	binIndex = Math.floor((this._triangles[index].boundingBox.center[1] - node.min[1]) / binWidth[1]);
                     else if (axis == 2)	binIndex = Math.floor((this._triangles[index].boundingBox.center[2] - node.min[2]) / binWidth[2]);
         
-                    // console.log(binCount);
-                    // console.log(binIndex);
                     binIndex = Math.min(binCount - 1, binIndex);
-                    // bins[binIndex].push_back(index);
-                    // console.log(index);
-                    // console.log(binIndex);
                     bins[binIndex].push(index);
                 }
         
@@ -137,7 +129,6 @@ namespace LH {
                 let count = 0;
                 for (let i = 0; i < binCount; i++)
                 {
-                    // for (let j = 0; j < bins[i].size(); j++)
                     for (let j = 0; j < bins[i].length; j++)
                     {
                         this._triangleIndices[node.first + count] = bins[i][j];
@@ -151,7 +142,6 @@ namespace LH {
                     let leftCount = 0, rightCount = 0;
                     for (let j = 0; j <= i; j++)
                     {
-                        // leftCount += bins[j].size();
                         leftCount += bins[j].length;
                     }
                     rightCount = node.count - leftCount;
