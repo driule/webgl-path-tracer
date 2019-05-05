@@ -273,7 +273,7 @@ var tracerFragmentSource = `#version 300 es
             if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) {
                 continue;
             } else {
-                pixelColor = pixelColor + vec4(0.0, 0.0, 0.1, 1.0); // visualize bounding boxes
+                pixelColor = pixelColor + vec4(0.01 * float(stackPointer), 0.0, 0.1, 1.0); // visualize bounding boxes
             }
             
             if (node.isLeaf) {
