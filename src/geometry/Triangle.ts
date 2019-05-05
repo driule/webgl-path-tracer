@@ -15,11 +15,11 @@ namespace LH {
 
             let minX = Math.min(Math.min(this.a[0], this.b[0]), this.c[0]);
             let minY = Math.min(Math.min(this.a[1], this.b[1]), this.c[1]);
-            let minZ = Math.min(Math.min(this.a[2], this.b[2]), this.a[2]);
+            let minZ = Math.min(Math.min(this.a[2], this.b[2]), this.c[2]);
         
             let maxX = Math.max(Math.max(this.a[0], this.b[0]), this.c[0]);
             let maxY = Math.max(Math.max(this.a[1], this.b[1]), this.c[1]);
-            let maxZ = Math.max(Math.max(this.a[2], this.b[2]), this.a[2]);
+            let maxZ = Math.max(Math.max(this.a[2], this.b[2]), this.c[2]);
         
             this._boundingBox = new BoundingBox(0);
             this._boundingBox.min = [minX, minY, minZ];
