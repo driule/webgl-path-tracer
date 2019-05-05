@@ -70,7 +70,7 @@ var tracerFragmentSource = `
         vec3 min, max;
         bool isLeaf;
         int first, count;
-        int left, right;
+        int left, right, id;
     };
 
     uniform vec2 resolution;
@@ -142,6 +142,11 @@ var tracerFragmentSource = `
         boundingBox.count = int(data[2]);
         boundingBox.left = int(children[0]);
         boundingBox.right = int(children[1]);
+        boundingBox.id = int(children[2]);
+
+        // if (boundingBox.id == id) {
+        //     gl_FragColor = vec4(0.0, 0.0, 0.25, 1.0);
+        // }
 
         return boundingBox;
      }
@@ -149,7 +154,7 @@ var tracerFragmentSource = `
      int fetchTriangleIndex(int id) {
          vec3 triangleIndex = getValueFromTexture(triangleIndicesDataTexture, float(id), triangleIndicesDataTextureSize);
 
-         return int(triangleIndex.x);
+         return int(triangleIndex[0]);
      }
 
     float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
@@ -262,18 +267,16 @@ var tracerFragmentSource = `
         stackPointer = stackPointer + 1;
     }
 
-    // intersect bounding box test
-    // int intersectPrimitives(vec3 origin, vec3 ray)
-    // {
-    //     if (isIntersectingBoundingBox(origin, ray, fetchBoundingBox(0))) {
-    //         gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-    //     };
-    //     return 0;
-    // }
+    struct Intersection
+    {
+        Triangle triangle;
+        float t;
+    };
 
     // traverse BVH to perform ray-primitive intersection
-    int intersectPrimitives(vec3 origin, vec3 ray)
+    Intersection intersectPrimitives(vec3 origin, vec3 ray)
     {
+        Intersection intersection;
         vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
         float t = INFINITY;
@@ -288,7 +291,6 @@ var tracerFragmentSource = `
         push(node);
 
         for (int i = 0; i < MAX_ITERATIONS; i++) {
-            // if (i == 100) break;
 
             // if stack is empty, stop traversing
             if (stackPointer <= 0) break;
@@ -300,15 +302,21 @@ var tracerFragmentSource = `
             if (node.isLeaf) {
                 // intersect triangles inside the node
 
-                for (int j = 0; j < MAX_TRIANGLES; j++) {
-                    if (node.first + j >= node.first + node.count) break;
+                for (int counter = 0; counter < MAX_TRIANGLES; counter++) {
+                    if (counter > node.count) break;
     
-                    int index = fetchTriangleIndex(node.first + j);
+                    int index = fetchTriangleIndex(node.first + counter);
+                    // if (index == 2) {
+                    //     gl_FragColor = vec4(0.0, 0.0, 0.25, 1.0);
+                    // }
                     Triangle triangle = fetchTriangle(index);
                     float tTriangle = intersectTriangle(origin, ray, triangle);
                     if (tTriangle < t) {
                         t = tTriangle;
                         triangleId = index;
+
+                        intersection.triangle = triangle;
+                        intersection.t = t;
                     }
                 }
             } else {
@@ -319,7 +327,7 @@ var tracerFragmentSource = `
             }
         }
 
-        return triangleId;
+        return intersection;
     }
 
     float random(vec3 scale, float seed) {
@@ -368,6 +376,9 @@ var tracerFragmentSource = `
             );
             if (tTriangle < 1.0) return 0.0;
         }
+
+        // Intersection intersection = intersectPrimitives(origin, ray);
+        // if (intersection.t < 1.0) return 0.0;
         
         return 1.0;
     }
@@ -412,25 +423,14 @@ var tracerFragmentSource = `
             //     }
             // }
 
-            int i = intersectPrimitives(origin, ray);
+            Intersection intersection = intersectPrimitives(origin, ray);
 
-            Triangle triangle = fetchTriangle(i);
-            float tTriangle = intersectTriangle(origin, ray, triangle);
-            if (tTriangle < t) {
-                t = tTriangle;
+            if (intersection.t < t) {
+                t = intersection.t;
                 hit = origin + ray * t;
-                normal = getTriangleNormal(hit, triangle);
+                normal = getTriangleNormal(hit, intersection.triangle);
                 surfaceColor = vec3(0.25, 0.00, 0.00);
             }
-
-            // Triangle triangle = fetchTriangle(triangleId);
-            // float tTriangle = intersectTriangle(origin, ray, triangle);
-            // if (tTriangle < t) {
-            //     t = tTriangle;
-            //     hit = origin + ray * t;
-            //     normal = getTriangleNormal(hit, triangle);
-            //     surfaceColor = vec3(0.25, 0.00, 0.00);
-            // }
 
             float tLight = INFINITY;
             for (int i = 0; i < MAX_LIGHTS; i++) {

@@ -125,12 +125,11 @@ namespace LH {
                             bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                             bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
                             // console.log(uniforms.bvhNodeList); exit();
-                            bvhNodeDataList[i * 3 * 4 + 11] = 0.0;
                         } else {
                             bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
                             bvhNodeDataList[i * 3 * 4 + 10] = 0.0;
-                            bvhNodeDataList[i * 3 * 4 + 11] = 0.0;
                         }
+                        bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
                     }
 
                     gl.activeTexture(gl.TEXTURE3);
@@ -152,14 +151,11 @@ namespace LH {
                 // specific case for triangle indices
                 if (name.toString() == "triangleIndices") {
                     let triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
-                    // triangleIndices = Uint32Array.from(uniforms.triangleIndices);
                     for (let i = 0; i < uniforms.triangleIndices.length; i++) {
                         triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
-                        triangleIndices[i * 3 + 1] = 0;
-                        triangleIndices[i * 3 + 2] = 0;
+                        triangleIndices[i * 3 + 1] = 0.0;
+                        triangleIndices[i * 3 + 2] = 0.0;
                     }
-                    // console.log(uniforms.triangleIndices.length);
-                    // console.log(uniforms.triangleIndicesDataTextureSize);
 
                     gl.activeTexture(gl.TEXTURE4);
                     gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -169,7 +165,6 @@ namespace LH {
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, triangleIndices);
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleIndices);
                     
                     let triangleIndicesDataLocation = gl.getUniformLocation(this._program, "triangleIndicesDataTexture");

@@ -17,7 +17,7 @@ namespace LH {
 
             this._angleX = 0;
             this._angleY = 0;
-            this._zoomZ = 40.0;
+            this._zoomZ = 2.5;
             this._eye = glMatrix.vec3.create();
         }
 
@@ -26,12 +26,13 @@ namespace LH {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // create scene
-            // let triangles = this.createTriangles();
-            let triangles = this.loadObject('assets/teddy.obj');
+            let triangles = this.createTriangles();
+            // let triangles = this.loadObject('assets/teddy.obj');
 
             let bvh: BVH = new BVH();
             bvh.build(triangles);
-            console.log('bvh size: ' + bvh.nodeStack.length);
+            console.log('bvh debug: ' + bvh.nodeStack.length);
+            console.log('bvh debug: ' + bvh.triangleIndices);
 
             let lights: Light[] = [
                 new Light([0.0, 5.75, 20.25], 0.25, 35.0),
