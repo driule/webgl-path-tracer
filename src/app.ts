@@ -1,9 +1,9 @@
 declare var glMatrix: any;
 
 // vertex shader for drawing a textured quad
-var renderVertexSource = `
-    attribute vec3 vertex;
-    varying vec2 texCoord;
+var renderVertexSource = `#version 300 es
+    in vec3 vertex;
+    out vec2 texCoord;
 
     void main() {
         texCoord = vertex.xy * 0.5 + 0.5;
@@ -12,14 +12,15 @@ var renderVertexSource = `
 `;
 
 // fragment shader for drawing a textured quad
-var renderFragmentSource = `
+var renderFragmentSource = `#version 300 es
     precision highp float;
 
-    varying vec2 texCoord;
-    uniform sampler2D texture;
+    in vec2 texCoord;
+    uniform sampler2D textureSampler;
 
+    out vec4 pixelColor;
     void main() {
-        gl_FragColor = texture2D(texture, texCoord);
+        pixelColor = texture(textureSampler, texCoord);
     }
 `;
 
