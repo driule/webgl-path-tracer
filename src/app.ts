@@ -25,10 +25,10 @@ var renderFragmentSource = `#version 300 es
 `;
 
 // vertex shader, interpolate ray per-pixel
-var tracerVertexSource = `
-    attribute vec3 vertex;
+var tracerVertexSource = `#version 300 es
+    in vec3 vertex;
+    out vec3 initialRay;
     uniform vec3 eye, ray00, ray01, ray10, ray11;
-    varying vec3 initialRay;
 
     void main() {
         vec2 percent = vertex.xy * 0.5 + 0.5;
@@ -37,7 +37,7 @@ var tracerVertexSource = `
     }
 `;
 
-var tracerFragmentSource = `
+var tracerFragmentSource = `#version 300 es
     precision highp float;
 
     #define MAX_TRIANGLES 10000
@@ -84,7 +84,7 @@ var tracerFragmentSource = `
     uniform vec3 eye;
     uniform float textureWeight;
     uniform float timeSinceStart;
-    uniform sampler2D texture;
+    uniform sampler2D textureSampler;
 
     // geometry
     uniform int totalTriangles;
@@ -106,15 +106,15 @@ var tracerFragmentSource = `
     int stackPointer;
     int stack[STACK_SIZE];
 
-    varying vec3 initialRay;
+    in vec3 initialRay;
 
-    vec3 getValueFromTexture(sampler2D texture, float index, float size) {
+    vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
         float column = mod(index, size);
         float row = floor(index / size);
 
         vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);
 
-        return texture2D(texture, uv).rgb;
+        return texture(sampler, uv).rgb;
      }
 
      Triangle fetchTriangle(int id) {
@@ -441,9 +441,10 @@ var tracerFragmentSource = `
         return accumulatedColor;
     }
 
+    out vec4 pixelColor;
     void main() {
-        vec3 texture = texture2D(texture, gl_FragCoord.xy / resolution).rgb;
-        gl_FragColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+        vec3 texture = texture(textureSampler, gl_FragCoord.xy / resolution).rgb;
+        pixelColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
 
         // debug mode
         // vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
