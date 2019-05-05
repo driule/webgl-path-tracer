@@ -45,7 +45,7 @@ var tracerFragmentSource = `
     #define BOUNCES 2
     #define EPSILON 0.0001
     #define INFINITY 10000.0
-    #define STACK_SIZE 32
+    #define STACK_SIZE 16
 
     struct Sphere
     {
@@ -103,7 +103,7 @@ var tracerFragmentSource = `
     uniform sampler2D lightDataTexture;
 
     int stackPointer;
-    BoundingBox stack[STACK_SIZE];
+    int stack[STACK_SIZE];
 
     varying vec3 initialRay;
 
@@ -245,7 +245,7 @@ var tracerFragmentSource = `
     BoundingBox pop() {
         stackPointer = stackPointer - 1;
 
-        BoundingBox node;
+        int node;
         for (int i = 0; i < STACK_SIZE; i++) {
             if (i == stackPointer) {
                 node = stack[i];
@@ -253,15 +253,17 @@ var tracerFragmentSource = `
             }
         }
 
-        return node;
+        return fetchBoundingBox(node);
     }
     
-    void push(BoundingBox node) {
+    void push(int node) {
         for (int i = 0; i < STACK_SIZE; i++) {
-            if (i == stackPointer) stack[i] = node;
+            if (i == stackPointer) {
+                stack[i] = node;
+                break;
+            }
         }
 
-        // stack[stackPointer] = node;
         stackPointer = stackPointer + 1;
     }
 
@@ -273,14 +275,13 @@ var tracerFragmentSource = `
         vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
         stackPointer = 0;
-        BoundingBox node = fetchBoundingBox(0);
-        push(node);
+        push(0);
 
         for (int i = 0; i < MAX_ITERATIONS; i++) {
 
             if (stackPointer <= 0) break;
 
-            node = pop();
+            BoundingBox node = pop();
 
             if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) continue;
             
@@ -298,8 +299,8 @@ var tracerFragmentSource = `
                     }
                 }
             } else {
-                push(fetchBoundingBox(node.left));
-                push(fetchBoundingBox(node.right));
+                push(node.left);
+                push(node.right);
             }
         }
 
