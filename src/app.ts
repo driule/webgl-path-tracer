@@ -273,20 +273,15 @@ var tracerFragmentSource = `
         float t;
     };
 
-    // traverse BVH to perform ray-primitive intersection
     Intersection intersectPrimitives(vec3 origin, vec3 ray)
     {
         Intersection intersection;
+        intersection.t = INFINITY;
+
         vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
-        float t = INFINITY;
-        int triangleId = 0;
-
-        // ToDo: check size
+        // push root node to the stack
         stackPointer = 0;
-        // BoundingBox stack[STACK_SIZE];
-
-        // start traversing from root
         BoundingBox node = fetchBoundingBox(0);
         push(node);
 
@@ -311,12 +306,10 @@ var tracerFragmentSource = `
                     // }
                     Triangle triangle = fetchTriangle(index);
                     float tTriangle = intersectTriangle(origin, ray, triangle);
-                    if (tTriangle < t) {
-                        t = tTriangle;
-                        triangleId = index;
 
+                    if (tTriangle < intersection.t) {
+                        intersection.t = tTriangle;
                         intersection.triangle = triangle;
-                        intersection.t = t;
                     }
                 }
             } else {
