@@ -267,26 +267,35 @@ var tracerFragmentSource = `#version 300 es
         push(0);
 
         while (true) {
+
+            // if (stackPointer >= STACK_SIZE) {
+            //     pixelColor = vec4(1.0, 0.0, 0.0, 1.0);break;
+            // }
+
             if (stackPointer <= 0 || stackPointer >= STACK_SIZE) break;
             BoundingBox node = pop();
 
             if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) {
                 continue;
             } else {
-                pixelColor = pixelColor + vec4(0.01 * float(stackPointer), 0.0, 0.1, 1.0); // visualize bounding boxes
+                // pixelColor = pixelColor + vec4(0.01 * float(stackPointer), 0.0, 0.1, 1.0); // visualize bounding boxes
             }
             
             if (node.isLeaf) {
-                // for (int i = node.first; i < node.first + node.count; i++) {
-                //     int index = fetchTriangleIndex(i);
-                //     Triangle triangle = fetchTriangle(index);
-                //     float tTriangle = intersectTriangle(origin, ray, triangle);
+                for (int i = 0; i < 20; i++) {
+                    if (node.first + i >= node.first + node.count) {
+                        break;
+                    }
+                    int index = fetchTriangleIndex(node.first + i);
+                    Triangle triangle = fetchTriangle(index);
+                    float tTriangle = intersectTriangle(origin, ray, triangle);
 
-                //     if (tTriangle < intersection.t) {
-                //         intersection.t = tTriangle;
-                //         intersection.triangle = triangle;
-                //     }
-                // }
+                    if (tTriangle < intersection.t) {
+                        // pixelColor = pixelColor + vec4(0.0, 0.1, 0.0, 1.0);
+                        intersection.t = tTriangle;
+                        intersection.triangle = triangle;
+                    }
+                }
             } else {
                 push(node.left);
                 push(node.right);
@@ -420,10 +429,10 @@ var tracerFragmentSource = `#version 300 es
 
     void main() {
         vec3 texture = texture(textureSampler, gl_FragCoord.xy / resolution).rgb;
-        // pixelColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+        pixelColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
 
         // debug mode
-        vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+        // vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
     }
 `;
 
