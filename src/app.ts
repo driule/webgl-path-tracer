@@ -45,7 +45,7 @@ var tracerFragmentSource = `
     #define BOUNCES 2
     #define EPSILON 0.0001
     #define INFINITY 10000.0
-    #define STACK_SIZE 16
+    #define STACK_SIZE 32
 
     struct Sphere
     {
@@ -261,6 +261,7 @@ var tracerFragmentSource = `
             if (i == stackPointer) stack[i] = node;
         }
 
+        // stack[stackPointer] = node;
         stackPointer = stackPointer + 1;
     }
 

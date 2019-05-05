@@ -63,7 +63,7 @@ namespace LH {
         }
 
         private subdivide(node: BoundingBox, depth: number): void {
-            if (node.count <= 3 || depth >= 10)
+            if (node.count <= 3 || depth >= 6)
             {
                 node.isLeaf = true;
                 return;

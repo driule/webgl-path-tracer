@@ -68,7 +68,7 @@ namespace LH {
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
                     
                     let triangleDataLocation = gl.getUniformLocation(this._program, "triangleDataTexture");
                     gl.uniform1i(triangleDataLocation, 1);
@@ -97,7 +97,7 @@ namespace LH {
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.lightDataTextureSize, uniforms.lightDataTextureSize, 0, gl.RGB, gl.FLOAT, lightList);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.lightDataTextureSize, uniforms.lightDataTextureSize, 0, gl.RGB, gl.FLOAT, lightList);
                     
                     let lightDataLocation = gl.getUniformLocation(this._program, "lightDataTexture");
                     gl.uniform1i(lightDataLocation, 2);
@@ -140,7 +140,7 @@ namespace LH {
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.bvhDataTextureSize, uniforms.bvhDataTextureSize, 0, gl.RGB, gl.FLOAT, bvhNodeDataList);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.bvhDataTextureSize, uniforms.bvhDataTextureSize, 0, gl.RGB, gl.FLOAT, bvhNodeDataList);
                     
                     let bvhDataLocation = gl.getUniformLocation(this._program, "bvhDataTexture");
                     gl.uniform1i(bvhDataLocation, 3);
@@ -165,7 +165,7 @@ namespace LH {
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleIndices);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleIndices);
                     
                     let triangleIndicesDataLocation = gl.getUniformLocation(this._program, "triangleIndicesDataTexture");
                     gl.uniform1i(triangleIndicesDataLocation, 4);
