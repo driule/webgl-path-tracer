@@ -43,7 +43,7 @@ var tracerFragmentSource = `#version 300 es
     #define MAX_TRIANGLES 10000
     #define MAX_LIGHTS 256
     #define MAX_ITERATIONS 10000
-    #define BOUNCES 2
+    #define BOUNCES 3
     #define EPSILON 0.0001
     #define INFINITY 10000.0
     #define STACK_SIZE 32
@@ -273,6 +273,9 @@ var tracerFragmentSource = `#version 300 es
             if (!isIntersectingBoundingBox(origin, invertedRay, node)) continue;
             
             if (node.isLeaf) {
+                // if (true) {
+                //     pixelColor = vec4(1.0, 0.0, 0.0, 1.0);
+                // }
                 for (int i = 0; i < 20; i++) {
                     if (node.first + i >= node.first + node.count) {
                         break;
@@ -333,11 +336,14 @@ var tracerFragmentSource = `#version 300 es
     }
 
     float getShadowIntensity(vec3 origin, vec3 ray) {
-        for (int i = 0; i < totalTriangles; i++) {
-            float tTriangle = intersectTriangle(origin, ray, fetchTriangle(i));
-            if (tTriangle < 1.0) return 0.0;
-        }
+        // for (int i = 0; i < totalTriangles; i++) {
+        //     float tTriangle = intersectTriangle(origin, ray, fetchTriangle(i));
+        //     if (tTriangle < 1.0) return 0.0;
+        // }
         
+        Intersection intersection = intersectPrimitives(origin, ray);
+        if (intersection.t < 1.0) return 0.0;
+
         return 1.0;
     }
 
@@ -362,7 +368,8 @@ var tracerFragmentSource = `#version 300 es
         vec3 colorMask = vec3(1.0);
 
         Light light;
-        
+        float energyMultiplier = 1.0;
+
         for (int bounce = 0; bounce < BOUNCES; bounce++) {
             float t = INFINITY;
             vec3 normal;
@@ -411,8 +418,16 @@ var tracerFragmentSource = `#version 300 es
             float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);
             
             colorMask *= surfaceColor;
-            accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity);
+            accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity) * energyMultiplier;
             
+            float raySurviveProbability = min(1.0, max(max(accumulatedColor.x, accumulatedColor.y), accumulatedColor.z));
+            energyMultiplier = 1.0 / raySurviveProbability;
+
+            float randomNumber = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(bounce));
+            if (randomNumber > raySurviveProbability) {
+                break;
+            }
+
             origin = hit;
         }
         
