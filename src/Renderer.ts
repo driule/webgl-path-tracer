@@ -17,7 +17,7 @@ namespace LH {
 
             this._angleX = 0.2;
             this._angleY = 5.75;
-            this._zoomZ = 75.0;
+            this._zoomZ = 50.0;
             this._eye = glMatrix.vec3.create();
         }
 

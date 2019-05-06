@@ -121,15 +121,19 @@ namespace LH {
                         bvhNodeDataList[i * 3 * 4 + 7] = uniforms.bvhNodeList[i].first;
                         bvhNodeDataList[i * 3 * 4 + 8] = uniforms.bvhNodeList[i].count;
 
+                        // console.log(bvhNodeDataList[i * 3 * 4 + 7] + ' ' + bvhNodeDataList[i * 3 * 4 + 8]);
+
                         if (!uniforms.bvhNodeList[i].isLeaf) {
                             bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                             bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
+                            // console.log(bvhNodeDataList[i * 3 * 4 + 9] + ':' + bvhNodeDataList[i * 3 * 4 + 10]);
                         } else {
                             bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
                             bvhNodeDataList[i * 3 * 4 + 10] = 0.0;
                         }
                         bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
                     }
+                    // exit();
 
                     gl.activeTexture(gl.TEXTURE3);
                     gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -152,8 +156,8 @@ namespace LH {
                     let triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
                     for (let i = 0; i < uniforms.triangleIndices.length; i++) {
                         triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
-                        triangleIndices[i * 3 + 1] = 0.0;
-                        triangleIndices[i * 3 + 2] = 0.0;
+                        triangleIndices[i * 3 + 1] = uniforms.triangleIndices[i];
+                        triangleIndices[i * 3 + 2] = uniforms.triangleIndices[i];
                     }
 
                     gl.activeTexture(gl.TEXTURE4);

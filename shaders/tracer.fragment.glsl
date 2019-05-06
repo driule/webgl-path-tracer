@@ -5,7 +5,7 @@ precision highp float;
 #define MAX_TRIANGLES 10000
 #define MAX_LIGHTS 256
 #define MAX_ITERATIONS 10000
-#define BOUNCES 15
+#define BOUNCES 3
 #define EPSILON 0.0001
 #define INFINITY 10000.0
 #define STACK_SIZE 32
@@ -78,27 +78,27 @@ vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
     vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);
 
     return texture(sampler, uv).rgb;
-    }
+}
 
-    Triangle fetchTriangle(int id) {
-        vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3 + 0), triangleDataTextureSize);
-        vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);
-        vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);
-        
-        return Triangle(coordA, coordB, coordC);
-    }
+Triangle fetchTriangle(int id) {
+    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3 + 0), triangleDataTextureSize);
+    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);
+    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);
+    
+    return Triangle(coordA, coordB, coordC);
+}
 
-    Light fetchLight(int id) {
-        vec3 position = getValueFromTexture(lightDataTexture, float(id * 2), lightDataTextureSize);
-        vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 2 + 1), lightDataTextureSize);
+Light fetchLight(int id) {
+    vec3 position = getValueFromTexture(lightDataTexture, float(id * 2), lightDataTextureSize);
+    vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 2 + 1), lightDataTextureSize);
 
-        float radius = featureVector[0];
-        float intensity = featureVector[1];
-        
-        return Light(position, radius, intensity);
-    }
+    float radius = featureVector[0];
+    float intensity = featureVector[1];
+    
+    return Light(position, radius, intensity);
+}
 
-    BoundingBox fetchBoundingBox(int id) {
+BoundingBox fetchBoundingBox(int id) {
     vec3 min = getValueFromTexture(bvhDataTexture, float(id * 4 + 0), bvhDataTextureSize);
     vec3 max = getValueFromTexture(bvhDataTexture, float(id * 4 + 1), bvhDataTextureSize);
     vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);
@@ -115,13 +115,13 @@ vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
     boundingBox.id = int(children[2]);
 
     return boundingBox;
-    }
+}
 
-    int fetchTriangleIndex(int id) {
-        vec3 triangleIndex = getValueFromTexture(triangleIndicesDataTexture, float(id), triangleIndicesDataTextureSize);
+int fetchTriangleIndex(int id) {
+    vec3 triangleIndex = getValueFromTexture(triangleIndicesDataTexture, float(id), triangleIndicesDataTextureSize);
 
-        return int(triangleIndex[0]);
-    }
+    return int(triangleIndex[0]);
+}
 
 float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
     vec3 toSphere = origin - sphere.center;
@@ -172,7 +172,7 @@ vec3 getTriangleNormal(Triangle triangle) {
     );
 }
 
-bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox boundingBox)
+bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox boundingBox, Intersection intersection)
 {
     // vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
@@ -196,9 +196,10 @@ bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox 
     tmin = max(tmin, min(tzmin, tzmax));
     tmax = min(tmax, max(tzmin, tzmax));
 
-    // if (tmin > intersection.t)
-    //     return false;
-    
+    // early out if intersection is further than the last one
+    if (tmin > intersection.t)
+        return false;
+
     if (tmax >= EPSILON && tmax >= tmin) {
         return true;
     }
@@ -221,7 +222,6 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
 {
     Intersection intersection;
     intersection.t = INFINITY;
-    intersection.triangle = fetchTriangle(0);
 
     vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
 
@@ -230,10 +230,11 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
 
     while (true) {
         if (stackPointer <= 0 || stackPointer >= STACK_SIZE) break;
+
         BoundingBox node = pop();
 
-        if (!isIntersectingBoundingBox(origin, invertedRay, node)) continue;
-        
+        if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) continue;
+
         if (node.isLeaf) {
             // visualize leaf bounding boxes
             // if (true) {
@@ -380,7 +381,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
         vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
         float diffuse = max(0.0, dot(normalize(toLight), normal));
-        float shadowIntensity = getShadowIntensity(hit + normal * EPSILON, toLight);
+        float shadowIntensity = getShadowIntensity(hit + normal, toLight);
         
         colorMask *= surfaceColor;
         accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity) * energyMultiplier;

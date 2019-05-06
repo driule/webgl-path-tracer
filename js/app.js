@@ -19,8 +19,8 @@ var LH;
             }
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
             // create shaders
-            this._tracerShader = new LH.Shader('tracer', loadFile('shaders/tracerVertex.glsl'), loadFile('shaders/tracerFragment.glsl'));
-            this._renderShader = new LH.Shader('render', loadFile('shaders/renderVertex.glsl'), loadFile('shaders/renderFragment.glsl'));
+            this._tracerShader = new LH.Shader('tracer', loadFile('shaders/tracer.vertex.glsl'), loadFile('shaders/tracer.fragment.glsl'));
+            this._renderShader = new LH.Shader('render', loadFile('shaders/render.vertex.glsl'), loadFile('shaders/render.fragment.glsl'));
             var renderVertexAttribute = new LH.AttributeInformation();
             renderVertexAttribute.location = this._renderShader.getAttributeLocation('vertex');
             renderVertexAttribute.offset = 0;
@@ -111,7 +111,7 @@ var LH;
             this._pathTracer = new LH.PathTracer([this._canvas.width, this._canvas.height]);
             this._angleX = 0.2;
             this._angleY = 5.75;
-            this._zoomZ = 75.0;
+            this._zoomZ = 50.0;
             this._eye = glMatrix.vec3.create();
         }
         Renderer.prototype.start = function () {
@@ -815,9 +815,11 @@ var LH;
                         bvhNodeDataList[i * 3 * 4 + 6] = uniforms.bvhNodeList[i].isLeaf;
                         bvhNodeDataList[i * 3 * 4 + 7] = uniforms.bvhNodeList[i].first;
                         bvhNodeDataList[i * 3 * 4 + 8] = uniforms.bvhNodeList[i].count;
+                        // console.log(bvhNodeDataList[i * 3 * 4 + 7] + ' ' + bvhNodeDataList[i * 3 * 4 + 8]);
                         if (!uniforms.bvhNodeList[i].isLeaf) {
                             bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                             bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
+                            // console.log(bvhNodeDataList[i * 3 * 4 + 9] + ':' + bvhNodeDataList[i * 3 * 4 + 10]);
                         }
                         else {
                             bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
@@ -825,6 +827,7 @@ var LH;
                         }
                         bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
                     }
+                    // exit();
                     LH.gl.activeTexture(LH.gl.TEXTURE3);
                     LH.gl.bindTexture(LH.gl.TEXTURE_2D, LH.gl.createTexture());
                     LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MIN_FILTER, LH.gl.NEAREST);
@@ -841,8 +844,8 @@ var LH;
                     var triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
                     for (var i = 0; i < uniforms.triangleIndices.length; i++) {
                         triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
-                        triangleIndices[i * 3 + 1] = 0.0;
-                        triangleIndices[i * 3 + 2] = 0.0;
+                        triangleIndices[i * 3 + 1] = uniforms.triangleIndices[i];
+                        triangleIndices[i * 3 + 2] = uniforms.triangleIndices[i];
                     }
                     LH.gl.activeTexture(LH.gl.TEXTURE4);
                     LH.gl.bindTexture(LH.gl.TEXTURE_2D, LH.gl.createTexture());
