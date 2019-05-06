@@ -39,8 +39,8 @@ namespace LH {
             gl.bindTexture(gl.TEXTURE_2D, null);
         
             // create shaders
-            this._tracerShader = new Shader('tracer', tracerVertexSource, tracerFragmentSource);
-            this._renderShader = new Shader('render', renderVertexSource, renderFragmentSource);
+            this._tracerShader = new Shader('tracer', loadFile('shaders/tracerVertex.glsl'), loadFile('shaders/tracerFragment.glsl'));
+            this._renderShader = new Shader('render', loadFile('shaders/renderVertex.glsl'), loadFile('shaders/renderFragment.glsl'));
 
             let renderVertexAttribute = new AttributeInformation();
             renderVertexAttribute.location = this._renderShader.getAttributeLocation('vertex');

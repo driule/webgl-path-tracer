@@ -12,7 +12,7 @@ namespace LH {
         private _viewProjection: any;
 
         public constructor() {
-            this._canvas = GLUtilities.initialize("pathTracer");
+            this._canvas = GLUtilities.initialize('pathTracer');
             this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
 
             this._angleX = 0.2;
@@ -120,7 +120,7 @@ namespace LH {
         // scene objects
         //
 
-        private createTriangles() {
+        private createTriangles(): Triangle[] {
             let objects = [];
 
             // for (let i = 0; i < 30; i++) {
@@ -152,24 +152,18 @@ namespace LH {
             return objects;
         }
 
-        private loadObject(filePath: string) {
+        private loadObject(filePath: string): Triangle[] {
             let triangles = [];
 
-            let xmlhttp = new XMLHttpRequest();
-            xmlhttp.open("GET", filePath, false);
-            xmlhttp.send(null);
-            let fileContent = xmlhttp.responseText;
-            let fileArray = fileContent.split('\n')
+            let lines = loadFile(filePath).split('\n')
 
             let vertices = [];
             let faceIndexes = [];
             let meshVertices = [];
 
             // collect vertices and facets data
-            for (let i = 0; i < fileArray.length; i++) {
-                let line = fileArray[i];
-
-                let parts = line.split(" ");
+            for (let i = 0; i < lines.length; i++) {
+                let parts = lines[i].split(" ");
 
                 if (parts[0] === "v") {
                     vertices.push([parts[1], parts[2], parts[3]]);
