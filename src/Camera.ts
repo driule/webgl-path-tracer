@@ -50,20 +50,20 @@ namespace LH {
             this._viewProjectionMatrix = glMatrix.mat4.invert([], this._viewProjectionMatrix);
         }
 
-        // rotate controls
-        public rotateUp(step: number = 0.1): void {
+        // movement controls
+        public moveUp(step: number = 0.1): void {
             this._angleX += step;
         }
 
-        public rotateDown(step: number = 0.1): void {
+        public moveDown(step: number = 0.1): void {
             this._angleX -= step;
         }
 
-        public rotateRight(step: number = 0.1): void {
+        public moveRight(step: number = 0.1): void {
             this._angleY += step;
         }
 
-        public rotateLeft(step: number = 0.1): void {
+        public moveLeft(step: number = 0.1): void {
             this._angleY -= step;
         }
 
@@ -75,29 +75,21 @@ namespace LH {
             this._zoomZ += step;
         }
 
-        // translate controls
-        public moveUp(step: number = 0.1): void {
+        // rotatation controls
+        public rotateUp(step: number = 0.1): void {
             this._axisY += step;
         }
 
-        public moveDown(step: number = 0.1): void {
+        public rotateDown(step: number = 0.1): void {
             this._axisY -= step;
         }
 
-        public moveRight(step: number = 0.1): void {
+        public rotateRight(step: number = 0.1): void {
             this._axisX += step;
         }
 
-        public moveLeft(step: number = 0.1): void {
+        public rotateLeft(step: number = 0.1): void {
             this._axisX -= step;
-        }
-
-        public moveForward(step: number = 0.1): void {
-            this._axisZ += step;
-        }
-
-        public moveBack(step: number = 0.1): void {
-            this._axisZ -= step;
         }
     }
 }

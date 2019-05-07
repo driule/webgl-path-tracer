@@ -71,36 +71,6 @@ namespace LH {
         //
         // camera controls
         //
-        public rotateUp(): void {
-            this._camera.rotateUp();
-            this.restart();
-        }
-
-        public rotateDown(): void {
-            this._camera.rotateDown();
-            this.restart();
-        }
-
-        public rotateRight(): void {
-            this._camera.rotateRight();
-            this.restart();
-        }
-
-        public rotateLeft(): void {
-            this._camera.rotateLeft();
-            this.restart();
-        }
-
-        public zoomIn(): void {
-            this._camera.zoomIn();
-            this.restart();
-        }
-
-        public zoomOut(): void {
-            this._camera.zoomOut();
-            this.restart();
-        }
-
         public moveUp(): void {
             this._camera.moveUp();
             this.restart();
@@ -121,13 +91,33 @@ namespace LH {
             this.restart();
         }
 
-        public moveForward(): void {
-            this._camera.moveForward();
+        public zoomIn(): void {
+            this._camera.zoomIn();
             this.restart();
         }
 
-        public moveBack(): void {
-            this._camera.moveBack();
+        public zoomOut(): void {
+            this._camera.zoomOut();
+            this.restart();
+        }
+        
+        public rotateUp(): void {
+            this._camera.rotateUp();
+            this.restart();
+        }
+
+        public rotateDown(): void {
+            this._camera.rotateDown();
+            this.restart();
+        }
+
+        public rotateRight(): void {
+            this._camera.rotateRight();
+            this.restart();
+        }
+
+        public rotateLeft(): void {
+            this._camera.rotateLeft();
             this.restart();
         }
 

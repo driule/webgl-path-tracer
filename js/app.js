@@ -35,20 +35,20 @@ var LH;
             this._viewProjectionMatrix = glMatrix.mat4.multiply([], projection, view);
             this._viewProjectionMatrix = glMatrix.mat4.invert([], this._viewProjectionMatrix);
         };
-        // rotate controls
-        Camera.prototype.rotateUp = function (step) {
+        // movement controls
+        Camera.prototype.moveUp = function (step) {
             if (step === void 0) { step = 0.1; }
             this._angleX += step;
         };
-        Camera.prototype.rotateDown = function (step) {
+        Camera.prototype.moveDown = function (step) {
             if (step === void 0) { step = 0.1; }
             this._angleX -= step;
         };
-        Camera.prototype.rotateRight = function (step) {
+        Camera.prototype.moveRight = function (step) {
             if (step === void 0) { step = 0.1; }
             this._angleY += step;
         };
-        Camera.prototype.rotateLeft = function (step) {
+        Camera.prototype.moveLeft = function (step) {
             if (step === void 0) { step = 0.1; }
             this._angleY -= step;
         };
@@ -60,30 +60,22 @@ var LH;
             if (step === void 0) { step = 0.1; }
             this._zoomZ += step;
         };
-        // translate controls
-        Camera.prototype.moveUp = function (step) {
+        // rotatation controls
+        Camera.prototype.rotateUp = function (step) {
             if (step === void 0) { step = 0.1; }
             this._axisY += step;
         };
-        Camera.prototype.moveDown = function (step) {
+        Camera.prototype.rotateDown = function (step) {
             if (step === void 0) { step = 0.1; }
             this._axisY -= step;
         };
-        Camera.prototype.moveRight = function (step) {
+        Camera.prototype.rotateRight = function (step) {
             if (step === void 0) { step = 0.1; }
             this._axisX += step;
         };
-        Camera.prototype.moveLeft = function (step) {
+        Camera.prototype.rotateLeft = function (step) {
             if (step === void 0) { step = 0.1; }
             this._axisX -= step;
-        };
-        Camera.prototype.moveForward = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._axisZ += step;
-        };
-        Camera.prototype.moveBack = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._axisZ -= step;
         };
         return Camera;
     }());
@@ -248,30 +240,6 @@ var LH;
         //
         // camera controls
         //
-        Renderer.prototype.rotateUp = function () {
-            this._camera.rotateUp();
-            this.restart();
-        };
-        Renderer.prototype.rotateDown = function () {
-            this._camera.rotateDown();
-            this.restart();
-        };
-        Renderer.prototype.rotateRight = function () {
-            this._camera.rotateRight();
-            this.restart();
-        };
-        Renderer.prototype.rotateLeft = function () {
-            this._camera.rotateLeft();
-            this.restart();
-        };
-        Renderer.prototype.zoomIn = function () {
-            this._camera.zoomIn();
-            this.restart();
-        };
-        Renderer.prototype.zoomOut = function () {
-            this._camera.zoomOut();
-            this.restart();
-        };
         Renderer.prototype.moveUp = function () {
             this._camera.moveUp();
             this.restart();
@@ -288,12 +256,28 @@ var LH;
             this._camera.moveLeft();
             this.restart();
         };
-        Renderer.prototype.moveForward = function () {
-            this._camera.moveForward();
+        Renderer.prototype.zoomIn = function () {
+            this._camera.zoomIn();
             this.restart();
         };
-        Renderer.prototype.moveBack = function () {
-            this._camera.moveBack();
+        Renderer.prototype.zoomOut = function () {
+            this._camera.zoomOut();
+            this.restart();
+        };
+        Renderer.prototype.rotateUp = function () {
+            this._camera.rotateUp();
+            this.restart();
+        };
+        Renderer.prototype.rotateDown = function () {
+            this._camera.rotateDown();
+            this.restart();
+        };
+        Renderer.prototype.rotateRight = function () {
+            this._camera.rotateRight();
+            this.restart();
+        };
+        Renderer.prototype.rotateLeft = function () {
+            this._camera.rotateLeft();
             this.restart();
         };
         Renderer.prototype.restart = function () {
@@ -455,44 +439,52 @@ function handleInput(command) {
 document.onkeydown = function (event) {
     // W
     if (event.keyCode == 87) {
-        renderer.rotateUp();
+        renderer.moveUp();
     }
     // S
     if (event.keyCode == 83) {
-        renderer.rotateDown();
+        renderer.moveDown();
     }
     // A
     if (event.keyCode == 65) {
-        renderer.rotateLeft();
+        renderer.moveLeft();
     }
     // D
     if (event.keyCode == 68) {
-        renderer.rotateRight();
+        renderer.moveRight();
     }
     // -
-    if (event.keyCode == 189 || event.keyCode == 109) {
+    if (event.keyCode == 189) {
         renderer.zoomOut();
     }
     // +
-    if (event.keyCode == 187 || event.keyCode == 107) {
+    if (event.keyCode == 187) {
         renderer.zoomIn();
     }
     // ArrowUp
     if (event.keyCode == 38) {
-        renderer.moveUp();
+        renderer.rotateUp();
     }
     // ArrowDown
     if (event.keyCode == 40) {
-        renderer.moveDown();
+        renderer.rotateDown();
     }
     // ArrowLeft
     if (event.keyCode == 37) {
-        renderer.moveLeft();
+        renderer.rotateLeft();
     }
     // ArrowRight
     if (event.keyCode == 39) {
-        renderer.moveRight();
+        renderer.rotateRight();
     }
+    // // numpad -
+    // if (event.keyCode == 109) {
+    //     renderer.moveBack();
+    // }
+    // // numpad +
+    // if (event.keyCode == 107) {
+    //     renderer.moveForward();
+    // }
 };
 var LH;
 (function (LH) {

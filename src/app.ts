@@ -86,51 +86,61 @@ document.onkeydown = function(event) {
 
     // W
     if (event.keyCode == 87) {
-        renderer.rotateUp();
+        renderer.moveUp();
     }
 
     // S
     if (event.keyCode == 83) {
-        renderer.rotateDown();
+        renderer.moveDown();
     }
 
     // A
     if (event.keyCode == 65) {
-        renderer.rotateLeft();
+        renderer.moveLeft();
     }
 
     // D
     if (event.keyCode == 68) {
-        renderer.rotateRight();
+        renderer.moveRight();
     }
 
     // -
-    if (event.keyCode == 189 || event.keyCode == 109) {
+    if (event.keyCode == 189) {
         renderer.zoomOut();
     }
 
     // +
-    if (event.keyCode == 187 || event.keyCode == 107) {
+    if (event.keyCode == 187) {
         renderer.zoomIn();
     }
     
     // ArrowUp
     if (event.keyCode == 38) {
-        renderer.moveUp();
+        renderer.rotateUp();
     }
 
     // ArrowDown
     if (event.keyCode == 40) {
-        renderer.moveDown();
+        renderer.rotateDown();
     }
 
     // ArrowLeft
     if (event.keyCode == 37) {
-        renderer.moveLeft();
+        renderer.rotateLeft();
     }
 
     // ArrowRight
     if (event.keyCode == 39) {
-        renderer.moveRight();
+        renderer.rotateRight();
     }
+
+    // // numpad -
+    // if (event.keyCode == 109) {
+    //     renderer.moveBack();
+    // }
+
+    // // numpad +
+    // if (event.keyCode == 107) {
+    //     renderer.moveForward();
+    // }
 };
