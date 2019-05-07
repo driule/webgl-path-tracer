@@ -4,9 +4,6 @@ precision highp float;
 precision highp int;
 precision highp sampler2D;
 
-#define MAX_TRIANGLES 10000
-#define MAX_LIGHTS 256
-#define MAX_ITERATIONS 10000
 #define BOUNCES 3
 #define EPSILON 0.0001
 #define INFINITY 10000.0
@@ -44,6 +41,10 @@ struct Intersection
     float t;
 };
 
+in vec3 initialRay;
+out vec4 pixelColor;
+
+// path tracer settings
 uniform vec2 resolution;
 uniform vec3 eye;
 uniform float textureWeight;
@@ -63,15 +64,13 @@ uniform sampler2D bvhDataTexture;
 uniform float triangleIndicesDataTextureSize;
 uniform sampler2D triangleIndicesDataTexture;
 
+// lights
 uniform int totalLights;
 uniform float lightDataTextureSize;
 uniform sampler2D lightDataTexture;
 
 int stackPointer;
 int stack[STACK_SIZE];
-
-in vec3 initialRay;
-out vec4 pixelColor;
 
 vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
     float column = mod(index, size);
@@ -231,7 +230,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
     push(0);
 
     while (true) {
-        if (stackPointer <= 0 || stackPointer >= STACK_SIZE) break;
+        if (stackPointer <= 0 || stackPointer > STACK_SIZE) break;
 
         BoundingBox node = pop();
 
@@ -245,7 +244,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
 
             // ToDo: check why "i < node.first" crashes
             for (int i = 0; i < 20; i++) {
-                if (node.first + i >= node.first + node.count) {
+                if (i >= node.count) {
                     break;
                 }
 
