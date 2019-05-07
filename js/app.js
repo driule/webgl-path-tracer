@@ -381,7 +381,70 @@ window.onload = function () {
         fpsLabel.innerHTML = fps.toFixed(1) + " fps";
         primitiveCountLabel.innerHTML = primitiveCount + " primitives loaded";
     }, 200);
+    // control buttons event listeners
+    document.getElementById('moveUp').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveUp').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('moveDown').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveDown').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('moveLeft').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveLeft').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('moveRight').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveRight').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('zoomIn').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('zoomIn').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('zoomOut').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('zoomOut').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateUp').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateUp').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateDown').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateDown').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateLeft').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateLeft').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateRight').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateRight').addEventListener('mouseup', onButtonUp, false);
 };
+var mouseDownId = 0;
+function onButtonDown(event) {
+    var element = event.target;
+    if (mouseDownId == 0) {
+        if (element.id == 'moveUp') {
+            mouseDownId = setInterval(function () { renderer.moveUp(); }, 100);
+        }
+        if (element.id == 'moveDown') {
+            mouseDownId = setInterval(function () { renderer.moveDown(); }, 100);
+        }
+        if (element.id == 'moveLeft') {
+            mouseDownId = setInterval(function () { renderer.moveLeft(); }, 100);
+        }
+        if (element.id == 'moveRight') {
+            mouseDownId = setInterval(function () { renderer.moveRight(); }, 100);
+        }
+        if (element.id == 'zoomIn') {
+            mouseDownId = setInterval(function () { renderer.zoomIn(); }, 100);
+        }
+        if (element.id == 'zoomOut') {
+            mouseDownId = setInterval(function () { renderer.zoomOut(); }, 100);
+        }
+        if (element.id == 'rotateUp') {
+            mouseDownId = setInterval(function () { renderer.rotateUp(); }, 100);
+        }
+        if (element.id == 'rotateDown') {
+            mouseDownId = setInterval(function () { renderer.rotateDown(); }, 100);
+        }
+        if (element.id == 'rotateLeft') {
+            mouseDownId = setInterval(function () { renderer.rotateLeft(); }, 100);
+        }
+        if (element.id == 'rotateRight') {
+            mouseDownId = setInterval(function () { renderer.rotateRight(); }, 100);
+        }
+    }
+}
+function onButtonUp(event) {
+    if (mouseDownId != 0) {
+        clearInterval(mouseDownId);
+        mouseDownId = 0;
+    }
+}
 function handleInput(command) {
     if (command == 'render') {
         renderer.resume();
@@ -399,41 +462,6 @@ function handleInput(command) {
         var renderButton = document.getElementById('render');
         renderButton.disabled = false;
     }
-    else if (command == 'rotateUp') {
-        renderer.rotateUp();
-    }
-    else if (command == 'rotateDown') {
-        renderer.rotateDown();
-    }
-    else if (command == 'rotateLeft') {
-        renderer.rotateLeft();
-    }
-    else if (command == 'rotateRight') {
-        renderer.rotateRight();
-    }
-    else if (command == 'zoomIn') {
-        renderer.zoomIn();
-    }
-    else if (command == 'zoomOut') {
-        renderer.zoomOut();
-    }
-    else if (command == 'moveUp') {
-        renderer.moveUp();
-    }
-    else if (command == 'moveDown') {
-        renderer.moveDown();
-    }
-    else if (command == 'moveLeft') {
-        renderer.moveLeft();
-    }
-    else if (command == 'moveRight') {
-        renderer.moveRight();
-    }
-    // else if (command == 'moveForward') {
-    //     renderer.moveForward();
-    // } else if (command == 'moveBack') {
-    //     renderer.moveBack();
-    // }
 }
 document.onkeydown = function (event) {
     // W
