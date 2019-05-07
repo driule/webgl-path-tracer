@@ -55,6 +55,18 @@ function handleInput(command: string): void {
         stopButton.disabled = true;
         let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
         renderButton.disabled = false;
+    } else if (command == 'rotateUp') {
+        renderer.rotateUp();
+    } else if (command == 'rotateDown') {
+        renderer.rotateDown();
+    } else if (command == 'rotateLeft') {
+        renderer.rotateLeft();
+    } else if (command == 'rotateRight') {
+        renderer.rotateRight();
+    } else if (command == 'zoomIn') {
+        renderer.zoomIn();
+    } else if (command == 'zoomOut') {
+        renderer.zoomOut();
     } else if (command == 'moveUp') {
         renderer.moveUp();
     } else if (command == 'moveDown') {
@@ -63,10 +75,10 @@ function handleInput(command: string): void {
         renderer.moveLeft();
     } else if (command == 'moveRight') {
         renderer.moveRight();
-    } else if (command == 'zoomIn') {
-        renderer.zoomIn();
-    } else if (command == 'zoomOut') {
-        renderer.zoomOut();
+    } else if (command == 'moveForward') {
+        renderer.moveForward();
+    } else if (command == 'moveBack') {
+        renderer.moveBack();
     }
 }
 
@@ -74,22 +86,22 @@ document.onkeydown = function(event) {
 
     // W
     if (event.keyCode == 87) {
-        renderer.moveUp();
+        renderer.rotateUp();
     }
 
     // S
     if (event.keyCode == 83) {
-        renderer.moveDown();
+        renderer.rotateDown();
     }
 
     // A
     if (event.keyCode == 65) {
-        renderer.moveLeft();
+        renderer.rotateLeft();
     }
 
     // D
     if (event.keyCode == 68) {
-        renderer.moveRight();
+        renderer.rotateRight();
     }
 
     // -
@@ -100,5 +112,25 @@ document.onkeydown = function(event) {
     // +
     if (event.keyCode == 187 || event.keyCode == 107) {
         renderer.zoomIn();
+    }
+    
+    // ArrowUp
+    if (event.keyCode == 38) {
+        renderer.moveUp();
+    }
+
+    // ArrowDown
+    if (event.keyCode == 40) {
+        renderer.moveDown();
+    }
+
+    // ArrowLeft
+    if (event.keyCode == 37) {
+        renderer.moveLeft();
+    }
+
+    // ArrowRight
+    if (event.keyCode == 39) {
+        renderer.moveRight();
     }
 };

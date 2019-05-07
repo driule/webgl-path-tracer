@@ -40,17 +40,30 @@
         <button class="playbackButton" id="stop" onclick="handleInput('stop')">Stop</button>
 
         <hr/>
-        <h3>Camera controls</h3>
         <table>
             <tr>
-                <td><button class="controllerButton" id="zoomOut" onclick="handleInput('zoomOut')">-</button></td>
-                <td><button class="controllerButton" id="moveUp" onclick="handleInput('moveUp')">W</button></td>
-                <td><button class="controllerButton" id="zoomIn" onclick="handleInput('zoomIn')">+</button></td>
+                <td colspan="5"><h4>Camera Rotation</h4></td>
+                <td colspan="3"><h4>Camera Translation</h4></td>
             </tr>
             <tr>
-                <td><button class="controllerButton" id="moveLeft" onclick="handleInput('moveLeft')">A</button></td>
-                <td><button class="controllerButton" id="moveDown" onclick="handleInput('moveDown')">S</button></td>
-                <td><button class="controllerButton" id="moveRight" onclick="handleInput('moveRight')">D</button></td>
+                <td><button class="controllerButton" id="zoomOut" onclick="handleInput('zoomOut')">-</button></td>
+                <td><button class="controllerButton" id="rotateUp" onclick="handleInput('rotateUp')">W</button></td>
+                <td><button class="controllerButton" id="zoomIn" onclick="handleInput('zoomIn')">+</button></td>
+                <td width="25px">&nbsp;</td>
+                <td width="25px">&nbsp;</td>
+                <td><button class="controllerButton" id="moveBack" onclick="handleInput('moveBack')">-</button></td>
+                <td><button class="controllerButton" id="moveUp" onclick="handleInput('moveUp')">&#8593;</button></td>
+                <td><button class="controllerButton" id="moveForward" onclick="handleInput('moveForward')">+</button></td>
+            </tr>
+            <tr>
+                <td><button class="controllerButton" id="rotateLeft" onclick="handleInput('rotateLeft')">A</button></td>
+                <td><button class="controllerButton" id="rotateDown" onclick="handleInput('rotateDown')">S</button></td>
+                <td><button class="controllerButton" id="rotateRight" onclick="handleInput('rotateRight')">D</button></td>
+                <td width="25px">&nbsp;</td>
+                <td width="25px">&nbsp;</td>
+                <td><button class="controllerButton" id="moveLeft" onclick="handleInput('moveLeft')">&#8592;</button></td>
+                <td><button class="controllerButton" id="moveDown" onclick="handleInput('moveDown')">&#8595;</button></td>
+                <td><button class="controllerButton" id="moveRight" onclick="handleInput('moveRight')">&#8594;</button></td>
             </tr>
         </table>
     </body>

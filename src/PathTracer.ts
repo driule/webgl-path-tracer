@@ -2,6 +2,7 @@ namespace LH {
 
     export class PathTracer {
 
+        private _camera: Camera;
         private _resolution: any;
 
         private _vertexBuffer: GLBuffer;
@@ -18,7 +19,8 @@ namespace LH {
         private _lights: Light[];
         private _bvh: BVH;
 
-        public constructor(resolution: any) {
+        public constructor(camera: Camera, resolution: any) {
+            this._camera = camera;
             this._resolution = resolution;
 
             // create framebuffer
@@ -60,20 +62,20 @@ namespace LH {
             this._triangles = [];
         }
           
-        public update(viewProjectionMatrix: any, timeSinceStart: number, eye: any): void {
+        public update(timeSinceStart: number): void {
             
             // jitter view-projection matrix for anti-aliasing
             let jitterVector = [(Math.random() * 2 - 1) / this._resolution[0], (Math.random() * 2 - 1) / this._resolution[1], 0];
-            viewProjectionMatrix = glMatrix.mat4.translate([], viewProjectionMatrix, jitterVector);
+            let viewProjectionMatrix = glMatrix.mat4.translate([], this._camera.viewProjectionMatrix, jitterVector);
 
             // calculate uniforms
             let uniforms: any = {};
             uniforms.resolution = this._resolution;
-            uniforms.eye = eye;
-            uniforms.ray00 = this.getEyeRay(viewProjectionMatrix, -1, -1, eye);
-            uniforms.ray01 = this.getEyeRay(viewProjectionMatrix, -1, +1, eye);
-            uniforms.ray10 = this.getEyeRay(viewProjectionMatrix, +1, -1, eye);
-            uniforms.ray11 = this.getEyeRay(viewProjectionMatrix, +1, +1, eye);
+            uniforms.eye = this._camera.eye;
+            uniforms.ray00 = this.getEyeRay(viewProjectionMatrix, -1, -1, this._camera.eye);
+            uniforms.ray01 = this.getEyeRay(viewProjectionMatrix, -1, +1, this._camera.eye);
+            uniforms.ray10 = this.getEyeRay(viewProjectionMatrix, +1, -1, this._camera.eye);
+            uniforms.ray11 = this.getEyeRay(viewProjectionMatrix, +1, +1, this._camera.eye);
             uniforms.timeSinceStart = timeSinceStart;
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 

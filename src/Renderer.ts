@@ -2,25 +2,17 @@ namespace LH {
 
     export class Renderer {
 
-        private _pathTracer: PathTracer;
         private _canvas: HTMLCanvasElement;
 
-        private _angleX: number;
-        private _angleY: number;
-        private _zoomZ: number;
-        private _eye: any;
-        private _viewProjection: any;
+        private _pathTracer: PathTracer;
+        private _camera: Camera;
 
         private _isRendering: boolean;
 
         public constructor() {
             this._canvas = GLUtilities.initialize('pathTracer');
-            this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
-
-            this._angleX = 0.2;
-            this._angleY = 5.75;
-            this._zoomZ = 50.0;
-            this._eye = glMatrix.vec3.create();
+            this._camera = new Camera(this._canvas);
+            this._pathTracer = new PathTracer(this._camera, [this._canvas.width, this._canvas.height]);
         }
 
         public start(): void {
@@ -40,9 +32,6 @@ namespace LH {
                 new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
             this._pathTracer.setObjects(triangles, lights, bvh);
-
-            this.calculateViewProjection();
-
             this._isRendering = true;
 
             primitiveCount = triangles.length;
@@ -52,7 +41,7 @@ namespace LH {
         }
 
         public tick(timeSinceStart: number): void {
-            this._pathTracer.update(this._viewProjection, timeSinceStart, this._eye);
+            this._pathTracer.update(timeSinceStart);
             this._pathTracer.render();
 
             // fps measurement
@@ -79,61 +68,77 @@ namespace LH {
             this._isRendering = true;
         }
 
-        private calculateViewProjection(): void {
-            this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
-            this._eye[1] = this._zoomZ * Math.sin(this._angleX);
-            this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
-
-            let view = glMatrix.mat4.lookAt([], this._eye, [0, 0, 0], [0, 1, 0]);
-            let projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
-            this._viewProjection = glMatrix.mat4.multiply([], projection, view);
-            this._viewProjection = glMatrix.mat4.invert([], this._viewProjection);
-        }
-
         //
         // camera controls
         //
-        public moveUp(): void {
-            this._angleX += 0.1;
+        public rotateUp(): void {
+            this._camera.rotateUp();
             this.restart();
         }
 
-        public moveDown(): void {
-            this._angleX -= 0.1;
+        public rotateDown(): void {
+            this._camera.rotateDown();
             this.restart();
         }
 
-        public moveRight(): void {
-            this._angleY += 0.1;
+        public rotateRight(): void {
+            this._camera.rotateRight();
             this.restart();
         }
 
-        public moveLeft(): void {
-            this._angleY -= 0.1;
+        public rotateLeft(): void {
+            this._camera.rotateLeft();
             this.restart();
         }
 
         public zoomIn(): void {
-            this._zoomZ -= 0.1;
+            this._camera.zoomIn();
             this.restart();
         }
 
         public zoomOut(): void {
-            this._zoomZ += 0.1;
+            this._camera.zoomOut();
+            this.restart();
+        }
+
+        public moveUp(): void {
+            this._camera.moveUp();
+            this.restart();
+        }
+
+        public moveDown(): void {
+            this._camera.moveDown();
+            this.restart();
+        }
+
+        public moveRight(): void {
+            this._camera.moveRight();
+            this.restart();
+        }
+
+        public moveLeft(): void {
+            this._camera.moveLeft();
+            this.restart();
+        }
+
+        public moveForward(): void {
+            this._camera.moveForward();
+            this.restart();
+        }
+
+        public moveBack(): void {
+            this._camera.moveBack();
             this.restart();
         }
 
         private restart(): void {
             this._pathTracer.restart();
-            this.calculateViewProjection();
-
-            // console.log('angleX: ', this._angleX, '; angleY: ', + this._angleY, '; zoomZ', + this._zoomZ + ';');
+            this._camera.calculateViewProjection();
         }
         
         //
         // scene objects
         //
-
         private createTriangles(): Triangle[] {
             let objects = [];
 
