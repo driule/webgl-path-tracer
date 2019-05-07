@@ -1,23 +1,16 @@
 declare var glMatrix: any;
 
-function loadFile(filePath: string): string {
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("GET", filePath, false);
-    xmlhttp.send(null);
-
-    return xmlhttp.responseText;
-}
-
 let renderer: LH.Renderer;
 
-// fps measurement
+// global variables
 var lastTick: number = Date.now();
 var fps: number = 0;
-var elapsedTime = 0;
-var frameCount = 0;
+var elapsedTime: number = 0;
+var frameCount: number = 0;
+var primitiveCount: number = 0;
+var mouseDownId: number = 0;
 
-var primitiveCount = 0;
-
+// initialize application when page loading
 window.onload = function() {
     renderer = new LH.Renderer();
     renderer.start();
@@ -36,95 +29,10 @@ window.onload = function() {
     }, 200);
 
     // control buttons event listeners
-    (<HTMLButtonElement>document.getElementById('moveUp')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('moveUp')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('moveDown')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('moveDown')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('moveLeft')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('moveLeft')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('moveRight')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('moveRight')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('zoomIn')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('zoomIn')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('zoomOut')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('zoomOut')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('rotateUp')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('rotateUp')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('rotateDown')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('rotateDown')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('rotateLeft')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('rotateLeft')).addEventListener('mouseup', onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('mousedown', onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('mouseup', onButtonUp, false);
+    addEventListeners();
 }
 
-var mouseDownId: number = 0;
-
-function onButtonDown(event: MouseEvent) {
-    let element: HTMLElement = <HTMLElement>event.target;
-
-    if (mouseDownId == 0) {
-        if (element.id == 'moveUp') {
-            mouseDownId = setInterval(function() { renderer.moveUp(); }, 100);
-        }
-        if (element.id == 'moveDown') {
-            mouseDownId = setInterval(function() { renderer.moveDown(); }, 100);
-        }
-        if (element.id == 'moveLeft') {
-            mouseDownId = setInterval(function() { renderer.moveLeft(); }, 100);
-        }
-        if (element.id == 'moveRight') {
-            mouseDownId = setInterval(function() { renderer.moveRight(); }, 100);
-        }
-        if (element.id == 'zoomIn') {
-            mouseDownId = setInterval(function() { renderer.zoomIn(); }, 100);
-        }
-        if (element.id == 'zoomOut') {
-            mouseDownId = setInterval(function() { renderer.zoomOut(); }, 100);
-        }
-        if (element.id == 'rotateUp') {
-            mouseDownId = setInterval(function() { renderer.rotateUp(); }, 100);
-        }
-        if (element.id == 'rotateDown') {
-            mouseDownId = setInterval(function() { renderer.rotateDown(); }, 100);
-        }
-        if (element.id == 'rotateLeft') {
-            mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 100);
-        }
-        if (element.id == 'rotateRight') {
-            mouseDownId = setInterval(function() { renderer.rotateRight(); }, 100);
-        }
-    }
-}
-
-function onButtonUp(event: MouseEvent) {
-    if (mouseDownId != 0) {
-        clearInterval(mouseDownId);
-        mouseDownId = 0;
-    }
-}
-
-function handleInput(command: string): void {
-    if (command == 'render') {
-        renderer.resume();
-        let start = Date.now();
-        renderer.tick(Date.now() - start);
-
-        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
-        renderButton.disabled = true;
-        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
-        stopButton.disabled = false;
-
-    } else if (command == 'stop') {
-        renderer.pause();
-
-        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
-        stopButton.disabled = true;
-        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
-        renderButton.disabled = false;
-    }
-}
-
+// handle keyboard input
 document.onkeydown = function(event) {
 
     // W
@@ -177,13 +85,136 @@ document.onkeydown = function(event) {
         renderer.rotateRight();
     }
 
-    // // numpad -
-    // if (event.keyCode == 109) {
-    //     renderer.moveBack();
-    // }
+    // numpad -
+    if (event.keyCode == 109) {
+        renderer.zoomOut();
+    }
 
-    // // numpad +
-    // if (event.keyCode == 107) {
-    //     renderer.moveForward();
-    // }
+    // numpad +
+    if (event.keyCode == 107) {
+        renderer.zoomIn();
+    }
 };
+
+function loadFile(filePath: string): string {
+    let xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", filePath, false);
+    xmlhttp.send(null);
+
+    return xmlhttp.responseText;
+}
+
+function handleInput(command: string): void {
+    if (command == 'render') {
+        renderer.resume();
+        let start = Date.now();
+        renderer.tick(Date.now() - start);
+
+        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
+        renderButton.disabled = true;
+        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
+        stopButton.disabled = false;
+
+    } else if (command == 'stop') {
+        renderer.pause();
+
+        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
+        stopButton.disabled = true;
+        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
+        renderButton.disabled = false;
+    }
+}
+
+function onButtonDown(event: MouseEvent): void {
+    let element: HTMLElement = <HTMLElement>event.target;
+
+    if (mouseDownId == 0) {
+        if (element.id == 'moveUp') {
+            mouseDownId = setInterval(function() { renderer.moveUp(); }, 100);
+        }
+        if (element.id == 'moveDown') {
+            mouseDownId = setInterval(function() { renderer.moveDown(); }, 100);
+        }
+        if (element.id == 'moveLeft') {
+            mouseDownId = setInterval(function() { renderer.moveLeft(); }, 100);
+        }
+        if (element.id == 'moveRight') {
+            mouseDownId = setInterval(function() { renderer.moveRight(); }, 100);
+        }
+        if (element.id == 'zoomIn') {
+            mouseDownId = setInterval(function() { renderer.zoomIn(); }, 100);
+        }
+        if (element.id == 'zoomOut') {
+            mouseDownId = setInterval(function() { renderer.zoomOut(); }, 100);
+        }
+        if (element.id == 'rotateUp') {
+            mouseDownId = setInterval(function() { renderer.rotateUp(); }, 100);
+        }
+        if (element.id == 'rotateDown') {
+            mouseDownId = setInterval(function() { renderer.rotateDown(); }, 100);
+        }
+        if (element.id == 'rotateLeft') {
+            mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 100);
+        }
+        if (element.id == 'rotateRight') {
+            mouseDownId = setInterval(function() { renderer.rotateRight(); }, 100);
+        }
+    }
+}
+
+function onButtonUp(event: MouseEvent): void {
+    clearInterval(mouseDownId);
+    mouseDownId = 0;
+}
+
+function addEventListeners(): void {
+    (<HTMLButtonElement>document.getElementById('moveUp')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveUp')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('moveUp')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveUp')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('moveDown')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveDown')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('moveDown')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveDown')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('moveLeft')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveLeft')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('moveLeft')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveLeft')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('moveRight')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveRight')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('moveRight')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('moveRight')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('zoomIn')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('zoomIn')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('zoomIn')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('zoomIn')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('zoomOut')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('zoomOut')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('zoomOut')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('zoomOut')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('rotateUp')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateUp')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('rotateUp')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateUp')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('rotateDown')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateDown')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('rotateDown')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateDown')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('rotateLeft')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateLeft')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('rotateLeft')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateLeft')).addEventListener('touchend', onButtonUp, false);
+    
+    (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('touchend', onButtonUp, false);
+}

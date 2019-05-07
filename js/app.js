@@ -355,19 +355,15 @@ var LH;
     }());
     LH.Scene = Scene;
 })(LH || (LH = {}));
-function loadFile(filePath) {
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("GET", filePath, false);
-    xmlhttp.send(null);
-    return xmlhttp.responseText;
-}
 var renderer;
-// fps measurement
+// global variables
 var lastTick = Date.now();
 var fps = 0;
 var elapsedTime = 0;
 var frameCount = 0;
 var primitiveCount = 0;
+var mouseDownId = 0;
+// initialize application when page loading
 window.onload = function () {
     renderer = new LH.Renderer();
     renderer.start();
@@ -382,87 +378,9 @@ window.onload = function () {
         primitiveCountLabel.innerHTML = primitiveCount + " primitives loaded";
     }, 200);
     // control buttons event listeners
-    document.getElementById('moveUp').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('moveUp').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('moveDown').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('moveDown').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('moveLeft').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('moveLeft').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('moveRight').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('moveRight').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('zoomIn').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('zoomIn').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('zoomOut').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('zoomOut').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('rotateUp').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('rotateUp').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('rotateDown').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('rotateDown').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('rotateLeft').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('rotateLeft').addEventListener('mouseup', onButtonUp, false);
-    document.getElementById('rotateRight').addEventListener('mousedown', onButtonDown, false);
-    document.getElementById('rotateRight').addEventListener('mouseup', onButtonUp, false);
+    addEventListeners();
 };
-var mouseDownId = 0;
-function onButtonDown(event) {
-    var element = event.target;
-    if (mouseDownId == 0) {
-        if (element.id == 'moveUp') {
-            mouseDownId = setInterval(function () { renderer.moveUp(); }, 100);
-        }
-        if (element.id == 'moveDown') {
-            mouseDownId = setInterval(function () { renderer.moveDown(); }, 100);
-        }
-        if (element.id == 'moveLeft') {
-            mouseDownId = setInterval(function () { renderer.moveLeft(); }, 100);
-        }
-        if (element.id == 'moveRight') {
-            mouseDownId = setInterval(function () { renderer.moveRight(); }, 100);
-        }
-        if (element.id == 'zoomIn') {
-            mouseDownId = setInterval(function () { renderer.zoomIn(); }, 100);
-        }
-        if (element.id == 'zoomOut') {
-            mouseDownId = setInterval(function () { renderer.zoomOut(); }, 100);
-        }
-        if (element.id == 'rotateUp') {
-            mouseDownId = setInterval(function () { renderer.rotateUp(); }, 100);
-        }
-        if (element.id == 'rotateDown') {
-            mouseDownId = setInterval(function () { renderer.rotateDown(); }, 100);
-        }
-        if (element.id == 'rotateLeft') {
-            mouseDownId = setInterval(function () { renderer.rotateLeft(); }, 100);
-        }
-        if (element.id == 'rotateRight') {
-            mouseDownId = setInterval(function () { renderer.rotateRight(); }, 100);
-        }
-    }
-}
-function onButtonUp(event) {
-    if (mouseDownId != 0) {
-        clearInterval(mouseDownId);
-        mouseDownId = 0;
-    }
-}
-function handleInput(command) {
-    if (command == 'render') {
-        renderer.resume();
-        var start = Date.now();
-        renderer.tick(Date.now() - start);
-        var renderButton = document.getElementById(command);
-        renderButton.disabled = true;
-        var stopButton = document.getElementById('stop');
-        stopButton.disabled = false;
-    }
-    else if (command == 'stop') {
-        renderer.pause();
-        var stopButton = document.getElementById(command);
-        stopButton.disabled = true;
-        var renderButton = document.getElementById('render');
-        renderButton.disabled = false;
-    }
-}
+// handle keyboard input
 document.onkeydown = function (event) {
     // W
     if (event.keyCode == 87) {
@@ -504,15 +422,120 @@ document.onkeydown = function (event) {
     if (event.keyCode == 39) {
         renderer.rotateRight();
     }
-    // // numpad -
-    // if (event.keyCode == 109) {
-    //     renderer.moveBack();
-    // }
-    // // numpad +
-    // if (event.keyCode == 107) {
-    //     renderer.moveForward();
-    // }
+    // numpad -
+    if (event.keyCode == 109) {
+        renderer.zoomOut();
+    }
+    // numpad +
+    if (event.keyCode == 107) {
+        renderer.zoomIn();
+    }
 };
+function loadFile(filePath) {
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", filePath, false);
+    xmlhttp.send(null);
+    return xmlhttp.responseText;
+}
+function handleInput(command) {
+    if (command == 'render') {
+        renderer.resume();
+        var start = Date.now();
+        renderer.tick(Date.now() - start);
+        var renderButton = document.getElementById(command);
+        renderButton.disabled = true;
+        var stopButton = document.getElementById('stop');
+        stopButton.disabled = false;
+    }
+    else if (command == 'stop') {
+        renderer.pause();
+        var stopButton = document.getElementById(command);
+        stopButton.disabled = true;
+        var renderButton = document.getElementById('render');
+        renderButton.disabled = false;
+    }
+}
+function onButtonDown(event) {
+    var element = event.target;
+    if (mouseDownId == 0) {
+        if (element.id == 'moveUp') {
+            mouseDownId = setInterval(function () { renderer.moveUp(); }, 100);
+        }
+        if (element.id == 'moveDown') {
+            mouseDownId = setInterval(function () { renderer.moveDown(); }, 100);
+        }
+        if (element.id == 'moveLeft') {
+            mouseDownId = setInterval(function () { renderer.moveLeft(); }, 100);
+        }
+        if (element.id == 'moveRight') {
+            mouseDownId = setInterval(function () { renderer.moveRight(); }, 100);
+        }
+        if (element.id == 'zoomIn') {
+            mouseDownId = setInterval(function () { renderer.zoomIn(); }, 100);
+        }
+        if (element.id == 'zoomOut') {
+            mouseDownId = setInterval(function () { renderer.zoomOut(); }, 100);
+        }
+        if (element.id == 'rotateUp') {
+            mouseDownId = setInterval(function () { renderer.rotateUp(); }, 100);
+        }
+        if (element.id == 'rotateDown') {
+            mouseDownId = setInterval(function () { renderer.rotateDown(); }, 100);
+        }
+        if (element.id == 'rotateLeft') {
+            mouseDownId = setInterval(function () { renderer.rotateLeft(); }, 100);
+        }
+        if (element.id == 'rotateRight') {
+            mouseDownId = setInterval(function () { renderer.rotateRight(); }, 100);
+        }
+    }
+}
+function onButtonUp(event) {
+    clearInterval(mouseDownId);
+    mouseDownId = 0;
+}
+function addEventListeners() {
+    document.getElementById('moveUp').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveUp').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('moveUp').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('moveUp').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('moveDown').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveDown').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('moveDown').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('moveDown').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('moveLeft').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveLeft').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('moveLeft').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('moveLeft').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('moveRight').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('moveRight').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('moveRight').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('moveRight').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('zoomIn').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('zoomIn').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('zoomIn').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('zoomIn').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('zoomOut').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('zoomOut').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('zoomOut').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('zoomOut').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('rotateUp').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateUp').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateUp').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('rotateUp').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('rotateDown').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateDown').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateDown').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('rotateDown').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('rotateLeft').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateLeft').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateLeft').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('rotateLeft').addEventListener('touchend', onButtonUp, false);
+    document.getElementById('rotateRight').addEventListener('mousedown', onButtonDown, false);
+    document.getElementById('rotateRight').addEventListener('mouseup', onButtonUp, false);
+    document.getElementById('rotateRight').addEventListener('touchstart', onButtonDown, false);
+    document.getElementById('rotateRight').addEventListener('touchend', onButtonUp, false);
+}
 var LH;
 (function (LH) {
     var BVH = /** @class */ (function () {
