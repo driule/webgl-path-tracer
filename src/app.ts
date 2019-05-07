@@ -55,6 +55,18 @@ function handleInput(command: string): void {
         stopButton.disabled = true;
         let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
         renderButton.disabled = false;
+    } else if (command == 'moveUp') {
+        renderer.moveUp();
+    } else if (command == 'moveDown') {
+        renderer.moveDown();
+    } else if (command == 'moveLeft') {
+        renderer.moveLeft();
+    } else if (command == 'moveRight') {
+        renderer.moveRight();
+    } else if (command == 'zoomIn') {
+        renderer.zoomIn();
+    } else if (command == 'zoomOut') {
+        renderer.zoomOut();
     }
 }
 

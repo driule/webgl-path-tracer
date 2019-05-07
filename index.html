@@ -9,6 +9,16 @@
                 /* overflow: hidden; */
                 /* background-color: black; */
             }
+
+            .playbackButton{
+                height: 30px;
+                width: 75px;
+            }
+
+            .controllerButton{
+                height: 40px;
+                width: 40px;
+            }
         </style>
         <script type="text/javascript" src="node_modules/gl-matrix/gl-matrix.js"></script>
         <script type="text/javascript" src="js/app.js"></script>
@@ -26,17 +36,22 @@
         | Does your browser exploit GPU power? Settings for <a href="images/nvidia-settings.png">NVIDIA</a><br/>
 
         <br/>
-        <button id="render" onclick="handleInput('render')" disabled="true">Render</button>
-        <button id="stop" onclick="handleInput('stop')">Stop</button>
+        <button class="playbackButton" id="render" onclick="handleInput('render')" disabled="true">Render</button>
+        <button class="playbackButton" id="stop" onclick="handleInput('stop')">Stop</button>
 
-        <h3>Camera controls:</h3>
-        <ul>
-            <li><b>W</b> (up)</li>
-            <li><b>A</b> (left)</li>
-            <li><b>S</b> (down)</li>
-            <li><b>D</b> (right))</li>
-            <li><b>+</b> (zoom in)</li>
-            <li><b>-</b> (zoom out)</li>
-        </ul>
+        <hr/>
+        <h3>Camera controls</h3>
+        <table>
+            <tr>
+                <td><button class="controllerButton" id="zoomOut" onclick="handleInput('zoomOut')">-</button></td>
+                <td><button class="controllerButton" id="moveUp" onclick="handleInput('moveUp')">W</button></td>
+                <td><button class="controllerButton" id="zoomIn" onclick="handleInput('zoomIn')">+</button></td>
+            </tr>
+            <tr>
+                <td><button class="controllerButton" id="moveLeft" onclick="handleInput('moveLeft')">A</button></td>
+                <td><button class="controllerButton" id="moveDown" onclick="handleInput('moveDown')">S</button></td>
+                <td><button class="controllerButton" id="moveRight" onclick="handleInput('moveRight')">D</button></td>
+            </tr>
+        </table>
     </body>
 </html>
