@@ -371,6 +371,7 @@ window.onload = function () {
     renderer.tick(Date.now() - start);
     // TODO: always use requestAnimationFrame() over setInterval()
     //setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
+    // TODO: encapsulate FPS measurement !!!
     var fpsLabel = document.getElementById('fps');
     var primitiveCountLabel = document.getElementById('primitiveCount');
     setInterval(function () {
@@ -379,6 +380,7 @@ window.onload = function () {
     }, 200);
     // control buttons event listeners
     addEventListeners();
+    preventDefaultControls();
 };
 // handle keyboard input
 document.onkeydown = function (event) {
@@ -535,6 +537,14 @@ function addEventListeners() {
     document.getElementById('rotateRight').addEventListener('mouseup', onButtonUp, false);
     document.getElementById('rotateRight').addEventListener('touchstart', onButtonDown, false);
     document.getElementById('rotateRight').addEventListener('touchend', onButtonUp, false);
+}
+function preventDefaultControls() {
+    window.addEventListener("keydown", function (e) {
+        // space and arrow keys
+        if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+            e.preventDefault();
+        }
+    }, false);
 }
 var LH;
 (function (LH) {
