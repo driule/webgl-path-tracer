@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://driule@bitbucket.org/driule/webgl-path-tracer.git"
+    "url": "git+https://github.com/driule/webgl-path-tracer.git"
   },
   "keywords": [
     "webgl",
@@ -24,5 +24,5 @@
   ],
   "author": "Andrius Jaškauskas",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/driule/webgl-path-tracer#readme"
+  "homepage": "https://github.com/driule/webgl-path-tracer#readme"
 }
