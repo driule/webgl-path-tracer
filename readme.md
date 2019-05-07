@@ -3,6 +3,7 @@
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
 ### Progress
+- [+] Camera control button implemented
 - [+] GLSL shaders separated into external files
 - [+] Russian Roulette implemented
 - [+] BVH implemented! Built on JavaScript and then passed to the fragment shader via texture. Traversed using stack, no optimizations
