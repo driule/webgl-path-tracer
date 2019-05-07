@@ -129,6 +129,7 @@ var LH;
             ];
             this._pathTracer.setObjects(triangles, lights, bvh);
             this.calculateViewProjection();
+            this._isRendering = true;
             primitiveCount = triangles.length;
             //var startTime = Date.now();
             //this.tick((Date.now() - startTime) * 0.001);
@@ -146,7 +147,15 @@ var LH;
                 frameCount = 0;
                 elapsedTime -= 1000;
             }
-            requestAnimationFrame(this.tick.bind(this));
+            if (this._isRendering) {
+                requestAnimationFrame(this.tick.bind(this));
+            }
+        };
+        Renderer.prototype.pause = function () {
+            this._isRendering = false;
+        };
+        Renderer.prototype.resume = function () {
+            this._isRendering = true;
         };
         Renderer.prototype.calculateViewProjection = function () {
             this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
@@ -278,6 +287,24 @@ window.onload = function () {
         primitiveCountLabel.innerHTML = primitiveCount + " primitives loaded";
     }, 200);
 };
+function handleInput(command) {
+    if (command == 'render') {
+        renderer.resume();
+        var start = Date.now();
+        renderer.tick(Date.now() - start);
+        var renderButton = document.getElementById(command);
+        renderButton.disabled = true;
+        var stopButton = document.getElementById('stop');
+        stopButton.disabled = false;
+    }
+    else if (command == 'stop') {
+        renderer.pause();
+        var stopButton = document.getElementById(command);
+        stopButton.disabled = true;
+        var renderButton = document.getElementById('render');
+        renderButton.disabled = false;
+    }
+}
 document.onkeydown = function (event) {
     // W
     if (event.keyCode == 87) {

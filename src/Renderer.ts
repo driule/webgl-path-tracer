@@ -11,6 +11,8 @@ namespace LH {
         private _eye: any;
         private _viewProjection: any;
 
+        private _isRendering: boolean;
+
         public constructor() {
             this._canvas = GLUtilities.initialize('pathTracer');
             this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
@@ -41,6 +43,8 @@ namespace LH {
 
             this.calculateViewProjection();
 
+            this._isRendering = true;
+
             primitiveCount = triangles.length;
 
             //var startTime = Date.now();
@@ -62,7 +66,17 @@ namespace LH {
                 elapsedTime -= 1000;
             }
 
-            requestAnimationFrame(this.tick.bind(this));
+            if (this._isRendering) {
+                requestAnimationFrame(this.tick.bind(this));
+            }
+        }
+
+        public pause(): void {
+            this._isRendering = false;
+        }
+
+        public resume(): void {
+            this._isRendering = true;
         }
 
         private calculateViewProjection(): void {

@@ -36,6 +36,28 @@ window.onload = function() {
     }, 200);
 }
 
+function handleInput(command: string): void {
+
+    if (command == 'render') {
+        renderer.resume();
+        let start = Date.now();
+        renderer.tick(Date.now() - start);
+
+        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
+        renderButton.disabled = true;
+        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
+        stopButton.disabled = false;
+
+    } else if (command == 'stop') {
+        renderer.pause();
+
+        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
+        stopButton.disabled = true;
+        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
+        renderButton.disabled = false;
+    }
+}
+
 document.onkeydown = function(event) {
 
     // W
