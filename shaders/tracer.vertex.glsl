@@ -1,5 +1,7 @@
 #version 300 es
 
+precision highp float;
+
 in vec3 vertex;
 out vec3 initialRay;
 uniform vec3 eye, ray00, ray01, ray10, ray11;

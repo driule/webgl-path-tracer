@@ -1,6 +1,8 @@
 #version 300 es
 
 precision highp float;
+precision highp int;
+precision highp sampler2D;
 
 #define MAX_TRIANGLES 10000
 #define MAX_LIGHTS 256
