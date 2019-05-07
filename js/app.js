@@ -429,12 +429,11 @@ function handleInput(command) {
     else if (command == 'moveRight') {
         renderer.moveRight();
     }
-    else if (command == 'moveForward') {
-        renderer.moveForward();
-    }
-    else if (command == 'moveBack') {
-        renderer.moveBack();
-    }
+    // else if (command == 'moveForward') {
+    //     renderer.moveForward();
+    // } else if (command == 'moveBack') {
+    //     renderer.moveBack();
+    // }
 }
 document.onkeydown = function (event) {
     // W
