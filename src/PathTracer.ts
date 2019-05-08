@@ -73,7 +73,7 @@ namespace LH {
             uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 3));
 
             // BVH data
-            uniforms.bvhNodeList =this._scene.bvh.nodeStack;
+            uniforms.bvhNodeList = this._scene.bvh.nodeStack;
             uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
 
             // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units

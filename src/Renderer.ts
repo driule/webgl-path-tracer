@@ -11,7 +11,6 @@ namespace LH {
 
         public constructor() {
             this._canvas = GLUtilities.initialize('pathTracer');
-            // this._camera = new Camera(this._canvas);
             this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
         }
 

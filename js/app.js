@@ -10,6 +10,7 @@ var LH;
             this._axisY = 0.0;
             this._axisZ = 0.0;
             this._eye = glMatrix.vec3.create();
+            this.calculateViewProjection();
         }
         Object.defineProperty(Camera.prototype, "eye", {
             get: function () {
@@ -186,7 +187,6 @@ var LH;
     var Renderer = /** @class */ (function () {
         function Renderer() {
             this._canvas = LH.GLUtilities.initialize('pathTracer');
-            // this._camera = new Camera(this._canvas);
             this._pathTracer = new LH.PathTracer([this._canvas.width, this._canvas.height]);
         }
         Renderer.prototype.start = function () {

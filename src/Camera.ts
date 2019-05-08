@@ -2,7 +2,7 @@ namespace LH {
 
     export class Camera {
 
-        private _canvas;
+        private _canvas: HTMLCanvasElement;
 
         private _angleX: number;
         private _angleY: number;
@@ -27,6 +27,7 @@ namespace LH {
             this._axisZ = 0.0;
 
             this._eye = glMatrix.vec3.create();
+            this.calculateViewProjection();
         }
 
         public get eye(): any {
