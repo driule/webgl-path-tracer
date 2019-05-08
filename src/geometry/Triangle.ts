@@ -13,18 +13,20 @@ namespace LH {
             this._b = b;
             this._c = c;
 
-            let minX = Math.min(Math.min(this.a[0], this.b[0]), this.c[0]);
-            let minY = Math.min(Math.min(this.a[1], this.b[1]), this.c[1]);
-            let minZ = Math.min(Math.min(this.a[2], this.b[2]), this.c[2]);
-        
-            let maxX = Math.max(Math.max(this.a[0], this.b[0]), this.c[0]);
-            let maxY = Math.max(Math.max(this.a[1], this.b[1]), this.c[1]);
-            let maxZ = Math.max(Math.max(this.a[2], this.b[2]), this.c[2]);
+            let minX = Math.min(this._a[0], this._b[0], this._c[0]);
+            let minY = Math.min(this._a[1], this._b[1], this._c[1]);
+            let minZ = Math.min(this._a[2], this._b[2], this._c[2]);
+
+            let maxX = Math.max(this._a[0], this._b[0], this._c[0]);
+            let maxY = Math.max(this._a[1], this._b[1], this._c[1]);
+            let maxZ = Math.max(this._a[2], this._b[2], this._c[2]);
         
             this._boundingBox = new BoundingBox(0);
             this._boundingBox.min = [minX, minY, minZ];
             this._boundingBox.max = [maxX, maxY, maxZ];
             this._boundingBox.calculateCenter();
+
+            // exit();
         }
 
         public get a(): any {

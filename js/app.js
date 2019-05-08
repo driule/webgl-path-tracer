@@ -202,8 +202,6 @@ var LH;
             //this.tick((Date.now() - startTime) * 0.001);
         };
         Renderer.prototype.createScene = function () {
-            // let triangles = this.createTriangles();
-            var triangles = this.loadObject('assets/teddy.obj');
             var lights = [
                 new LH.Light([0.0, 5.75, 20.25], 0.25, 35.0),
                 new LH.Light([20.25, 22.75, 0.25], 1.5, 10.0),
@@ -211,7 +209,9 @@ var LH;
             ];
             var camera = new LH.Camera(this._canvas, [0.2, 5.75, 75.0]);
             var scene = new LH.Scene(camera);
-            scene.setGeometry(triangles, lights);
+            scene.setLights(lights);
+            scene.loadModel('assets/teddy.obj');
+            scene.loadModel('assets/teddy.obj', [40, 0, 0]);
             return scene;
         };
         Renderer.prototype.tick = function (timeSinceStart) {
@@ -311,37 +311,6 @@ var LH;
             objects.push(new LH.Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75]));
             return objects;
         };
-        Renderer.prototype.loadObject = function (filePath) {
-            var triangles = [];
-            var lines = loadFile(filePath).split('\n');
-            var vertices = [];
-            var faceIndexes = [];
-            var meshVertices = [];
-            // collect vertices and facets data
-            for (var i = 0; i < lines.length; i++) {
-                var parts = lines[i].split(" ");
-                if (parts[0] === "v") {
-                    vertices.push([parts[1], parts[2], parts[3]]);
-                }
-                else if (parts[0] === "f") {
-                    faceIndexes.push((+parts[1]) - 1);
-                    faceIndexes.push((+parts[2]) - 1);
-                    faceIndexes.push((+parts[3]) - 1);
-                }
-            }
-            // build all mesh vertices
-            for (var i = 0; i < faceIndexes.length; i++) {
-                meshVertices.push([vertices[faceIndexes[i]][0], vertices[faceIndexes[i]][1], vertices[faceIndexes[i]][2]]);
-            }
-            var primitivesCount = meshVertices.length / 3;
-            for (var i = 0; i < primitivesCount; i++) {
-                var a = meshVertices[i * 3];
-                var b = meshVertices[i * 3 + 1];
-                var c = meshVertices[i * 3 + 2];
-                triangles.push(new LH.Triangle(a, b, c));
-            }
-            return triangles;
-        };
         return Renderer;
     }());
     LH.Renderer = Renderer;
@@ -352,6 +321,8 @@ var LH;
         function Scene(camera) {
             this._camera = camera;
             this._bvh = new LH.BVH();
+            this._triangles = [];
+            this._lights = [];
         }
         Object.defineProperty(Scene.prototype, "camera", {
             get: function () {
@@ -381,10 +352,49 @@ var LH;
             enumerable: true,
             configurable: true
         });
-        Scene.prototype.setGeometry = function (triangles, lights) {
-            this._triangles = triangles;
+        Scene.prototype.setLights = function (lights) {
+            if (lights === void 0) { lights = []; }
             this._lights = lights;
-            // rebuild BVH is scene has changed
+        };
+        Scene.prototype.setTriangles = function (triangles) {
+            if (triangles === void 0) { triangles = []; }
+            this._triangles = triangles;
+            this._bvh.build(this._triangles);
+        };
+        Scene.prototype.loadModel = function (filePath, translation) {
+            if (translation === void 0) { translation = [0, 0, 0]; }
+            var triangles = [];
+            var lines = loadFile(filePath).split('\n');
+            var vertices = [];
+            var faceIndexes = [];
+            var meshVertices = [];
+            // collect vertices and facets data
+            for (var i = 0; i < lines.length; i++) {
+                var parts = lines[i].split(" ");
+                if (parts[0] === "v") {
+                    vertices.push([+parts[1], +parts[2], +parts[3]]);
+                }
+                else if (parts[0] === "f") {
+                    faceIndexes.push((+parts[1]) - 1);
+                    faceIndexes.push((+parts[2]) - 1);
+                    faceIndexes.push((+parts[3]) - 1);
+                }
+            }
+            // build all mesh vertices
+            for (var i = 0; i < faceIndexes.length; i++) {
+                meshVertices.push([
+                    vertices[faceIndexes[i]][0],
+                    vertices[faceIndexes[i]][1],
+                    vertices[faceIndexes[i]][2]
+                ]);
+            }
+            for (var i = 0; i < meshVertices.length / 3; i++) {
+                var a = glMatrix.vec3.add([], meshVertices[i * 3], translation);
+                var b = glMatrix.vec3.add([], meshVertices[i * 3 + 1], translation);
+                var c = glMatrix.vec3.add([], meshVertices[i * 3 + 2], translation);
+                triangles.push(new LH.Triangle(a, b, c));
+            }
+            this._triangles = this._triangles.concat(triangles);
             this._bvh.build(this._triangles);
         };
         return Scene;
@@ -811,16 +821,17 @@ var LH;
             this._a = a;
             this._b = b;
             this._c = c;
-            var minX = Math.min(Math.min(this.a[0], this.b[0]), this.c[0]);
-            var minY = Math.min(Math.min(this.a[1], this.b[1]), this.c[1]);
-            var minZ = Math.min(Math.min(this.a[2], this.b[2]), this.c[2]);
-            var maxX = Math.max(Math.max(this.a[0], this.b[0]), this.c[0]);
-            var maxY = Math.max(Math.max(this.a[1], this.b[1]), this.c[1]);
-            var maxZ = Math.max(Math.max(this.a[2], this.b[2]), this.c[2]);
+            var minX = Math.min(this._a[0], this._b[0], this._c[0]);
+            var minY = Math.min(this._a[1], this._b[1], this._c[1]);
+            var minZ = Math.min(this._a[2], this._b[2], this._c[2]);
+            var maxX = Math.max(this._a[0], this._b[0], this._c[0]);
+            var maxY = Math.max(this._a[1], this._b[1], this._c[1]);
+            var maxZ = Math.max(this._a[2], this._b[2], this._c[2]);
             this._boundingBox = new LH.BoundingBox(0);
             this._boundingBox.min = [minX, minY, minZ];
             this._boundingBox.max = [maxX, maxY, maxZ];
             this._boundingBox.calculateCenter();
+            // exit();
         }
         Object.defineProperty(Triangle.prototype, "a", {
             get: function () {

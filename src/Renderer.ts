@@ -31,9 +31,6 @@ namespace LH {
         }
 
         private createScene(): Scene {
-            // let triangles = this.createTriangles();
-            let triangles = this.loadObject('assets/teddy.obj');
-
             let lights: Light[] = [
                 new Light([0.0, 5.75, 20.25], 0.25, 35.0),
                 new Light([20.25, 22.75, 0.25], 1.5, 10.0),
@@ -43,7 +40,9 @@ namespace LH {
             let camera = new Camera(this._canvas, [0.2, 5.75, 75.0]);
 
             let scene: Scene = new Scene(camera);
-            scene.setGeometry(triangles, lights);
+            scene.setLights(lights);
+            scene.loadModel('assets/teddy.obj');
+            scene.loadModel('assets/teddy.obj', [40, 0, 0]);
 
             return scene;
         }
@@ -167,47 +166,6 @@ namespace LH {
             objects.push(new Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75]));
 
             return objects;
-        }
-
-        private loadObject(filePath: string): Triangle[] {
-            let triangles = [];
-
-            let lines = loadFile(filePath).split('\n')
-
-            let vertices = [];
-            let faceIndexes = [];
-            let meshVertices = [];
-
-            // collect vertices and facets data
-            for (let i = 0; i < lines.length; i++) {
-                let parts = lines[i].split(" ");
-
-                if (parts[0] === "v") {
-                    vertices.push([parts[1], parts[2], parts[3]]);
-                } else if (parts[0] === "f") {
-                    faceIndexes.push((+parts[1]) - 1);
-                    faceIndexes.push((+parts[2]) - 1);
-                    faceIndexes.push((+parts[3]) - 1);
-                }
-            }
-
-            // build all mesh vertices
-            for (let i = 0; i < faceIndexes.length; i++) {
-                meshVertices.push(
-                    [vertices[faceIndexes[i]][0], vertices[faceIndexes[i]][1], vertices[faceIndexes[i]][2]]
-                );
-            }
-
-            let primitivesCount: number = meshVertices.length / 3;
-            for (let i = 0; i < primitivesCount; i++) {
-                let a = meshVertices[i * 3];
-                let b = meshVertices[i * 3 + 1];
-                let c = meshVertices[i * 3 + 2];
-
-                triangles.push(new Triangle(a, b, c));
-            }
-
-            return triangles;
         }
     }
 }
