@@ -25,8 +25,6 @@ namespace LH {
             this._boundingBox.min = [minX, minY, minZ];
             this._boundingBox.max = [maxX, maxY, maxZ];
             this._boundingBox.calculateCenter();
-
-            // exit();
         }
 
         public get a(): any {

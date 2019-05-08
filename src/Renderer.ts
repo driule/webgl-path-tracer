@@ -18,33 +18,14 @@ namespace LH {
             gl.clearColor(0, 0, 0, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
-            this._scene = this.createScene();
-            this._pathTracer.setScene(this._scene);
+            this.loadTeddyScene();
             this._isRendering = true;
 
             // ToDo: encapsulate in Gauge class
-            primitiveCount = this._scene.triangles.length;
+            // primitiveCount = this._scene.triangles.length;
 
             //var startTime = Date.now();
             //this.tick((Date.now() - startTime) * 0.001);
-        }
-
-        private createScene(): Scene {
-            let lights: Light[] = [
-                new Light([0.0, 5.75, 20.25], 0.25, 35.0),
-                new Light([20.25, 22.75, 0.25], 1.5, 10.0),
-                new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
-            ];
-
-            let camera = new Camera(this._canvas, [0.2, 5.75, 75.0]);
-
-            let scene: Scene = new Scene(camera);
-            scene.setLights(lights);
-            scene.loadModel('assets/teddy.obj');
-            scene.loadModel('assets/teddy.obj', [40, 0, 0]);
-
-            return scene;
         }
 
         public tick(timeSinceStart: number): void {
@@ -73,6 +54,57 @@ namespace LH {
 
         public resume(): void {
             this._isRendering = true;
+        }
+
+        private restart(): void {
+            primitiveCount = this._scene.triangles.length;
+            this._pathTracer.setScene(this._scene);
+            this._scene.camera.calculateViewProjection();
+            this._pathTracer.restart();
+        }
+
+        public loadTeddyScene(): void {
+            let lights: Light[] = [
+                new Light([0.0, 5.75, 20.25], 0.25, 35.0),
+                new Light([20.25, 22.75, 0.25], 1.5, 10.0),
+                new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
+            ];
+
+            let camera = new Camera(this._canvas, [0.2, 5.75, 75.0]);
+
+            this._scene = new Scene(camera);
+            this._scene.setLights(lights);
+            this._scene.loadModel('assets/teddy.obj');
+            this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
+
+            this.restart();
+        }
+
+        public loadBasicScene(): void {
+            let lights: Light[] = [
+                new Light([0.0, 1.75, 0.25], 0.25, 12.5),
+            ];
+
+            let camera = new Camera(this._canvas, [0.0, 0.0, 2.5]);
+
+            this._scene = new Scene(camera);
+            this._scene.setLights(lights);
+
+            this._scene.setTriangles([
+                // ground plane
+                new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]),
+                new Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]),
+
+                // left wall
+                new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]),
+                new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75],  [-0.75, 0.95, 0.75]),
+
+                // back wall
+                new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, -0.75], [-0.75, 0.95, -0.75]),
+                new Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75])
+            ]);
+
+            this.restart();
         }
 
         //
@@ -126,46 +158,6 @@ namespace LH {
         public rotateLeft(): void {
             this._scene.camera.rotateLeft();
             this.restart();
-        }
-
-        private restart(): void {
-            this._scene.camera.calculateViewProjection();
-            this._pathTracer.restart();
-        }
-        
-        //
-        // scene objects
-        //
-        private createTriangles(): Triangle[] {
-            let objects = [];
-
-            // for (let i = 0; i < 30; i++) {
-            //     // ground plane
-            //     objects.push(new Triangle([-0.75 + i - 3, -0.95, -0.75], [0.75 + i - 3, -0.95, 0.75], [0.75 + i - 3, -0.95, -0.75]));
-            //     objects.push(new Triangle([-0.75 + i - 3, -0.95, -0.75], [-0.75+ i - 3, -0.95, 0.75], [0.75 + i - 3, -0.95, 0.75]));
-                
-            //     // left side
-            //     //objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]));
-            //     //objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75],  [-0.75, 0.95, 0.75]));
-
-            //     // back side
-            //     objects.push(new Triangle([-0.75 + i - 3, -0.95, -0.75], [0.75 + i - 3, -0.95, -0.75], [-0.75 + i - 3, 0.95, -0.75]));
-            //     objects.push(new Triangle([0.75 + i - 3, -0.95, -0.75], [0.75 + i - 3, 0.95, -0.75], [-0.75 + i - 3, 0.95, -0.75]));
-            // }
-
-            // ground plane
-            // objects.push(new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]));
-            // objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]));
-            
-            // left side
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]));
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75],  [-0.75, 0.95, 0.75]));
-
-            // back side
-            objects.push(new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, -0.75], [-0.75, 0.95, -0.75]));
-            objects.push(new Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75]));
-
-            return objects;
         }
     }
 }

@@ -10,12 +10,17 @@
                 /* background-color: black; */
             }
 
-            .playbackButton{
+            .playbackButton {
                 height: 30px;
                 width: 75px;
             }
+            
+            .sceneButton {
+                height: 30px;
+                width: 125px;
+            }
 
-            .controllerButton{
+            .controllerButton {
                 height: 40px;
                 width: 40px;
             }
@@ -38,6 +43,9 @@
         <br/>
         <button class="playbackButton" id="render" onclick="handleInput('render')" disabled="true">Render</button>
         <button class="playbackButton" id="stop" onclick="handleInput('stop')">Stop</button>
+        |    
+        <button class="sceneButton" onclick="handleInput('changeScene1')">Basic Geometry</button>
+        <button class="sceneButton" onclick="handleInput('changeScene2')">Teddy</button>
 
         <hr/>
         <table>

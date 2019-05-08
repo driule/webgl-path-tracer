@@ -124,6 +124,10 @@ function handleInput(command: string): void {
         stopButton.disabled = true;
         let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
         renderButton.disabled = false;
+    } else if (command == 'changeScene1') {
+        renderer.loadBasicScene();
+    } else if (command == 'changeScene2') {
+        renderer.loadTeddyScene();
     }
 }
 
