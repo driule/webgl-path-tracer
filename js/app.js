@@ -749,13 +749,20 @@ var LH;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(BoundingBox.prototype, "center", {
+            get: function () {
+                return this._center;
+            },
+            enumerable: true,
+            configurable: true
+        });
         BoundingBox.prototype.calculateSurfaceArea = function () {
             var diagonal = glMatrix.vec3.subtract([], this.max, this.min);
             diagonal = [Math.abs(diagonal[0]), Math.abs(diagonal[1]), Math.abs(diagonal[2])];
             return ((diagonal[0] * diagonal[1]) + (diagonal[0] * diagonal[2]) + (diagonal[2] * diagonal[1])) * 2;
         };
         BoundingBox.prototype.calculateCenter = function () {
-            this.center = glMatrix.vec3.add([], this.min, glMatrix.vec3.scale([], glMatrix.vec3.subtract([], this.max, this.min), 0.5));
+            this._center = glMatrix.vec3.add([], this.min, glMatrix.vec3.scale([], glMatrix.vec3.subtract([], this.max, this.min), 0.5));
         };
         return BoundingBox;
     }());
@@ -1083,11 +1090,9 @@ var LH;
                         bvhNodeDataList[i * 3 * 4 + 6] = uniforms.bvhNodeList[i].isLeaf;
                         bvhNodeDataList[i * 3 * 4 + 7] = uniforms.bvhNodeList[i].first;
                         bvhNodeDataList[i * 3 * 4 + 8] = uniforms.bvhNodeList[i].count;
-                        // console.log(bvhNodeDataList[i * 3 * 4 + 7] + ' ' + bvhNodeDataList[i * 3 * 4 + 8]);
                         if (!uniforms.bvhNodeList[i].isLeaf) {
                             bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                             bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
-                            // console.log(bvhNodeDataList[i * 3 * 4 + 9] + ':' + bvhNodeDataList[i * 3 * 4 + 10]);
                         }
                         else {
                             bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
@@ -1095,7 +1100,6 @@ var LH;
                         }
                         bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
                     }
-                    // exit();
                     LH.gl.activeTexture(LH.gl.TEXTURE3);
                     LH.gl.bindTexture(LH.gl.TEXTURE_2D, LH.gl.createTexture());
                     LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MIN_FILTER, LH.gl.NEAREST);

@@ -2,17 +2,17 @@ namespace LH {
 
     export class BoundingBox {
 
-        private _id: number;
-
         public min: any; // vec3
         public max: any; // vec3
-        public center: any; // vec3
 
         public isLeaf: boolean;
         public left: BoundingBox;
         public right: BoundingBox;
         public first: number;
         public count: number;
+        
+        private _id: number;
+        private _center: any; // vec3
 
         public constructor(id: number) {
             this._id = id;
@@ -20,6 +20,10 @@ namespace LH {
 
         public get id(): number {
             return this._id;
+        }
+
+        public get center(): any {
+            return this._center;
         }
 
         public calculateSurfaceArea(): number
@@ -31,7 +35,7 @@ namespace LH {
         }
 
         public calculateCenter(): void {
-            this.center = glMatrix.vec3.add([], this.min, glMatrix.vec3.scale([], glMatrix.vec3.subtract([], this.max, this.min), 0.5));
+            this._center = glMatrix.vec3.add([], this.min, glMatrix.vec3.scale([], glMatrix.vec3.subtract([], this.max, this.min), 0.5));
         }
     }
 }
