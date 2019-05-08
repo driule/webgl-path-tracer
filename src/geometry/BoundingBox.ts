@@ -31,8 +31,6 @@ namespace LH {
         }
 
         public calculateCenter(): void {
-            // this.center = this.min + 0.5 * (this.max - this.min);
-
             this.center = glMatrix.vec3.add([], this.min, glMatrix.vec3.scale([], glMatrix.vec3.subtract([], this.max, this.min), 0.5));
         }
     }

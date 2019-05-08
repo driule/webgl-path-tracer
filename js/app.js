@@ -186,8 +186,9 @@ var LH;
 var LH;
 (function (LH) {
     var Renderer = /** @class */ (function () {
-        function Renderer() {
+        function Renderer(gauge) {
             this._canvas = LH.GLUtilities.initialize('pathTracer');
+            this._gauge = gauge;
             this._pathTracer = new LH.PathTracer([this._canvas.width, this._canvas.height]);
         }
         Renderer.prototype.start = function () {
@@ -195,24 +196,13 @@ var LH;
             LH.gl.clear(LH.gl.COLOR_BUFFER_BIT | LH.gl.DEPTH_BUFFER_BIT);
             this.loadTeddyScene();
             this._isRendering = true;
-            // ToDo: encapsulate in Gauge class
-            // primitiveCount = this._scene.triangles.length;
-            //var startTime = Date.now();
-            //this.tick((Date.now() - startTime) * 0.001);
+            var startTime = Date.now();
+            this.tick((Date.now() - startTime) * 0.001);
         };
         Renderer.prototype.tick = function (timeSinceStart) {
             this._pathTracer.update(timeSinceStart);
             this._pathTracer.render();
-            // fps measurement
-            var currentTick = new Date().getTime();
-            frameCount++;
-            elapsedTime += (currentTick - lastTick);
-            lastTick = currentTick;
-            if (elapsedTime >= 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                elapsedTime -= 1000;
-            }
+            this._gauge.measureFPS();
             if (this._isRendering) {
                 requestAnimationFrame(this.tick.bind(this));
             }
@@ -224,7 +214,7 @@ var LH;
             this._isRendering = true;
         };
         Renderer.prototype.restart = function () {
-            primitiveCount = this._scene.triangles.length;
+            this._gauge.primitiveCount = this._scene.triangles.length;
             this._pathTracer.setScene(this._scene);
             this._scene.camera.calculateViewProjection();
             this._pathTracer.restart();
@@ -239,7 +229,7 @@ var LH;
             this._scene = new LH.Scene(camera);
             this._scene.setLights(lights);
             this._scene.loadModel('assets/teddy.obj');
-            this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
+            // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
             this.restart();
         };
         Renderer.prototype.loadBasicScene = function () {
@@ -396,27 +386,18 @@ var LH;
     LH.Scene = Scene;
 })(LH || (LH = {}));
 var renderer;
-// global variables
-var lastTick = Date.now();
-var fps = 0;
-var elapsedTime = 0;
-var frameCount = 0;
-var primitiveCount = 0;
-var mouseDownId = 0;
+var gauge;
 // initialize application when page loading
 window.onload = function () {
-    renderer = new LH.Renderer();
+    gauge = new LH.Gauge();
+    renderer = new LH.Renderer(gauge);
     renderer.start();
-    var start = Date.now();
-    renderer.tick(Date.now() - start);
-    // TODO: always use requestAnimationFrame() over setInterval()
-    //setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
-    // TODO: encapsulate FPS measurement !!!
+    // primitive count and FPS measurement
     var fpsLabel = document.getElementById('fps');
     var primitiveCountLabel = document.getElementById('primitiveCount');
     setInterval(function () {
-        fpsLabel.innerHTML = fps.toFixed(1) + " fps";
-        primitiveCountLabel.innerHTML = primitiveCount + " primitives loaded";
+        fpsLabel.innerHTML = gauge.fps.toFixed(1) + " fps";
+        primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives loaded";
     }, 200);
     // control buttons event listeners
     addEventListeners();
@@ -505,42 +486,42 @@ function handleInput(command) {
 }
 function onButtonDown(event) {
     var element = event.target;
-    if (mouseDownId == 0) {
+    if (gauge.mouseDownId == 0) {
         if (element.id == 'moveUp') {
-            mouseDownId = setInterval(function () { renderer.moveUp(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.moveUp(); }, 100);
         }
         if (element.id == 'moveDown') {
-            mouseDownId = setInterval(function () { renderer.moveDown(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.moveDown(); }, 100);
         }
         if (element.id == 'moveLeft') {
-            mouseDownId = setInterval(function () { renderer.moveLeft(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.moveLeft(); }, 100);
         }
         if (element.id == 'moveRight') {
-            mouseDownId = setInterval(function () { renderer.moveRight(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.moveRight(); }, 100);
         }
         if (element.id == 'zoomIn') {
-            mouseDownId = setInterval(function () { renderer.zoomIn(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.zoomIn(); }, 100);
         }
         if (element.id == 'zoomOut') {
-            mouseDownId = setInterval(function () { renderer.zoomOut(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.zoomOut(); }, 100);
         }
         if (element.id == 'rotateUp') {
-            mouseDownId = setInterval(function () { renderer.rotateUp(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.rotateUp(); }, 100);
         }
         if (element.id == 'rotateDown') {
-            mouseDownId = setInterval(function () { renderer.rotateDown(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.rotateDown(); }, 100);
         }
         if (element.id == 'rotateLeft') {
-            mouseDownId = setInterval(function () { renderer.rotateLeft(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.rotateLeft(); }, 100);
         }
         if (element.id == 'rotateRight') {
-            mouseDownId = setInterval(function () { renderer.rotateRight(); }, 100);
+            gauge.mouseDownId = setInterval(function () { renderer.rotateRight(); }, 100);
         }
     }
 }
 function onButtonUp(event) {
-    clearInterval(mouseDownId);
-    mouseDownId = 0;
+    clearInterval(gauge.mouseDownId);
+    gauge.mouseDownId = 0;
 }
 function addEventListeners() {
     document.getElementById('moveUp').addEventListener('mousedown', onButtonDown, false);
@@ -774,7 +755,6 @@ var LH;
             return ((diagonal[0] * diagonal[1]) + (diagonal[0] * diagonal[2]) + (diagonal[2] * diagonal[1])) * 2;
         };
         BoundingBox.prototype.calculateCenter = function () {
-            // this.center = this.min + 0.5 * (this.max - this.min);
             this.center = glMatrix.vec3.add([], this.min, glMatrix.vec3.scale([], glMatrix.vec3.subtract([], this.max, this.min), 0.5));
         };
         return BoundingBox;
@@ -1241,4 +1221,37 @@ var LH;
         return Shader;
     }());
     LH.Shader = Shader;
+})(LH || (LH = {}));
+var LH;
+(function (LH) {
+    var Gauge = /** @class */ (function () {
+        function Gauge() {
+            this.primitiveCount = 0;
+            this.mouseDownId = 0;
+            this._fps = 0;
+            this._lastTick = Date.now();
+            this._elapsedTime = 0;
+            this._frameCount = 0;
+        }
+        Object.defineProperty(Gauge.prototype, "fps", {
+            get: function () {
+                return this._fps;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Gauge.prototype.measureFPS = function () {
+            var currentTick = new Date().getTime();
+            this._frameCount++;
+            this._elapsedTime += (currentTick - this._lastTick);
+            this._lastTick = currentTick;
+            if (this._elapsedTime >= 1000) {
+                this._fps = this._frameCount;
+                this._frameCount = 0;
+                this._elapsedTime -= 1000;
+            }
+        };
+        return Gauge;
+    }());
+    LH.Gauge = Gauge;
 })(LH || (LH = {}));

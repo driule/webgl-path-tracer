@@ -1,32 +1,20 @@
 declare var glMatrix: any;
 
 let renderer: LH.Renderer;
-
-// global variables
-var lastTick: number = Date.now();
-var fps: number = 0;
-var elapsedTime: number = 0;
-var frameCount: number = 0;
-var primitiveCount: number = 0;
-var mouseDownId: number = 0;
+let gauge: LH.Gauge;
 
 // initialize application when page loading
 window.onload = function() {
-    renderer = new LH.Renderer();
+    gauge = new LH.Gauge();
+    renderer = new LH.Renderer(gauge);
     renderer.start();
 
-    let start = Date.now();
-    renderer.tick(Date.now() - start);
-
-    // TODO: always use requestAnimationFrame() over setInterval()
-    //setInterval(function(){ renderer.tick((Date.now() - start) * 0.001); }, 1000 / 60);
-
-    // TODO: encapsulate FPS measurement !!!
-    var fpsLabel = document.getElementById('fps');
-    var primitiveCountLabel = document.getElementById('primitiveCount');
+    // primitive count and FPS measurement
+    let fpsLabel = document.getElementById('fps');
+    let primitiveCountLabel = document.getElementById('primitiveCount');
     setInterval(function() {
-        fpsLabel.innerHTML = fps.toFixed(1) + " fps";
-        primitiveCountLabel.innerHTML = primitiveCount + " primitives loaded";
+        fpsLabel.innerHTML = gauge.fps.toFixed(1) + " fps";
+        primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives loaded";
     }, 200);
 
     // control buttons event listeners
@@ -134,43 +122,43 @@ function handleInput(command: string): void {
 function onButtonDown(event: MouseEvent): void {
     let element: HTMLElement = <HTMLElement>event.target;
 
-    if (mouseDownId == 0) {
+    if (gauge.mouseDownId == 0) {
         if (element.id == 'moveUp') {
-            mouseDownId = setInterval(function() { renderer.moveUp(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveUp(); }, 100);
         }
         if (element.id == 'moveDown') {
-            mouseDownId = setInterval(function() { renderer.moveDown(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveDown(); }, 100);
         }
         if (element.id == 'moveLeft') {
-            mouseDownId = setInterval(function() { renderer.moveLeft(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveLeft(); }, 100);
         }
         if (element.id == 'moveRight') {
-            mouseDownId = setInterval(function() { renderer.moveRight(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveRight(); }, 100);
         }
         if (element.id == 'zoomIn') {
-            mouseDownId = setInterval(function() { renderer.zoomIn(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.zoomIn(); }, 100);
         }
         if (element.id == 'zoomOut') {
-            mouseDownId = setInterval(function() { renderer.zoomOut(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.zoomOut(); }, 100);
         }
         if (element.id == 'rotateUp') {
-            mouseDownId = setInterval(function() { renderer.rotateUp(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateUp(); }, 100);
         }
         if (element.id == 'rotateDown') {
-            mouseDownId = setInterval(function() { renderer.rotateDown(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateDown(); }, 100);
         }
         if (element.id == 'rotateLeft') {
-            mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 100);
         }
         if (element.id == 'rotateRight') {
-            mouseDownId = setInterval(function() { renderer.rotateRight(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 100);
         }
     }
 }
 
 function onButtonUp(event: MouseEvent): void {
-    clearInterval(mouseDownId);
-    mouseDownId = 0;
+    clearInterval(gauge.mouseDownId);
+    gauge.mouseDownId = 0;
 }
 
 function addEventListeners(): void {

@@ -3,14 +3,16 @@ namespace LH {
     export class Renderer {
 
         private _canvas: HTMLCanvasElement;
+        private _gauge: Gauge;
 
         private _pathTracer: PathTracer;
         private _scene: Scene;
 
         private _isRendering: boolean;
 
-        public constructor() {
+        public constructor(gauge: Gauge) {
             this._canvas = GLUtilities.initialize('pathTracer');
+            this._gauge = gauge;
             this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
         }
 
@@ -21,27 +23,15 @@ namespace LH {
             this.loadTeddyScene();
             this._isRendering = true;
 
-            // ToDo: encapsulate in Gauge class
-            // primitiveCount = this._scene.triangles.length;
-
-            //var startTime = Date.now();
-            //this.tick((Date.now() - startTime) * 0.001);
+            let startTime = Date.now();
+            this.tick((Date.now() - startTime) * 0.001);
         }
 
         public tick(timeSinceStart: number): void {
             this._pathTracer.update(timeSinceStart);
             this._pathTracer.render();
 
-            // fps measurement
-            var currentTick = new Date().getTime();
-            frameCount++;
-            elapsedTime += (currentTick - lastTick);
-            lastTick = currentTick;
-            if (elapsedTime >= 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                elapsedTime -= 1000;
-            }
+            this._gauge.measureFPS();
 
             if (this._isRendering) {
                 requestAnimationFrame(this.tick.bind(this));
@@ -57,7 +47,7 @@ namespace LH {
         }
 
         private restart(): void {
-            primitiveCount = this._scene.triangles.length;
+            this._gauge.primitiveCount = this._scene.triangles.length;
             this._pathTracer.setScene(this._scene);
             this._scene.camera.calculateViewProjection();
             this._pathTracer.restart();
@@ -75,7 +65,7 @@ namespace LH {
             this._scene = new Scene(camera);
             this._scene.setLights(lights);
             this._scene.loadModel('assets/teddy.obj');
-            this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
+            // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
 
             this.restart();
         }
