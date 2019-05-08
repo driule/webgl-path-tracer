@@ -7,9 +7,8 @@ namespace LH {
         private _lights: Light[];
         private _bvh: BVH;
 
-        public constructor(canvas: HTMLCanvasElement) {
-            this._camera = new Camera(canvas);
-            this._camera.calculateViewProjection();
+        public constructor(camera: Camera) {
+            this._camera = camera;
             this._bvh = new BVH();
         }
 

@@ -40,7 +40,9 @@ namespace LH {
                 new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
 
-            let scene: Scene = new Scene(this._canvas);
+            let camera = new Camera(this._canvas, [0.2, 5.75, 75.0]);
+
+            let scene: Scene = new Scene(camera);
             scene.setGeometry(triangles, lights);
 
             return scene;

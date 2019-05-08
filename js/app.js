@@ -1,11 +1,12 @@
 var LH;
 (function (LH) {
     var Camera = /** @class */ (function () {
-        function Camera(canvas) {
+        function Camera(canvas, initialView) {
+            if (initialView === void 0) { initialView = [0.2, 5.75, 50.0]; }
             this._canvas = canvas;
-            this._angleX = 0.2;
-            this._angleY = 5.75;
-            this._zoomZ = 50.0;
+            this._angleX = initialView[0];
+            this._angleY = initialView[1];
+            this._zoomZ = initialView[2];
             this._axisX = 0.0;
             this._axisY = 0.0;
             this._axisZ = 0.0;
@@ -208,7 +209,8 @@ var LH;
                 new LH.Light([20.25, 22.75, 0.25], 1.5, 10.0),
                 new LH.Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
-            var scene = new LH.Scene(this._canvas);
+            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 75.0]);
+            var scene = new LH.Scene(camera);
             scene.setGeometry(triangles, lights);
             return scene;
         };
@@ -347,9 +349,8 @@ var LH;
 var LH;
 (function (LH) {
     var Scene = /** @class */ (function () {
-        function Scene(canvas) {
-            this._camera = new LH.Camera(canvas);
-            this._camera.calculateViewProjection();
+        function Scene(camera) {
+            this._camera = camera;
             this._bvh = new LH.BVH();
         }
         Object.defineProperty(Scene.prototype, "camera", {

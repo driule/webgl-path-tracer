@@ -15,12 +15,12 @@ namespace LH {
         private _eye: any;
         private _viewProjectionMatrix: any;
 
-        public constructor(canvas: HTMLCanvasElement) {
+        public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0]) {
             this._canvas = canvas;
 
-            this._angleX = 0.2;
-            this._angleY = 5.75;
-            this._zoomZ = 50.0;
+            this._angleX = initialView[0];
+            this._angleY = initialView[1];
+            this._zoomZ = initialView[2];
 
             this._axisX = 0.0;
             this._axisY = 0.0;
