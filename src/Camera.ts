@@ -2,7 +2,7 @@ namespace LH {
 
     export class Camera {
 
-        private _canvas: HTMLCanvasElement;
+        private _canvas;
 
         private _angleX: number;
         private _angleY: number;
@@ -27,8 +27,6 @@ namespace LH {
             this._axisZ = 0.0;
 
             this._eye = glMatrix.vec3.create();
-
-            this.calculateViewProjection();
         }
 
         public get eye(): any {
@@ -48,6 +46,17 @@ namespace LH {
             let projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
             this._viewProjectionMatrix = glMatrix.mat4.multiply([], projection, view);
             this._viewProjectionMatrix = glMatrix.mat4.invert([], this._viewProjectionMatrix);
+        }
+        
+        public getEyeRay(x: number, y: number): any {
+            // jitter view-projection matrix for anti-aliasing
+            let jitterVector = [(Math.random() * 2 - 1) / this._canvas.width, (Math.random() * 2 - 1) / this._canvas.height, 0];
+            let viewProjectionMatrix = glMatrix.mat4.translate([], this._viewProjectionMatrix, jitterVector);
+
+            let transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], viewProjectionMatrix);
+            let scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
+
+            return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], this._eye);
         }
 
         // movement controls

@@ -2,8 +2,8 @@ namespace LH {
 
     export class PathTracer {
 
-        private _camera: Camera;
-        private _resolution: any;
+        private _scene: Scene;
+        private _resolution: number[];
 
         private _vertexBuffer: GLBuffer;
         private _framebuffer: WebGLBuffer;
@@ -15,12 +15,7 @@ namespace LH {
 
         private _sampleCount: number;
 
-        private _triangles: Triangle[];
-        private _lights: Light[];
-        private _bvh: BVH;
-
-        public constructor(camera: Camera, resolution: any) {
-            this._camera = camera;
+        public constructor(resolution: number[]) {
             this._resolution = resolution;
 
             // create framebuffer
@@ -57,47 +52,40 @@ namespace LH {
                 +1, +1
             ]);
             this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
-        
-            this._lights = [];
-            this._triangles = [];
         }
           
         public update(timeSinceStart: number): void {
-            
-            // jitter view-projection matrix for anti-aliasing
-            let jitterVector = [(Math.random() * 2 - 1) / this._resolution[0], (Math.random() * 2 - 1) / this._resolution[1], 0];
-            let viewProjectionMatrix = glMatrix.mat4.translate([], this._camera.viewProjectionMatrix, jitterVector);
 
             // calculate uniforms
             let uniforms: any = {};
             uniforms.resolution = this._resolution;
-            uniforms.eye = this._camera.eye;
-            uniforms.ray00 = this.getEyeRay(viewProjectionMatrix, -1, -1, this._camera.eye);
-            uniforms.ray01 = this.getEyeRay(viewProjectionMatrix, -1, +1, this._camera.eye);
-            uniforms.ray10 = this.getEyeRay(viewProjectionMatrix, +1, -1, this._camera.eye);
-            uniforms.ray11 = this.getEyeRay(viewProjectionMatrix, +1, +1, this._camera.eye);
+            uniforms.eye = this._scene.camera.eye;
+            uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1,);
+            uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1,);
+            uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1,);
+            uniforms.ray11 = this._scene.camera.getEyeRay(+1, +1,);
             uniforms.timeSinceStart = timeSinceStart;
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
             // triangle data
-            uniforms.triangles = this._triangles;
-            uniforms.totalTriangles = this._triangles.length;
-            uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._triangles.length * 3));
+            uniforms.triangles = this._scene.triangles;
+            uniforms.totalTriangles = this._scene.triangles.length;
+            uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 3));
 
             // BVH data
-            uniforms.bvhNodeList = this._bvh.nodeStack;
+            uniforms.bvhNodeList =this._scene.bvh.nodeStack;
             uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
 
             // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units
-            uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._bvh.nodeStack.length * 4));
+            uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
 
-            uniforms.triangleIndices = this._bvh.triangleIndices;
+            uniforms.triangleIndices = this._scene.bvh.triangleIndices;
             uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
 
             // light data
-            uniforms.lights = this._lights;
-            uniforms.totalLights = this._lights.length;
-            uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._lights.length * 2));
+            uniforms.lights = this._scene.lights;
+            uniforms.totalLights = this._scene.lights.length;
+            uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
           
             // set uniforms
             this._tracerShader.use();
@@ -127,23 +115,13 @@ namespace LH {
             this._vertexBuffer.draw();
         }
 
-        public setObjects(triangles: Triangle[], lights: Light[], bvh: BVH): void {
-            this._triangles = triangles;
-            this._lights = lights;
-            this._bvh = bvh;
-
+        public setScene(scene: Scene): void {
+            this._scene = scene;
             this.restart();
         }
         
         public restart(): void {
             this._sampleCount = 0;
-        }
-        
-        private getEyeRay(matrix: any, x: number, y: number, eye: any): any {
-            let transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
-            let scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
-
-            return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], eye);
         }
     }
 }

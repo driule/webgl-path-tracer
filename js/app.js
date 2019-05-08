@@ -10,7 +10,6 @@ var LH;
             this._axisY = 0.0;
             this._axisZ = 0.0;
             this._eye = glMatrix.vec3.create();
-            this.calculateViewProjection();
         }
         Object.defineProperty(Camera.prototype, "eye", {
             get: function () {
@@ -34,6 +33,14 @@ var LH;
             var projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
             this._viewProjectionMatrix = glMatrix.mat4.multiply([], projection, view);
             this._viewProjectionMatrix = glMatrix.mat4.invert([], this._viewProjectionMatrix);
+        };
+        Camera.prototype.getEyeRay = function (x, y) {
+            // jitter view-projection matrix for anti-aliasing
+            var jitterVector = [(Math.random() * 2 - 1) / this._canvas.width, (Math.random() * 2 - 1) / this._canvas.height, 0];
+            var viewProjectionMatrix = glMatrix.mat4.translate([], this._viewProjectionMatrix, jitterVector);
+            var transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], viewProjectionMatrix);
+            var scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
+            return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], this._eye);
         };
         // movement controls
         Camera.prototype.moveUp = function (step) {
@@ -84,8 +91,7 @@ var LH;
 var LH;
 (function (LH) {
     var PathTracer = /** @class */ (function () {
-        function PathTracer(camera, resolution) {
-            this._camera = camera;
+        function PathTracer(resolution) {
             this._resolution = resolution;
             // create framebuffer
             this._framebuffer = LH.gl.createFramebuffer();
@@ -117,38 +123,33 @@ var LH;
                 +1, +1
             ]);
             this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
-            this._lights = [];
-            this._triangles = [];
         }
         PathTracer.prototype.update = function (timeSinceStart) {
-            // jitter view-projection matrix for anti-aliasing
-            var jitterVector = [(Math.random() * 2 - 1) / this._resolution[0], (Math.random() * 2 - 1) / this._resolution[1], 0];
-            var viewProjectionMatrix = glMatrix.mat4.translate([], this._camera.viewProjectionMatrix, jitterVector);
             // calculate uniforms
             var uniforms = {};
             uniforms.resolution = this._resolution;
-            uniforms.eye = this._camera.eye;
-            uniforms.ray00 = this.getEyeRay(viewProjectionMatrix, -1, -1, this._camera.eye);
-            uniforms.ray01 = this.getEyeRay(viewProjectionMatrix, -1, +1, this._camera.eye);
-            uniforms.ray10 = this.getEyeRay(viewProjectionMatrix, +1, -1, this._camera.eye);
-            uniforms.ray11 = this.getEyeRay(viewProjectionMatrix, +1, +1, this._camera.eye);
+            uniforms.eye = this._scene.camera.eye;
+            uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1);
+            uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1);
+            uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1);
+            uniforms.ray11 = this._scene.camera.getEyeRay(+1, +1);
             uniforms.timeSinceStart = timeSinceStart;
             uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
             // triangle data
-            uniforms.triangles = this._triangles;
-            uniforms.totalTriangles = this._triangles.length;
-            uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._triangles.length * 3));
+            uniforms.triangles = this._scene.triangles;
+            uniforms.totalTriangles = this._scene.triangles.length;
+            uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 3));
             // BVH data
-            uniforms.bvhNodeList = this._bvh.nodeStack;
+            uniforms.bvhNodeList = this._scene.bvh.nodeStack;
             uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
             // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units
-            uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._bvh.nodeStack.length * 4));
-            uniforms.triangleIndices = this._bvh.triangleIndices;
+            uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
+            uniforms.triangleIndices = this._scene.bvh.triangleIndices;
             uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
             // light data
-            uniforms.lights = this._lights;
-            uniforms.totalLights = this._lights.length;
-            uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._lights.length * 2));
+            uniforms.lights = this._scene.lights;
+            uniforms.totalLights = this._scene.lights.length;
+            uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
             // set uniforms
             this._tracerShader.use();
             // render to texture
@@ -169,19 +170,12 @@ var LH;
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, this._textures[0]);
             this._vertexBuffer.draw();
         };
-        PathTracer.prototype.setObjects = function (triangles, lights, bvh) {
-            this._triangles = triangles;
-            this._lights = lights;
-            this._bvh = bvh;
+        PathTracer.prototype.setScene = function (scene) {
+            this._scene = scene;
             this.restart();
         };
         PathTracer.prototype.restart = function () {
             this._sampleCount = 0;
-        };
-        PathTracer.prototype.getEyeRay = function (matrix, x, y, eye) {
-            var transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], matrix);
-            var scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
-            return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], eye);
         };
         return PathTracer;
     }());
@@ -192,27 +186,31 @@ var LH;
     var Renderer = /** @class */ (function () {
         function Renderer() {
             this._canvas = LH.GLUtilities.initialize('pathTracer');
-            this._camera = new LH.Camera(this._canvas);
-            this._pathTracer = new LH.PathTracer(this._camera, [this._canvas.width, this._canvas.height]);
+            // this._camera = new Camera(this._canvas);
+            this._pathTracer = new LH.PathTracer([this._canvas.width, this._canvas.height]);
         }
         Renderer.prototype.start = function () {
             LH.gl.clearColor(0, 0, 0, 1);
             LH.gl.clear(LH.gl.COLOR_BUFFER_BIT | LH.gl.DEPTH_BUFFER_BIT);
-            // create scene
+            this._scene = this.createScene();
+            this._pathTracer.setScene(this._scene);
+            this._isRendering = true;
+            // ToDo: encapsulate in Gauge class
+            primitiveCount = this._scene.triangles.length;
+            //var startTime = Date.now();
+            //this.tick((Date.now() - startTime) * 0.001);
+        };
+        Renderer.prototype.createScene = function () {
             // let triangles = this.createTriangles();
             var triangles = this.loadObject('assets/teddy.obj');
-            var bvh = new LH.BVH();
-            bvh.build(triangles);
             var lights = [
                 new LH.Light([0.0, 5.75, 20.25], 0.25, 35.0),
                 new LH.Light([20.25, 22.75, 0.25], 1.5, 10.0),
                 new LH.Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
-            this._pathTracer.setObjects(triangles, lights, bvh);
-            this._isRendering = true;
-            primitiveCount = triangles.length;
-            //var startTime = Date.now();
-            //this.tick((Date.now() - startTime) * 0.001);
+            var scene = new LH.Scene(this._canvas);
+            scene.setGeometry(triangles, lights);
+            return scene;
         };
         Renderer.prototype.tick = function (timeSinceStart) {
             this._pathTracer.update(timeSinceStart);
@@ -241,48 +239,48 @@ var LH;
         // camera controls
         //
         Renderer.prototype.moveUp = function () {
-            this._camera.moveUp();
+            this._scene.camera.moveUp();
             this.restart();
         };
         Renderer.prototype.moveDown = function () {
-            this._camera.moveDown();
+            this._scene.camera.moveDown();
             this.restart();
         };
         Renderer.prototype.moveRight = function () {
-            this._camera.moveRight();
+            this._scene.camera.moveRight();
             this.restart();
         };
         Renderer.prototype.moveLeft = function () {
-            this._camera.moveLeft();
+            this._scene.camera.moveLeft();
             this.restart();
         };
         Renderer.prototype.zoomIn = function () {
-            this._camera.zoomIn();
+            this._scene.camera.zoomIn();
             this.restart();
         };
         Renderer.prototype.zoomOut = function () {
-            this._camera.zoomOut();
+            this._scene.camera.zoomOut();
             this.restart();
         };
         Renderer.prototype.rotateUp = function () {
-            this._camera.rotateUp();
+            this._scene.camera.rotateUp();
             this.restart();
         };
         Renderer.prototype.rotateDown = function () {
-            this._camera.rotateDown();
+            this._scene.camera.rotateDown();
             this.restart();
         };
         Renderer.prototype.rotateRight = function () {
-            this._camera.rotateRight();
+            this._scene.camera.rotateRight();
             this.restart();
         };
         Renderer.prototype.rotateLeft = function () {
-            this._camera.rotateLeft();
+            this._scene.camera.rotateLeft();
             this.restart();
         };
         Renderer.prototype.restart = function () {
+            this._scene.camera.calculateViewProjection();
             this._pathTracer.restart();
-            this._camera.calculateViewProjection();
         };
         //
         // scene objects
@@ -349,8 +347,45 @@ var LH;
 var LH;
 (function (LH) {
     var Scene = /** @class */ (function () {
-        function Scene() {
+        function Scene(canvas) {
+            this._camera = new LH.Camera(canvas);
+            this._camera.calculateViewProjection();
+            this._bvh = new LH.BVH();
         }
+        Object.defineProperty(Scene.prototype, "camera", {
+            get: function () {
+                return this._camera;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Scene.prototype, "triangles", {
+            get: function () {
+                return this._triangles;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Scene.prototype, "lights", {
+            get: function () {
+                return this._lights;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Scene.prototype, "bvh", {
+            get: function () {
+                return this._bvh;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Scene.prototype.setGeometry = function (triangles, lights) {
+            this._triangles = triangles;
+            this._lights = lights;
+            // rebuild BVH is scene has changed
+            this._bvh.build(this._triangles);
+        };
         return Scene;
     }());
     LH.Scene = Scene;

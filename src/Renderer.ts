@@ -5,39 +5,46 @@ namespace LH {
         private _canvas: HTMLCanvasElement;
 
         private _pathTracer: PathTracer;
-        private _camera: Camera;
+        private _scene: Scene;
 
         private _isRendering: boolean;
 
         public constructor() {
             this._canvas = GLUtilities.initialize('pathTracer');
-            this._camera = new Camera(this._canvas);
-            this._pathTracer = new PathTracer(this._camera, [this._canvas.width, this._canvas.height]);
+            // this._camera = new Camera(this._canvas);
+            this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
         }
 
         public start(): void {
             gl.clearColor(0, 0, 0, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            // create scene
+
+            this._scene = this.createScene();
+            this._pathTracer.setScene(this._scene);
+            this._isRendering = true;
+
+            // ToDo: encapsulate in Gauge class
+            primitiveCount = this._scene.triangles.length;
+
+            //var startTime = Date.now();
+            //this.tick((Date.now() - startTime) * 0.001);
+        }
+
+        private createScene(): Scene {
             // let triangles = this.createTriangles();
             let triangles = this.loadObject('assets/teddy.obj');
-
-            let bvh: BVH = new BVH();
-            bvh.build(triangles);
 
             let lights: Light[] = [
                 new Light([0.0, 5.75, 20.25], 0.25, 35.0),
                 new Light([20.25, 22.75, 0.25], 1.5, 10.0),
                 new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
-            this._pathTracer.setObjects(triangles, lights, bvh);
-            this._isRendering = true;
 
-            primitiveCount = triangles.length;
+            let scene: Scene = new Scene(this._canvas);
+            scene.setGeometry(triangles, lights);
 
-            //var startTime = Date.now();
-            //this.tick((Date.now() - startTime) * 0.001);
+            return scene;
         }
 
         public tick(timeSinceStart: number): void {
@@ -72,58 +79,58 @@ namespace LH {
         // camera controls
         //
         public moveUp(): void {
-            this._camera.moveUp();
+            this._scene.camera.moveUp();
             this.restart();
         }
 
         public moveDown(): void {
-            this._camera.moveDown();
+            this._scene.camera.moveDown();
             this.restart();
         }
 
         public moveRight(): void {
-            this._camera.moveRight();
+            this._scene.camera.moveRight();
             this.restart();
         }
 
         public moveLeft(): void {
-            this._camera.moveLeft();
+            this._scene.camera.moveLeft();
             this.restart();
         }
 
         public zoomIn(): void {
-            this._camera.zoomIn();
+            this._scene.camera.zoomIn();
             this.restart();
         }
 
         public zoomOut(): void {
-            this._camera.zoomOut();
+            this._scene.camera.zoomOut();
             this.restart();
         }
         
         public rotateUp(): void {
-            this._camera.rotateUp();
+            this._scene.camera.rotateUp();
             this.restart();
         }
 
         public rotateDown(): void {
-            this._camera.rotateDown();
+            this._scene.camera.rotateDown();
             this.restart();
         }
 
         public rotateRight(): void {
-            this._camera.rotateRight();
+            this._scene.camera.rotateRight();
             this.restart();
         }
 
         public rotateLeft(): void {
-            this._camera.rotateLeft();
+            this._scene.camera.rotateLeft();
             this.restart();
         }
 
         private restart(): void {
+            this._scene.camera.calculateViewProjection();
             this._pathTracer.restart();
-            this._camera.calculateViewProjection();
         }
         
         //
