@@ -218,14 +218,15 @@ var LH;
         Renderer.prototype.loadHouseScene = function () {
             var lights = [
                 new LH.Light([0.0, 15.75, 20.25], 0.25, 35.0),
-                new LH.Light([120.25, 142.75, 0.25], 1.5, 10.0),
+                new LH.Light([120.25, 1272.75, 0.25], 1.5, 1000.0),
                 new LH.Light([-20.25, 40.75, 0.25], 0.15, 15.0)
             ];
-            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 175.0], 2.0);
+            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 950.0], 20.0);
             this._scene = new LH.Scene(camera);
             this._scene.setLights(lights);
-            this._scene.loadModel('assets/models/cottage/cottage_obj.obj');
-            // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
+            // this._scene.loadModel('assets/models/cottage/cottage_obj.obj');
+            // this._scene.loadModel('assets/models/mill/low-poly-mill.obj');
+            this._scene.loadModel('assets/models/earth/earth.obj');
             this.restart();
         };
         Renderer.prototype.loadTeddyScene = function () {
@@ -363,7 +364,15 @@ var LH;
             var meshVertices = [];
             // collect vertices and facets data
             for (var i = 0; i < lines.length; i++) {
-                var parts = lines[i].split(" ");
+                var line = lines[i].replace(/(\r\n|\n|\r)/gm, "");
+                var parts = line.split(" ");
+                parts = parts.filter(function (v) { return v != '' && v != ' '; });
+                // parts = parts.filter(val => !!val);
+                // if (parts[5] != undefined)
+                //     if (parts[5].length == 0) {
+                //         console.log('bim');
+                //         delete parts[5];
+                //     }
                 if (parts[0] === "v") {
                     vertices.push([+parts[1], +parts[2], +parts[3]]);
                 }
@@ -375,8 +384,10 @@ var LH;
                             faceIndexes.push((+v_vt_vn[0]) - 1);
                         }
                     }
-                    // quad
-                    if (parts.length == 5) {
+                    else if (parts.length > 4) {
+                        // if (parts.length > 5) {
+                        //     console.log(parts);
+                        // }
                         var v_vt_vn = void 0;
                         v_vt_vn = parts[1].split("/");
                         faceIndexes.push((+v_vt_vn[0]) - 1);
