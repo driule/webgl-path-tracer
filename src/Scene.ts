@@ -58,9 +58,37 @@ namespace LH {
                 if (parts[0] === "v") {
                     vertices.push([+parts[1], +parts[2], +parts[3]]);
                 } else if (parts[0] === "f") {
-                    faceIndexes.push((+parts[1]) - 1);
-                    faceIndexes.push((+parts[2]) - 1);
-                    faceIndexes.push((+parts[3]) - 1);
+
+                    // triangle
+                    if (parts.length == 4) {
+                        for (let j = 1; j < 4; j++) {
+                            let v_vt_vn = parts[j].split("/");
+                            faceIndexes.push((+v_vt_vn[0]) - 1);
+                        }
+                    }
+
+                    // quad
+                    if (parts.length == 5) {
+                        let v_vt_vn: any;
+                        
+                        v_vt_vn = parts[1].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[2].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[3].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+
+                        v_vt_vn = parts[1].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[3].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[4].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                    }
+
+                    // faceIndexes.push((+parts[1]) - 1);
+                    // faceIndexes.push((+parts[2]) - 1);
+                    // faceIndexes.push((+parts[3]) - 1);
                 }
             }
 

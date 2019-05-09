@@ -215,6 +215,19 @@ var LH;
             this._pathTracer.setScene(this._scene);
             this._pathTracer.restart();
         };
+        Renderer.prototype.loadHouseScene = function () {
+            var lights = [
+                new LH.Light([0.0, 15.75, 20.25], 0.25, 35.0),
+                new LH.Light([120.25, 142.75, 0.25], 1.5, 10.0),
+                new LH.Light([-20.25, 40.75, 0.25], 0.15, 15.0)
+            ];
+            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 175.0], 2.0);
+            this._scene = new LH.Scene(camera);
+            this._scene.setLights(lights);
+            this._scene.loadModel('assets/models/cottage/cottage_obj.obj');
+            // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
+            this.restart();
+        };
         Renderer.prototype.loadTeddyScene = function () {
             var lights = [
                 new LH.Light([0.0, 5.75, 20.25], 0.25, 35.0),
@@ -355,9 +368,32 @@ var LH;
                     vertices.push([+parts[1], +parts[2], +parts[3]]);
                 }
                 else if (parts[0] === "f") {
-                    faceIndexes.push((+parts[1]) - 1);
-                    faceIndexes.push((+parts[2]) - 1);
-                    faceIndexes.push((+parts[3]) - 1);
+                    // triangle
+                    if (parts.length == 4) {
+                        for (var j = 1; j < 4; j++) {
+                            var v_vt_vn = parts[j].split("/");
+                            faceIndexes.push((+v_vt_vn[0]) - 1);
+                        }
+                    }
+                    // quad
+                    if (parts.length == 5) {
+                        var v_vt_vn = void 0;
+                        v_vt_vn = parts[1].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[2].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[3].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[1].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[3].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                        v_vt_vn = parts[4].split("/");
+                        faceIndexes.push((+v_vt_vn[0]) - 1);
+                    }
+                    // faceIndexes.push((+parts[1]) - 1);
+                    // faceIndexes.push((+parts[2]) - 1);
+                    // faceIndexes.push((+parts[3]) - 1);
                 }
             }
             // build all mesh vertices
@@ -478,6 +514,9 @@ function handleInput(command) {
     }
     else if (command == 'changeScene2') {
         renderer.loadTeddyScene();
+    }
+    else if (command == 'changeScene3') {
+        renderer.loadHouseScene();
     }
 }
 function onButtonDown(event) {

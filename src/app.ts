@@ -116,6 +116,8 @@ function handleInput(command: string): void {
         renderer.loadBasicScene();
     } else if (command == 'changeScene2') {
         renderer.loadTeddyScene();
+    } else if (command == 'changeScene3') {
+        renderer.loadHouseScene();
     }
 }
 
