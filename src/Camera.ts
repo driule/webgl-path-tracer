@@ -14,8 +14,8 @@ namespace LH {
 
         private _movementSpeed: number;
 
-        private _eye: any;
-        private _viewProjectionMatrix: any;
+        private _eye: any; // vec3
+        private _viewProjectionMatrix: any; //mat4
 
         public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0], movementSpeed: number = 0.1) {
             this._canvas = canvas;

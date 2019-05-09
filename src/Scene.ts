@@ -3,8 +3,10 @@ namespace LH {
     export class Scene {
 
         private _camera: Camera;
+
         private _triangles: Triangle[];
         private _lights: Light[];
+        
         private _bvh: BVH;
 
         public constructor(camera: Camera) {

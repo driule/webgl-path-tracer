@@ -3,17 +3,16 @@ namespace LH {
     export class Renderer {
 
         private _canvas: HTMLCanvasElement;
-        private _gauge: Gauge;
-
         private _pathTracer: PathTracer;
         private _scene: Scene;
+        private _gauge: Gauge;
 
         private _isRendering: boolean;
 
         public constructor(gauge: Gauge) {
             this._canvas = GLUtilities.initialize('pathTracer');
+            this._pathTracer = new PathTracer(this._canvas);
             this._gauge = gauge;
-            this._pathTracer = new PathTracer([this._canvas.width, this._canvas.height]);
         }
 
         public start(): void {
@@ -48,8 +47,8 @@ namespace LH {
 
         private restart(): void {
             this._gauge.primitiveCount = this._scene.triangles.length;
-            this._pathTracer.setScene(this._scene);
             this._scene.camera.calculateViewProjection();
+            this._pathTracer.setScene(this._scene);
             this._pathTracer.restart();
         }
 

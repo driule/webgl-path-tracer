@@ -2,8 +2,8 @@ namespace LH {
 
     export class PathTracer {
 
+        private _canvas: HTMLCanvasElement;
         private _scene: Scene;
-        private _resolution: number[];
 
         private _vertexBuffer: GLBuffer;
         private _framebuffer: WebGLBuffer;
@@ -15,8 +15,8 @@ namespace LH {
 
         private _sampleCount: number;
 
-        public constructor(resolution: number[]) {
-            this._resolution = resolution;
+        public constructor(canvas: HTMLCanvasElement) {
+            this._canvas = canvas;
 
             // create framebuffer
             this._framebuffer = gl.createFramebuffer();
@@ -31,7 +31,7 @@ namespace LH {
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, this._resolution[0], this._resolution[1], 0, gl.RGB, type, null);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, this._canvas.width, this._canvas.height, 0, gl.RGB, type, null);
             }
             gl.bindTexture(gl.TEXTURE_2D, null);
         
@@ -58,7 +58,7 @@ namespace LH {
 
             // calculate uniforms
             let uniforms: any = {};
-            uniforms.resolution = this._resolution;
+            uniforms.resolution = [this._canvas.width, this._canvas.height];
             uniforms.eye = this._scene.camera.eye;
             uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1,);
             uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1,);

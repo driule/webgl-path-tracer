@@ -89,8 +89,8 @@ var LH;
 var LH;
 (function (LH) {
     var PathTracer = /** @class */ (function () {
-        function PathTracer(resolution) {
-            this._resolution = resolution;
+        function PathTracer(canvas) {
+            this._canvas = canvas;
             // create framebuffer
             this._framebuffer = LH.gl.createFramebuffer();
             // create textures
@@ -103,7 +103,7 @@ var LH;
                 LH.gl.texParameteri(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_MAG_FILTER, LH.gl.NEAREST);
                 LH.gl.texParameterf(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_WRAP_S, LH.gl.CLAMP_TO_EDGE);
                 LH.gl.texParameterf(LH.gl.TEXTURE_2D, LH.gl.TEXTURE_WRAP_T, LH.gl.CLAMP_TO_EDGE);
-                LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB, this._resolution[0], this._resolution[1], 0, LH.gl.RGB, type, null);
+                LH.gl.texImage2D(LH.gl.TEXTURE_2D, 0, LH.gl.RGB, this._canvas.width, this._canvas.height, 0, LH.gl.RGB, type, null);
             }
             LH.gl.bindTexture(LH.gl.TEXTURE_2D, null);
             // create shaders
@@ -125,7 +125,7 @@ var LH;
         PathTracer.prototype.update = function (timeSinceStart) {
             // calculate uniforms
             var uniforms = {};
-            uniforms.resolution = this._resolution;
+            uniforms.resolution = [this._canvas.width, this._canvas.height];
             uniforms.eye = this._scene.camera.eye;
             uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1);
             uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1);
@@ -184,8 +184,8 @@ var LH;
     var Renderer = /** @class */ (function () {
         function Renderer(gauge) {
             this._canvas = LH.GLUtilities.initialize('pathTracer');
+            this._pathTracer = new LH.PathTracer(this._canvas);
             this._gauge = gauge;
-            this._pathTracer = new LH.PathTracer([this._canvas.width, this._canvas.height]);
         }
         Renderer.prototype.start = function () {
             LH.gl.clearColor(0, 0, 0, 1);
@@ -211,8 +211,8 @@ var LH;
         };
         Renderer.prototype.restart = function () {
             this._gauge.primitiveCount = this._scene.triangles.length;
-            this._pathTracer.setScene(this._scene);
             this._scene.camera.calculateViewProjection();
+            this._pathTracer.setScene(this._scene);
             this._pathTracer.restart();
         };
         Renderer.prototype.loadTeddyScene = function () {
