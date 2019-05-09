@@ -64,7 +64,7 @@ namespace LH {
 
             this._scene = new Scene(camera);
             this._scene.setLights(lights);
-            this._scene.loadModel('assets/teddy.obj');
+            this._scene.loadModel('assets/models/teddy.obj');
             // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
 
             this.restart();

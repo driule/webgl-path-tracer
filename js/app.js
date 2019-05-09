@@ -228,7 +228,7 @@ var LH;
             var camera = new LH.Camera(this._canvas, [0.2, 5.75, 75.0]);
             this._scene = new LH.Scene(camera);
             this._scene.setLights(lights);
-            this._scene.loadModel('assets/teddy.obj');
+            this._scene.loadModel('assets/models/teddy.obj');
             // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
             this.restart();
         };
