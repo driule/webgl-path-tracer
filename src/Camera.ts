@@ -12,10 +12,12 @@ namespace LH {
         private _axisY: number;
         private _axisZ: number;
 
+        private _movementSpeed: number;
+
         private _eye: any;
         private _viewProjectionMatrix: any;
 
-        public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0]) {
+        public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0], movementSpeed: number = 0.1) {
             this._canvas = canvas;
 
             this._angleX = initialView[0];
@@ -25,6 +27,8 @@ namespace LH {
             this._axisX = 0.0;
             this._axisY = 0.0;
             this._axisZ = 0.0;
+
+            this._movementSpeed = movementSpeed;
 
             this._eye = glMatrix.vec3.create();
             this.calculateViewProjection();
@@ -77,29 +81,29 @@ namespace LH {
             this._angleY -= step;
         }
 
-        public zoomIn(step: number = 0.1): void {
-            this._zoomZ -= step;
+        public zoomIn(): void {
+            this._zoomZ -= this._movementSpeed;
         }
 
-        public zoomOut(step: number = 0.1): void {
-            this._zoomZ += step;
+        public zoomOut(): void {
+            this._zoomZ += this._movementSpeed;
         }
 
         // rotatation controls
-        public rotateUp(step: number = 0.1): void {
-            this._axisY += step;
+        public rotateUp(): void {
+            this._axisY += this._movementSpeed;
         }
 
-        public rotateDown(step: number = 0.1): void {
-            this._axisY -= step;
+        public rotateDown(): void {
+            this._axisY -= this._movementSpeed;
         }
 
-        public rotateRight(step: number = 0.1): void {
-            this._axisX += step;
+        public rotateRight(): void {
+            this._axisX += this._movementSpeed;
         }
 
-        public rotateLeft(step: number = 0.1): void {
-            this._axisX -= step;
+        public rotateLeft(): void {
+            this._axisX -= this._movementSpeed;
         }
     }
 }

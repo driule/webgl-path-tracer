@@ -1,8 +1,9 @@
 var LH;
 (function (LH) {
     var Camera = /** @class */ (function () {
-        function Camera(canvas, initialView) {
+        function Camera(canvas, initialView, movementSpeed) {
             if (initialView === void 0) { initialView = [0.2, 5.75, 50.0]; }
+            if (movementSpeed === void 0) { movementSpeed = 0.1; }
             this._canvas = canvas;
             this._angleX = initialView[0];
             this._angleY = initialView[1];
@@ -10,6 +11,7 @@ var LH;
             this._axisX = 0.0;
             this._axisY = 0.0;
             this._axisZ = 0.0;
+            this._movementSpeed = movementSpeed;
             this._eye = glMatrix.vec3.create();
             this.calculateViewProjection();
         }
@@ -61,30 +63,24 @@ var LH;
             if (step === void 0) { step = 0.1; }
             this._angleY -= step;
         };
-        Camera.prototype.zoomIn = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._zoomZ -= step;
+        Camera.prototype.zoomIn = function () {
+            this._zoomZ -= this._movementSpeed;
         };
-        Camera.prototype.zoomOut = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._zoomZ += step;
+        Camera.prototype.zoomOut = function () {
+            this._zoomZ += this._movementSpeed;
         };
         // rotatation controls
-        Camera.prototype.rotateUp = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._axisY += step;
+        Camera.prototype.rotateUp = function () {
+            this._axisY += this._movementSpeed;
         };
-        Camera.prototype.rotateDown = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._axisY -= step;
+        Camera.prototype.rotateDown = function () {
+            this._axisY -= this._movementSpeed;
         };
-        Camera.prototype.rotateRight = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._axisX += step;
+        Camera.prototype.rotateRight = function () {
+            this._axisX += this._movementSpeed;
         };
-        Camera.prototype.rotateLeft = function (step) {
-            if (step === void 0) { step = 0.1; }
-            this._axisX -= step;
+        Camera.prototype.rotateLeft = function () {
+            this._axisX -= this._movementSpeed;
         };
         return Camera;
     }());
@@ -225,7 +221,7 @@ var LH;
                 new LH.Light([20.25, 22.75, 0.25], 1.5, 10.0),
                 new LH.Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
-            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 75.0]);
+            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 75.0], 2.0);
             this._scene = new LH.Scene(camera);
             this._scene.setLights(lights);
             this._scene.loadModel('assets/models/teddy.obj');

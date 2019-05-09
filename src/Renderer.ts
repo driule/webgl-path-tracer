@@ -60,7 +60,7 @@ namespace LH {
                 new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
 
-            let camera = new Camera(this._canvas, [0.2, 5.75, 75.0]);
+            let camera = new Camera(this._canvas, [0.2, 5.75, 75.0], 2.0);
 
             this._scene = new Scene(camera);
             this._scene.setLights(lights);
