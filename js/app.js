@@ -215,19 +215,19 @@ var LH;
             this._pathTracer.setScene(this._scene);
             this._pathTracer.restart();
         };
-        Renderer.prototype.loadWellScene = function () {
+        Renderer.prototype.loadTexturedScene = function () {
             var lights = [
                 new LH.Light([0.0, 5.75, 20.25], 0.25, 35.0),
-                new LH.Light([20.25, 22.75, 0.25], 1.5, 10.0),
+                new LH.Light([20.25, 125.75, 0.25], 1.5, 100.0),
                 new LH.Light([-20.25, 20.75, 0.25], 0.15, 15.0)
             ];
-            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 75.0], 2.0);
+            var camera = new LH.Camera(this._canvas, [0.2, 5.75, 175.0], 2.0);
             this._scene = new LH.Scene(camera);
             this._scene.setLights(lights);
             // this._scene.loadModel('assets/models/cottage/cottage_obj.obj');
             // this._scene.loadModel('assets/models/mill/low-poly-mill.obj');
             // this._scene.loadModel('assets/models/earth/earth.obj');
-            this._scene.loadModel('assets/models/well/well_OBJ.obj');
+            this._scene.loadModel('assets/models/spider/Only_Spider_with_Animations_Export.obj');
             this.restart();
         };
         Renderer.prototype.loadTeddyScene = function () {
@@ -519,7 +519,7 @@ function handleInput(command) {
         renderer.loadTeddyScene();
     }
     else if (command == 'changeScene3') {
-        renderer.loadWellScene();
+        renderer.loadTexturedScene();
     }
 }
 function onButtonDown(event) {

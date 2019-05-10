@@ -117,7 +117,7 @@ function handleInput(command: string): void {
     } else if (command == 'changeScene2') {
         renderer.loadTeddyScene();
     } else if (command == 'changeScene3') {
-        renderer.loadWellScene();
+        renderer.loadTexturedScene();
     }
 }
 
