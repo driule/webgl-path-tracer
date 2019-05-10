@@ -56,13 +56,6 @@ namespace LH {
                 let line = lines[i].replace(/(\r\n|\n|\r)/gm, "");
                 let parts = line.split(" ");
                 parts = parts.filter(v => v != '' && v != ' ');
-                // parts = parts.filter(val => !!val);
-
-                // if (parts[5] != undefined)
-                //     if (parts[5].length == 0) {
-                //         console.log('bim');
-                //         delete parts[5];
-                //     }
 
                 if (parts[0] === "v") {
                     vertices.push([+parts[1], +parts[2], +parts[3]]);
@@ -75,9 +68,6 @@ namespace LH {
                             faceIndexes.push((+v_vt_vn[0]) - 1);
                         }
                     }  else if (parts.length > 4) {
-                        // if (parts.length > 5) {
-                        //     console.log(parts);
-                        // }
                         let v_vt_vn: any;
                         
                         v_vt_vn = parts[1].split("/");
