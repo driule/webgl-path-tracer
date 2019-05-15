@@ -1,8 +1,6 @@
 import { Renderer } from "./Renderer";
 import { Gauge } from "./utilities/Gauge";
 
-declare var glMatrix: any;
-
 let renderer: Renderer;
 let gauge: Gauge;
 
@@ -97,32 +95,32 @@ export function loadFile(filePath: string): string {
     return xmlhttp.responseText;
 }
 
-function handleInput(command: string): void {
-    if (command == 'render') {
-        renderer.resume();
-        let start = Date.now();
-        renderer.tick(Date.now() - start);
+// export function handleInput(command: string): void {
+//     if (command == 'render') {
+//         renderer.resume();
+//         let start = Date.now();
+//         renderer.tick(Date.now() - start);
 
-        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
-        renderButton.disabled = true;
-        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
-        stopButton.disabled = false;
+//         let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
+//         renderButton.disabled = true;
+//         let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
+//         stopButton.disabled = false;
 
-    } else if (command == 'stop') {
-        renderer.pause();
+//     } else if (command == 'stop') {
+//         renderer.pause();
 
-        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
-        stopButton.disabled = true;
-        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
-        renderButton.disabled = false;
-    } else if (command == 'changeScene1') {
-        renderer.loadBasicScene();
-    } else if (command == 'changeScene2') {
-        renderer.loadTeddyScene();
-    } else if (command == 'changeScene3') {
-        renderer.loadTexturedScene();
-    }
-}
+//         let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
+//         stopButton.disabled = true;
+//         let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
+//         renderButton.disabled = false;
+//     } else if (command == 'changeScene1') {
+//         renderer.loadBasicScene();
+//     } else if (command == 'changeScene2') {
+//         renderer.loadTeddyScene();
+//     } else if (command == 'changeScene3') {
+//         renderer.loadTexturedScene();
+//     }
+// }
 
 function onButtonDown(event: MouseEvent): void {
     let element: HTMLElement = <HTMLElement>event.target;
@@ -157,6 +155,30 @@ function onButtonDown(event: MouseEvent): void {
         }
         if (element.id == 'rotateRight') {
             gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 100);
+        }
+        if (element.id == 'render') {
+            renderer.resume();
+            let start = Date.now();
+            renderer.tick(Date.now() - start);
+    
+            let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
+            renderButton.disabled = true;
+            let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
+            stopButton.disabled = false;
+    
+        } if (element.id == 'stop') {
+            renderer.pause();
+    
+            let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
+            stopButton.disabled = true;
+            let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
+            renderButton.disabled = false;
+        } if (element.id == 'changeScene1') {
+            renderer.loadBasicScene();
+        } if (element.id == 'changeScene2') {
+            renderer.loadTeddyScene();
+        } if (element.id == 'changeScene3') {
+            renderer.loadTexturedScene();
         }
     }
 }
@@ -216,6 +238,31 @@ function addEventListeners(): void {
     (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('mouseup', onButtonUp, false);
     (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('touchstart', onButtonDown, false);
     (<HTMLButtonElement>document.getElementById('rotateRight')).addEventListener('touchend', onButtonUp, false);
+    
+    (<HTMLButtonElement>document.getElementById('render')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('render')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('render')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('render')).addEventListener('touchend', onButtonUp, false);
+    
+    (<HTMLButtonElement>document.getElementById('stop')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('stop')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('stop')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('stop')).addEventListener('touchend', onButtonUp, false);
+    
+    (<HTMLButtonElement>document.getElementById('changeScene1')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene1')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('changeScene1')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene1')).addEventListener('touchend', onButtonUp, false);
+    
+    (<HTMLButtonElement>document.getElementById('changeScene2')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene2')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('changeScene2')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene2')).addEventListener('touchend', onButtonUp, false);
+    
+    (<HTMLButtonElement>document.getElementById('changeScene3')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene3')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('changeScene3')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene3')).addEventListener('touchend', onButtonUp, false);
 }
 
 function preventDefaultControls(): void {
