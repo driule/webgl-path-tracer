@@ -4,4 +4,5 @@
 # compiled typescript files in src/
 # /src/*.js
 
+/dist/tmp
 /node_modules

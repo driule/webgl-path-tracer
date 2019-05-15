@@ -16,8 +16,8 @@ const path = require('path');
       extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
-      filename: 'bundle.js',
-      path: path.resolve(__dirname, 'dist/js/dist')
+      filename: 'pathTracer.js',
+      path: path.resolve(__dirname, 'dist/js')
     },
     // watch: true
   };

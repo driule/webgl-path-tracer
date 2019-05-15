@@ -5,7 +5,7 @@
     //     "watch": true
     // }
     "compilerOptions": {
-      "outDir": "./dist/js",
+      "outDir": "./dist/tmp/",
       "sourceMap": true,
       "noImplicitAny": true,
       "module": "commonjs",
