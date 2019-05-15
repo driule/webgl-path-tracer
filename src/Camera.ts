@@ -50,21 +50,21 @@
             this._eye[1] = this._zoomZ * Math.sin(this._angleX);
             this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
 
-            let view = glMatrix.mat4.lookAt([], this._eye, [this._axisX, this._axisY, this._axisZ], [0, 1, 0]);
-            let projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
-            this._viewProjectionMatrix = glMatrix.mat4.multiply([], projection, view);
-            this._viewProjectionMatrix = glMatrix.mat4.invert([], this._viewProjectionMatrix);
+            let view: glMatrix.mat4 = glMatrix.mat4.lookAt(glMatrix.mat4.create(), this._eye, [this._axisX, this._axisY, this._axisZ], [0, 1, 0]);
+            let projection = glMatrix.mat4.perspective(glMatrix.mat4.create(), Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
+            this._viewProjectionMatrix = glMatrix.mat4.multiply(glMatrix.mat4.create(), projection, view);
+            this._viewProjectionMatrix = glMatrix.mat4.invert(glMatrix.mat4.create(), this._viewProjectionMatrix);
         }
         
         public getEyeRay(x: number, y: number): any {
             // jitter view-projection matrix for anti-aliasing
             let jitterVector = [(Math.random() * 2 - 1) / this._canvas.width, (Math.random() * 2 - 1) / this._canvas.height, 0];
-            let viewProjectionMatrix = glMatrix.mat4.translate([], this._viewProjectionMatrix, jitterVector);
+            let viewProjectionMatrix = glMatrix.mat4.translate(glMatrix.mat4.create(), this._viewProjectionMatrix, jitterVector);
 
-            let transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], viewProjectionMatrix);
-            let scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
+            let transformedVector = glMatrix.vec4.transformMat4(glMatrix.vec4.create(), [x, y, 0, 1], viewProjectionMatrix);
+            let scaledVector = glMatrix.vec4.scale(glMatrix.vec4.create(), transformedVector, 1.00 / transformedVector[3]);
 
-            return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], this._eye);
+            return glMatrix.vec3.subtract(glMatrix.vec3.create(), [scaledVector[0], scaledVector[1], scaledVector[2]], this._eye);
         }
 
         // movement controls

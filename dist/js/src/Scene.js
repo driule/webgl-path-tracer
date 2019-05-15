@@ -102,9 +102,9 @@ var Scene = /** @class */ (function () {
             ]);
         }
         for (var i = 0; i < meshVertices.length / 3; i++) {
-            var a = glMatrix.vec3.add([], meshVertices[i * 3], translation);
-            var b = glMatrix.vec3.add([], meshVertices[i * 3 + 1], translation);
-            var c = glMatrix.vec3.add([], meshVertices[i * 3 + 2], translation);
+            var a = glMatrix.vec3.add(glMatrix.vec3.create(), meshVertices[i * 3], translation);
+            var b = glMatrix.vec3.add(glMatrix.vec3.create(), meshVertices[i * 3 + 1], translation);
+            var c = glMatrix.vec3.add(glMatrix.vec3.create(), meshVertices[i * 3 + 2], translation);
             triangles.push(new Triangle_1.Triangle(a, b, c));
         }
         this._triangles = this._triangles.concat(triangles);

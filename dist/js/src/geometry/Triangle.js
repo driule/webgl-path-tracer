@@ -2,6 +2,7 @@
 // namespace LH {
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoundingBox_1 = require("./BoundingBox");
+var glMatrix = require("gl-matrix");
 var Triangle = /** @class */ (function () {
     function Triangle(a, b, c) {
         this._a = a;
@@ -14,8 +15,8 @@ var Triangle = /** @class */ (function () {
         var maxY = Math.max(this._a[1], this._b[1], this._c[1]);
         var maxZ = Math.max(this._a[2], this._b[2], this._c[2]);
         this._boundingBox = new BoundingBox_1.BoundingBox(0);
-        this._boundingBox.min = [minX, minY, minZ];
-        this._boundingBox.max = [maxX, maxY, maxZ];
+        this._boundingBox.min = glMatrix.vec3.fromValues(minX, minY, minZ);
+        this._boundingBox.max = glMatrix.vec3.fromValues(maxX, maxY, maxZ);
         this._boundingBox.calculateCenter();
     }
     Object.defineProperty(Triangle.prototype, "a", {

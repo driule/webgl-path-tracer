@@ -112,9 +112,9 @@
             }
 
             for (let i = 0; i < meshVertices.length / 3; i++) {
-                let a = glMatrix.vec3.add([], meshVertices[i * 3], translation);
-                let b = glMatrix.vec3.add([], meshVertices[i * 3 + 1], translation);
-                let c = glMatrix.vec3.add([], meshVertices[i * 3 + 2], translation);
+                let a: glMatrix.vec3 = glMatrix.vec3.add(glMatrix.vec3.create(), meshVertices[i * 3], translation);
+                let b: glMatrix.vec3 = glMatrix.vec3.add(glMatrix.vec3.create(), meshVertices[i * 3 + 1], translation);
+                let c: glMatrix.vec3 = glMatrix.vec3.add(glMatrix.vec3.create(), meshVertices[i * 3 + 2], translation);
 
                 triangles.push(new Triangle(a, b, c));
             }

@@ -55,8 +55,8 @@ var BVH = /** @class */ (function () {
             maxY = Math.max(this._triangles[index].boundingBox.max[1], maxY);
             maxZ = Math.max(this._triangles[index].boundingBox.max[2], maxZ);
         }
-        node.min = [minX, minY, minZ];
-        node.max = [maxX, maxY, maxZ];
+        node.min = glMatrix.vec3.fromValues(minX, minY, minZ);
+        node.max = glMatrix.vec3.fromValues(maxX, maxY, maxZ);
         node.calculateCenter();
     };
     BVH.prototype.subdivide = function (node, depth) {
@@ -87,7 +87,7 @@ var BVH = /** @class */ (function () {
         }
         var binCount = 10;
         var bins = [];
-        var binWidth = glMatrix.vec3.subtract([], node.max, node.min);
+        var binWidth = glMatrix.vec3.subtract(glMatrix.vec3.create(), node.max, node.min);
         binWidth[0] = Math.floor(binWidth[0] / binCount);
         binWidth[1] = Math.floor(binWidth[1] / binCount);
         binWidth[2] = Math.floor(binWidth[2] / binCount);

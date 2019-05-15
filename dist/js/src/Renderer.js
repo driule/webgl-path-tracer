@@ -5,7 +5,6 @@ var PathTracer_1 = require("./PathTracer");
 var Scene_1 = require("./Scene");
 var Camera_1 = require("./Camera");
 var Light_1 = require("./geometry/Light");
-var Triangle_1 = require("./geometry/Triangle");
 var GLUtilities_1 = require("./gl/GLUtilities");
 var GLUtilities_2 = require("./gl/GLUtilities");
 var Renderer = /** @class */ (function () {
@@ -77,17 +76,17 @@ var Renderer = /** @class */ (function () {
         var camera = new Camera_1.Camera(this._canvas, [0.0, 0.0, 2.5]);
         this._scene = new Scene_1.Scene(camera);
         this._scene.setLights(lights);
-        this._scene.setTriangles([
-            // ground plane
-            new Triangle_1.Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]),
-            new Triangle_1.Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]),
-            // left wall
-            new Triangle_1.Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]),
-            new Triangle_1.Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75], [-0.75, 0.95, 0.75]),
-            // back wall
-            new Triangle_1.Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, -0.75], [-0.75, 0.95, -0.75]),
-            new Triangle_1.Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75])
-        ]);
+        // this._scene.setTriangles([
+        //     // ground plane
+        //     new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]),
+        //     new Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]),
+        //     // left wall
+        //     new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]),
+        //     new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75],  [-0.75, 0.95, 0.75]),
+        //     // back wall
+        //     new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, -0.75], [-0.75, 0.95, -0.75]),
+        //     new Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75])
+        // ]);
         this.restart();
     };
     //
