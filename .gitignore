@@ -3,3 +3,5 @@
 
 # compiled typescript files in src/
 # /src/*.js
+
+/node_modules

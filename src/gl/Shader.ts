@@ -39,7 +39,7 @@ namespace LH {
         }
 
         // TODO: this is very badly harcoded way to set uniforms
-        public setUniforms(uniforms): void {
+        public setUniforms(uniforms: any): void {
             for (let name in uniforms) {
 
                 // specific case for triangle data texture
@@ -186,8 +186,6 @@ namespace LH {
                 var vector2Uniforms = [
                     "resolution"
                 ];
-                var matrix4Uniforms = [
-                ];
                 var intUniforms = [
                     "totalTriangles",
                     "totalBvhNodes",
@@ -207,8 +205,6 @@ namespace LH {
                     gl.uniform2fv(location, new Float32Array([value[0], value[1]]));
                 } else if (vector3Uniforms.indexOf(name) > -1) {
                     gl.uniform3fv(location, new Float32Array([value[0], value[1], value[2]]));
-                } else if (matrix4Uniforms.indexOf(name) > -1) {
-                    // TODO: implement matrix uniform support
                 } else if (intUniforms.indexOf(name) > -1) {
                     gl.uniform1i(location, value);
                 } else if (floatUniforms.indexOf(name) > -1) {
