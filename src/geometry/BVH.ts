@@ -3,7 +3,8 @@
     import { Triangle } from "./Triangle";
     import { BoundingBox } from "./BoundingBox";
     
-    import { glMatrix } from "gl-matrix";
+    // import { glMatrix } from "gl-matrix";
+    import * as glMatrix from "gl-matrix";
 
     export class BVH {
 

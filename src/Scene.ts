@@ -1,14 +1,15 @@
 // namespace LH {
 
-    import { PathTracer } from "./PathTracer";
     import { Camera } from "./Camera";
 
     import { Light } from "./geometry/Light";
     import { Triangle } from "./geometry/Triangle";
     import { BVH } from "./geometry/BVH";
-    import { glMatrix } from "gl-matrix";
+    // import { glMatrix } from "gl-matrix";
 
     import { loadFile } from "./app"
+
+    import * as glMatrix from "gl-matrix";
     
     export class Scene {
 

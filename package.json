@@ -8,6 +8,7 @@
     "gl-matrix": "^3.0.0"
   },
   "devDependencies": {
+    "@types/gl-matrix": "^2.4.5",
     "ts-loader": "^6.0.0",
     "typescript": "^3.4.5",
     "webpack": "^4.31.0",

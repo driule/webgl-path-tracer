@@ -3,8 +3,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var Triangle_1 = require("./geometry/Triangle");
 var BVH_1 = require("./geometry/BVH");
-var gl_matrix_1 = require("gl-matrix");
+// import { glMatrix } from "gl-matrix";
 var app_1 = require("./app");
+var glMatrix = require("gl-matrix");
 var Scene = /** @class */ (function () {
     function Scene(camera) {
         this._camera = camera;
@@ -101,9 +102,9 @@ var Scene = /** @class */ (function () {
             ]);
         }
         for (var i = 0; i < meshVertices.length / 3; i++) {
-            var a = gl_matrix_1.glMatrix.vec3.add([], meshVertices[i * 3], translation);
-            var b = gl_matrix_1.glMatrix.vec3.add([], meshVertices[i * 3 + 1], translation);
-            var c = gl_matrix_1.glMatrix.vec3.add([], meshVertices[i * 3 + 2], translation);
+            var a = glMatrix.vec3.add([], meshVertices[i * 3], translation);
+            var b = glMatrix.vec3.add([], meshVertices[i * 3 + 1], translation);
+            var c = glMatrix.vec3.add([], meshVertices[i * 3 + 2], translation);
             triangles.push(new Triangle_1.Triangle(a, b, c));
         }
         this._triangles = this._triangles.concat(triangles);

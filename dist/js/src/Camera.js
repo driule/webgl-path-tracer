@@ -1,7 +1,8 @@
 "use strict";
 // namespace LH {
 Object.defineProperty(exports, "__esModule", { value: true });
-var gl_matrix_1 = require("../node_modules/gl-matrix");
+// import { glMatrix } from "gl-matrix";
+var glMatrix = require("gl-matrix");
 var Camera = /** @class */ (function () {
     function Camera(canvas, initialView, movementSpeed) {
         if (initialView === void 0) { initialView = [0.2, 5.75, 50.0]; }
@@ -14,7 +15,7 @@ var Camera = /** @class */ (function () {
         this._axisY = 0.0;
         this._axisZ = 0.0;
         this._movementSpeed = movementSpeed;
-        this._eye = gl_matrix_1.glMatrix.vec3.create();
+        this._eye = glMatrix.vec3.create();
         this.calculateViewProjection();
     }
     Object.defineProperty(Camera.prototype, "eye", {
@@ -35,18 +36,18 @@ var Camera = /** @class */ (function () {
         this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
         this._eye[1] = this._zoomZ * Math.sin(this._angleX);
         this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
-        var view = gl_matrix_1.glMatrix.mat4.lookAt([], this._eye, [this._axisX, this._axisY, this._axisZ], [0, 1, 0]);
-        var projection = gl_matrix_1.glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
-        this._viewProjectionMatrix = gl_matrix_1.glMatrix.mat4.multiply([], projection, view);
-        this._viewProjectionMatrix = gl_matrix_1.glMatrix.mat4.invert([], this._viewProjectionMatrix);
+        var view = glMatrix.mat4.lookAt([], this._eye, [this._axisX, this._axisY, this._axisZ], [0, 1, 0]);
+        var projection = glMatrix.mat4.perspective([], Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
+        this._viewProjectionMatrix = glMatrix.mat4.multiply([], projection, view);
+        this._viewProjectionMatrix = glMatrix.mat4.invert([], this._viewProjectionMatrix);
     };
     Camera.prototype.getEyeRay = function (x, y) {
         // jitter view-projection matrix for anti-aliasing
         var jitterVector = [(Math.random() * 2 - 1) / this._canvas.width, (Math.random() * 2 - 1) / this._canvas.height, 0];
-        var viewProjectionMatrix = gl_matrix_1.glMatrix.mat4.translate([], this._viewProjectionMatrix, jitterVector);
-        var transformedVector = gl_matrix_1.glMatrix.vec4.transformMat4([], [x, y, 0, 1], viewProjectionMatrix);
-        var scaledVector = gl_matrix_1.glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
-        return gl_matrix_1.glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], this._eye);
+        var viewProjectionMatrix = glMatrix.mat4.translate([], this._viewProjectionMatrix, jitterVector);
+        var transformedVector = glMatrix.vec4.transformMat4([], [x, y, 0, 1], viewProjectionMatrix);
+        var scaledVector = glMatrix.vec4.scale([], transformedVector, 1.00 / transformedVector[3]);
+        return glMatrix.vec3.subtract([], [scaledVector[0], scaledVector[1], scaledVector[2]], this._eye);
     };
     // movement controls
     Camera.prototype.moveUp = function (step) {

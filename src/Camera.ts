@@ -1,6 +1,7 @@
 // namespace LH {
 
-    import { glMatrix } from "../node_modules/gl-matrix";
+    // import { glMatrix } from "gl-matrix";
+    import * as glMatrix from "gl-matrix";
 
     export class Camera {
 

@@ -2,7 +2,8 @@
 // namespace LH {
 Object.defineProperty(exports, "__esModule", { value: true });
 var BoundingBox_1 = require("./BoundingBox");
-var gl_matrix_1 = require("gl-matrix");
+// import { glMatrix } from "gl-matrix";
+var glMatrix = require("gl-matrix");
 var BVH = /** @class */ (function () {
     function BVH() {
     }
@@ -86,7 +87,7 @@ var BVH = /** @class */ (function () {
         }
         var binCount = 10;
         var bins = [];
-        var binWidth = gl_matrix_1.glMatrix.vec3.subtract([], node.max, node.min);
+        var binWidth = glMatrix.vec3.subtract([], node.max, node.min);
         binWidth[0] = Math.floor(binWidth[0] / binCount);
         binWidth[1] = Math.floor(binWidth[1] / binCount);
         binWidth[2] = Math.floor(binWidth[2] / binCount);
