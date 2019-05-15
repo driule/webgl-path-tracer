@@ -1,4 +1,4 @@
-namespace LH {
+// namespace LH {
     
     export var gl: WebGL2RenderingContext;
 
@@ -24,4 +24,4 @@ namespace LH {
             return canvas;
         }
     }
-}
+// }

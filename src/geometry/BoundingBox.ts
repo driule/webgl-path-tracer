@@ -1,4 +1,6 @@
-namespace LH {
+// namespace LH {
+
+    import { glMatrix } from "gl-matrix";
 
     export class BoundingBox {
 
@@ -38,4 +40,4 @@ namespace LH {
             this._center = glMatrix.vec3.add([], this.min, glMatrix.vec3.scale([], glMatrix.vec3.subtract([], this.max, this.min), 0.5));
         }
     }
-}
+// }

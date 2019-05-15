@@ -1,5 +1,15 @@
-namespace LH {
+// namespace LH {
 
+    import { PathTracer } from "./PathTracer";
+    import { Camera } from "./Camera";
+
+    import { Light } from "./geometry/Light";
+    import { Triangle } from "./geometry/Triangle";
+    import { BVH } from "./geometry/BVH";
+    import { glMatrix } from "gl-matrix";
+
+    import { loadFile } from "./app"
+    
     export class Scene {
 
         private _camera: Camera;
@@ -112,4 +122,4 @@ namespace LH {
             this._bvh.build(this._triangles);
         }
     }
-}
+// }

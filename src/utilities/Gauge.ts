@@ -1,4 +1,4 @@
-namespace LH {
+// namespace LH {
 
     export class Gauge {
         public primitiveCount: number;
@@ -37,4 +37,4 @@ namespace LH {
             }
         }
     }
-}
+// }

@@ -1,4 +1,9 @@
-namespace LH {
+// namespace LH {
+
+    import { Triangle } from "./Triangle";
+    import { BoundingBox } from "./BoundingBox";
+    
+    import { glMatrix } from "gl-matrix";
 
     export class BVH {
 
@@ -191,4 +196,4 @@ namespace LH {
             this.calculateBounds(node.right);
         }
     }
-}
+// }

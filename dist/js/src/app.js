@@ -1,9 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Renderer_1 = require("./Renderer");
+var Gauge_1 = require("./utilities/Gauge");
 var renderer;
 var gauge;
 // initialize application when page loading
 window.onload = function () {
-    gauge = new LH.Gauge();
-    renderer = new LH.Renderer(gauge);
+    gauge = new Gauge_1.Gauge();
+    renderer = new Renderer_1.Renderer(gauge);
     renderer.start();
     // primitive count and FPS measurement
     var fpsLabel = document.getElementById('fps');
@@ -73,6 +77,7 @@ function loadFile(filePath) {
     xmlhttp.send(null);
     return xmlhttp.responseText;
 }
+exports.loadFile = loadFile;
 function handleInput(command) {
     if (command == 'render') {
         renderer.resume();

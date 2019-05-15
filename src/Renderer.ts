@@ -1,4 +1,15 @@
-namespace LH {
+// namespace LH {
+
+    import { PathTracer } from "./PathTracer";
+    import { Scene } from "./Scene";
+    import { Camera } from "./Camera";
+
+    import { Light } from "./geometry/Light";
+    import { Triangle } from "./geometry/Triangle";
+    
+    import { Gauge } from "./utilities/Gauge";
+    import { GLUtilities } from "./gl/GLUtilities";
+    import { gl } from "./gl/GLUtilities";
 
     export class Renderer {
 
@@ -168,4 +179,4 @@ namespace LH {
             this.restart();
         }
     }
-}
+// }

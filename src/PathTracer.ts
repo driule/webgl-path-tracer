@@ -1,4 +1,12 @@
-namespace LH {
+// namespace LH {
+
+    import { gl } from "./gl/GLUtilities";
+    import { Scene } from "./Scene";
+    import { GLBuffer } from "./gl/GLBuffer";
+    import { Shader } from "./gl/Shader";
+    import { AttributeInformation } from "./gl/GLBuffer";
+
+    import { loadFile } from "./app"
 
     export class PathTracer {
 
@@ -124,4 +132,4 @@ namespace LH {
             this._sampleCount = 0;
         }
     }
-}
+// }

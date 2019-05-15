@@ -1,4 +1,6 @@
-namespace LH {
+// namespace LH {
+
+    import { BoundingBox } from "./BoundingBox";
 
     export class Triangle {
 
@@ -43,4 +45,4 @@ namespace LH {
             return this._boundingBox;
         }
     }
-}
+// }

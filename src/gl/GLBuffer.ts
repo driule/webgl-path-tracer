@@ -1,4 +1,6 @@
-namespace LH {
+// namespace LH {
+
+    import { gl } from "./GLUtilities";
 
     export class AttributeInformation {
         public location: number;
@@ -146,4 +148,4 @@ namespace LH {
             }
         }
     }
-}
+// }

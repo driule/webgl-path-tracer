@@ -1,4 +1,6 @@
-namespace LH {
+// namespace LH {
+
+    import { glMatrix } from "../node_modules/gl-matrix";
 
     export class Camera {
 
@@ -106,4 +108,4 @@ namespace LH {
             this._axisX -= this._movementSpeed;
         }
     }
-}
+// }

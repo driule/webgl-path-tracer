@@ -1,4 +1,4 @@
-namespace LH {
+// namespace LH {
 
     export class Light {
 
@@ -24,4 +24,4 @@ namespace LH {
             return this._intensity;
         }
     }
-}
+// }

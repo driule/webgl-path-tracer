@@ -1,4 +1,6 @@
-namespace LH {
+// namespace LH {
+
+    import { gl } from "./GLUtilities";
 
     export class Shader {
 
@@ -272,4 +274,4 @@ namespace LH {
             }
         }
     }
-}
+// }

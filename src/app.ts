@@ -1,12 +1,15 @@
+import { Renderer } from "./Renderer";
+import { Gauge } from "./utilities/Gauge";
+
 declare var glMatrix: any;
 
-let renderer: LH.Renderer;
-let gauge: LH.Gauge;
+let renderer: Renderer;
+let gauge: Gauge;
 
 // initialize application when page loading
 window.onload = function() {
-    gauge = new LH.Gauge();
-    renderer = new LH.Renderer(gauge);
+    gauge = new Gauge();
+    renderer = new Renderer(gauge);
     renderer.start();
 
     // primitive count and FPS measurement
@@ -86,7 +89,7 @@ document.onkeydown = function(event) {
     }
 };
 
-function loadFile(filePath: string): string {
+export function loadFile(filePath: string): string {
     let xmlhttp = new XMLHttpRequest();
     xmlhttp.open("GET", filePath, false);
     xmlhttp.send(null);
