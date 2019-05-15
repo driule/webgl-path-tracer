@@ -10,6 +10,8 @@
     import { Gauge } from "./utilities/Gauge";
     import { GLUtilities } from "./gl/GLUtilities";
     import { gl } from "./gl/GLUtilities";
+    
+    import * as glMatrix from "gl-matrix";
 
     export class Renderer {
 
@@ -109,19 +111,19 @@
             this._scene = new Scene(camera);
             this._scene.setLights(lights);
 
-            // this._scene.setTriangles([
-            //     // ground plane
-            //     new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, 0.75], [0.75, -0.95, -0.75]),
-            //     new Triangle([-0.75, -0.95, -0.75], [-0.75, -0.95, 0.75], [0.75, -0.95, 0.75]),
+            this._scene.setTriangles([
+                // ground plane
+                new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(0.75, -0.95, 0.75), glMatrix.vec3.fromValues(0.75, -0.95, -0.75)),
+                new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, -0.95, 0.75), glMatrix.vec3.fromValues(0.75, -0.95, 0.75)),
 
-            //     // left wall
-            //     new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, 0.75], [-0.75, -0.95, 0.75]),
-            //     new Triangle([-0.75, -0.95, -0.75], [-0.75, 0.95, -0.75],  [-0.75, 0.95, 0.75]),
+                // left wall
+                new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, 0.75), glMatrix.vec3.fromValues(-0.75, -0.95, 0.75)),
+                new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, -0.75),  glMatrix.vec3.fromValues(-0.75, 0.95, 0.75)),
 
-            //     // back wall
-            //     new Triangle([-0.75, -0.95, -0.75], [0.75, -0.95, -0.75], [-0.75, 0.95, -0.75]),
-            //     new Triangle([0.75, -0.95, -0.75], [0.75, 0.95, -0.75], [-0.75, 0.95, -0.75])
-            // ]);
+                // back wall
+                new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, -0.75)),
+                new Triangle(glMatrix.vec3.fromValues(0.75, -0.95, -0.75), glMatrix.vec3.fromValues(0.75, 0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, -0.75))
+            ]);
 
             this.restart();
         }
