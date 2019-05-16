@@ -1,15 +1,11 @@
 import { PathTracer } from "./PathTracer";
 import { Scene } from "./Scene";
 import { Camera } from "./Camera";
-
 import { Light } from "./geometry/Light";
 import { Triangle } from "./geometry/Triangle";
-
 import { Gauge } from "./utilities/Gauge";
-import { GLUtilities } from "./gl/GLUtilities";
-import { gl } from "./gl/GLUtilities";
-
-import * as glMatrix from "gl-matrix";
+import { gl, GLUtilities } from "./gl/GLUtilities";
+import { vec3 } from "gl-matrix";
 
 export class Renderer {
 
@@ -65,9 +61,9 @@ export class Renderer {
 
     public loadTexturedScene(): void {
         let lights: Light[] = [
-            new Light([0.0, 5.75, 20.25], 0.25, 35.0),
-            new Light([20.25, 125.75, 0.25], 1.5, 100.0),
-            new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
+            new Light(vec3.fromValues(0.0, 5.75, 20.25), 0.25, 35.0),
+            new Light(vec3.fromValues(20.25, 125.75, 0.25), 1.5, 100.0),
+            new Light(vec3.fromValues(-20.25, 20.75, 0.25), 0.15, 15.0)
         ];
 
         let camera = new Camera(this._canvas, [0.2, 5.75, 175.0], 2.0);
@@ -84,9 +80,9 @@ export class Renderer {
 
     public loadTeddyScene(): void {
         let lights: Light[] = [
-            new Light([0.0, 5.75, 20.25], 0.25, 35.0),
-            new Light([20.25, 22.75, 0.25], 1.5, 10.0),
-            new Light([-20.25, 20.75, 0.25], 0.15, 15.0)
+            new Light(vec3.fromValues(0.0, 5.75, 20.25), 0.25, 35.0),
+            new Light(vec3.fromValues(20.25, 22.75, 0.25), 1.5, 10.0),
+            new Light(vec3.fromValues(-20.25, 20.75, 0.25), 0.15, 15.0)
         ];
 
         let camera = new Camera(this._canvas, [0.2, 5.75, 75.0], 2.0);
@@ -101,7 +97,7 @@ export class Renderer {
 
     public loadBasicScene(): void {
         let lights: Light[] = [
-            new Light([0.0, 1.75, 0.25], 0.25, 12.5),
+            new Light(vec3.fromValues(0.0, 1.75, 0.25), 0.25, 12.5),
         ];
 
         let camera = new Camera(this._canvas, [0.0, 0.0, 2.5]);
@@ -111,16 +107,16 @@ export class Renderer {
 
         this._scene.setTriangles([
             // ground plane
-            new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(0.75, -0.95, 0.75), glMatrix.vec3.fromValues(0.75, -0.95, -0.75)),
-            new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, -0.95, 0.75), glMatrix.vec3.fromValues(0.75, -0.95, 0.75)),
+            new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(0.75, -0.95, 0.75), vec3.fromValues(0.75, -0.95, -0.75)),
+            new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(-0.75, -0.95, 0.75), vec3.fromValues(0.75, -0.95, 0.75)),
 
             // left wall
-            new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, 0.75), glMatrix.vec3.fromValues(-0.75, -0.95, 0.75)),
-            new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, -0.75),  glMatrix.vec3.fromValues(-0.75, 0.95, 0.75)),
+            new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(-0.75, 0.95, 0.75), vec3.fromValues(-0.75, -0.95, 0.75)),
+            new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75),  vec3.fromValues(-0.75, 0.95, 0.75)),
 
             // back wall
-            new Triangle(glMatrix.vec3.fromValues(-0.75, -0.95, -0.75), glMatrix.vec3.fromValues(0.75, -0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, -0.75)),
-            new Triangle(glMatrix.vec3.fromValues(0.75, -0.95, -0.75), glMatrix.vec3.fromValues(0.75, 0.95, -0.75), glMatrix.vec3.fromValues(-0.75, 0.95, -0.75))
+            new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(0.75, -0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75)),
+            new Triangle(vec3.fromValues(0.75, -0.95, -0.75), vec3.fromValues(0.75, 0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75))
         ]);
 
         this.restart();

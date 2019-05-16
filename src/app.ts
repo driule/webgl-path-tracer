@@ -95,33 +95,6 @@ export function loadFile(filePath: string): string {
     return xmlhttp.responseText;
 }
 
-// export function handleInput(command: string): void {
-//     if (command == 'render') {
-//         renderer.resume();
-//         let start = Date.now();
-//         renderer.tick(Date.now() - start);
-
-//         let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
-//         renderButton.disabled = true;
-//         let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
-//         stopButton.disabled = false;
-
-//     } else if (command == 'stop') {
-//         renderer.pause();
-
-//         let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(command);
-//         stopButton.disabled = true;
-//         let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
-//         renderButton.disabled = false;
-//     } else if (command == 'changeScene1') {
-//         renderer.loadBasicScene();
-//     } else if (command == 'changeScene2') {
-//         renderer.loadTeddyScene();
-//     } else if (command == 'changeScene3') {
-//         renderer.loadTexturedScene();
-//     }
-// }
-
 function onButtonDown(event: MouseEvent): void {
     let element: HTMLElement = <HTMLElement>event.target;
 
@@ -157,22 +130,22 @@ function onButtonDown(event: MouseEvent): void {
             gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 100);
         }
         if (element.id == 'render') {
+            let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
+            let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
+            renderButton.disabled = true;
+            stopButton.disabled = false;
+
             renderer.resume();
             let start = Date.now();
             renderer.tick(Date.now() - start);
     
-            let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
-            renderButton.disabled = true;
-            let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('stop');
-            stopButton.disabled = false;
-    
         } if (element.id == 'stop') {
-            renderer.pause();
-    
             let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
-            stopButton.disabled = true;
             let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
+            stopButton.disabled = true;
             renderButton.disabled = false;
+            
+            renderer.pause();
         } if (element.id == 'changeScene1') {
             renderer.loadBasicScene();
         } if (element.id == 'changeScene2') {
