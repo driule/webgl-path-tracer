@@ -3,6 +3,7 @@
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
 ### Progress
+- [+] Improved user interface: added more controls (by clicking buttons); change scene, stop/render; etc.
 - [+] Camera control buttons implemented
 - [+] GLSL shaders separated into external files
 - [+] Russian Roulette implemented
@@ -12,8 +13,13 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 - [+] Pass triangles and lights to the scene via texture
 
 ### ToDo
-- [-] Improve user interface: add more controls (by clicking buttons); change scene, stop/render; etc.
 - [-] Generalize uniforms passing to the shader (avoid hardcoding by name); initialize dataTexture uniform type or smth.
 - [-] Initialize materials
 - [-] Texturing
 - [-] Skydome
+
+### How to run?
+- Install all dependencies listed in *package.json*: **npm install**
+- To compile TypeScript source files into JavasScript: **CTRL + SHIFT + B** in Visual Studio Code
+- Bundle JavasScript source files into one JS bundle: **npm run develop** or **npm run build**
+- Deploy */dist* content on a web server excluding */dist/tmp* folder.
