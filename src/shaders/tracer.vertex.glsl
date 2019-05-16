@@ -1,7 +1,6 @@
 #version 300 es
 
-precision highp float;
-precision highp int;
+@import ./precisions;
 
 in vec3 vertex;
 out vec3 initialRay;

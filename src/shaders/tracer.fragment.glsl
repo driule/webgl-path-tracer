@@ -1,8 +1,6 @@
 #version 300 es
 
-precision highp float;
-precision highp int;
-precision highp sampler2D;
+@import ./precisions;
 
 #define BOUNCES 3
 #define EPSILON 0.0001
