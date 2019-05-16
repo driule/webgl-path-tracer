@@ -1,10 +1,7 @@
 import { Camera } from "./Camera";
-
 import { Light } from "./geometry/Light";
 import { Triangle } from "./geometry/Triangle";
 import { BVH } from "./geometry/BVH";
-
-// import { loadFile } from "./app"
 
 import { vec3 } from "gl-matrix";
 

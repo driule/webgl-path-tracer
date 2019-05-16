@@ -3,8 +3,6 @@ import { Scene } from "./Scene";
 import { GLBuffer, AttributeInformation } from "./gl/GLBuffer";
 import { Shader } from "./gl/Shader";
 
-// import { loadFile } from "./app"
-
 export class PathTracer {
 
     private _canvas: HTMLCanvasElement;

@@ -1,4 +1,5 @@
 import { BoundingBox } from "./BoundingBox";
+
 import { vec3 } from "gl-matrix";
 
 export class Triangle {

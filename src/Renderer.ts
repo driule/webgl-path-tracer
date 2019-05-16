@@ -5,6 +5,7 @@ import { Light } from "./geometry/Light";
 import { Triangle } from "./geometry/Triangle";
 import { Gauge } from "./utilities/Gauge";
 import { gl, GLUtilities } from "./gl/GLUtilities";
+
 import { vec3 } from "gl-matrix";
 
 export class Renderer {
