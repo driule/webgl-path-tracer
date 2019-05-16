@@ -5,6 +5,8 @@ import { BVH } from "./geometry/BVH";
 
 import { vec3 } from "gl-matrix";
 
+const duckModel = require('./assets/models/duck/Duck.gltf');
+
 export class Scene {
 
     private _camera: Camera;
@@ -45,6 +47,12 @@ export class Scene {
     public setTriangles(triangles: Triangle[] = []): void {
         this._triangles = triangles;
         this._bvh.build(this._triangles);
+    }
+
+    private loadGLTF(filePath: string): void {
+        // let gltfLoader = new GLTFLoader()
+        // gltfLoader.parse(duckModel);
+        let x = duckModel;
     }
 
     private loadFile(filePath: string): string {

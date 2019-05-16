@@ -13,11 +13,20 @@ const path = require('path');
         {
           test: /\.glsl$/,
           loader: 'webpack-glsl-loader'
+        },
+        {
+          test: /\.gltf$/,
+          loader: '@vxna/gltf-loader',
+          options: { inline: true }
+        },
+        {
+          test: /\.(bin|jpe?g|png)$/,
+          loader: 'file-loader'
         }
       ]
     },
     resolve: {
-      extensions: [ '.tsx', '.ts', '.js', '.glsl' ]
+      extensions: [ '.tsx', '.ts', '.js', '.glsl', 'gltf' ]
     },
     output: {
       filename: 'pathTracer.js',
