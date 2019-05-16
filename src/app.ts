@@ -87,18 +87,10 @@ document.onkeydown = function(event) {
     }
 };
 
-export function loadFile(filePath: string): string {
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("GET", filePath, false);
-    xmlhttp.send(null);
-
-    return xmlhttp.responseText;
-}
-
 function onButtonDown(event: MouseEvent): void {
     let element: HTMLElement = <HTMLElement>event.target;
 
-    if (gauge.mouseDownId == 0) {
+    if (gauge.mouseDownId == null) {
         if (element.id == 'moveUp') {
             gauge.mouseDownId = setInterval(function() { renderer.moveUp(); }, 100);
         }
@@ -144,7 +136,7 @@ function onButtonDown(event: MouseEvent): void {
             let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById('render');
             stopButton.disabled = true;
             renderButton.disabled = false;
-            
+
             renderer.pause();
         } if (element.id == 'changeScene1') {
             renderer.loadBasicScene();
@@ -158,7 +150,7 @@ function onButtonDown(event: MouseEvent): void {
 
 function onButtonUp(event: MouseEvent): void {
     clearInterval(gauge.mouseDownId);
-    gauge.mouseDownId = 0;
+    gauge.mouseDownId = null;
 }
 
 function addEventListeners(): void {

@@ -1,6 +1,6 @@
 export class Gauge {
     public primitiveCount: number;
-    public mouseDownId: number;
+    public mouseDownId: NodeJS.Timeout;
 
     private _fps: number;
     private _lastTick: number;
@@ -9,7 +9,7 @@ export class Gauge {
 
     public constructor() {
         this.primitiveCount = 0;
-        this.mouseDownId = 0;
+        this.mouseDownId = null;
 
         this._fps = 0;
         this._lastTick = Date.now();

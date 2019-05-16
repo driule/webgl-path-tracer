@@ -4,7 +4,7 @@ import { Light } from "./geometry/Light";
 import { Triangle } from "./geometry/Triangle";
 import { BVH } from "./geometry/BVH";
 
-import { loadFile } from "./app"
+// import { loadFile } from "./app"
 
 import { vec3 } from "gl-matrix";
 
@@ -50,10 +50,18 @@ export class Scene {
         this._bvh.build(this._triangles);
     }
 
+    private loadFile(filePath: string): string {
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("GET", filePath, false);
+        xmlhttp.send(null);
+    
+        return xmlhttp.responseText;
+    }
+
     public loadModel(filePath: string, translation: number[] = [0, 0, 0]): void {
         let triangles: Triangle[] = [];
 
-        let lines = loadFile(filePath).split('\n')
+        let lines = this.loadFile(filePath).split('\n')
 
         let vertices = [];
         let faceIndexes = [];

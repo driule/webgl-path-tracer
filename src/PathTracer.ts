@@ -3,7 +3,7 @@ import { Scene } from "./Scene";
 import { GLBuffer, AttributeInformation } from "./gl/GLBuffer";
 import { Shader } from "./gl/Shader";
 
-import { loadFile } from "./app"
+// import { loadFile } from "./app"
 
 export class PathTracer {
 
@@ -41,8 +41,8 @@ export class PathTracer {
         gl.bindTexture(gl.TEXTURE_2D, null);
     
         // create shaders
-        this._tracerShader = new Shader('tracer', loadFile('shaders/tracer.vertex.glsl'), loadFile('shaders/tracer.fragment.glsl'));
-        this._renderShader = new Shader('render', loadFile('shaders/render.vertex.glsl'), loadFile('shaders/render.fragment.glsl'));
+        this._tracerShader = new Shader('tracer', require('./shaders/tracer.vertex.glsl'), require('./shaders/tracer.fragment.glsl'));
+        this._renderShader = new Shader('render', require('./shaders/render.vertex.glsl'), require('./shaders/render.fragment.glsl'));
 
         let renderVertexAttribute = new AttributeInformation();
         renderVertexAttribute.location = this._renderShader.getAttributeLocation('vertex');
