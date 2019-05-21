@@ -5,7 +5,8 @@ import { BVH } from "./geometry/BVH";
 
 import { vec3 } from "gl-matrix";
 
-const duckModel = require('./assets/models/duck/Duck.gltf');
+// import { GltfLoader } from 'gltf-loader-ts';
+// const duckModel = require('./assets/models/duck/Duck.gltf');
 
 export class Scene {
 
@@ -52,7 +53,7 @@ export class Scene {
     private loadGLTF(filePath: string): void {
         // let gltfLoader = new GLTFLoader()
         // gltfLoader.parse(duckModel);
-        let x = duckModel;
+        // let x = duckModel;
     }
 
     private loadFile(filePath: string): string {
@@ -64,6 +65,24 @@ export class Scene {
     }
 
     public loadModel(filePath: string, translation: number[] = [0, 0, 0]): void {
+        console.log('Scene::loadModel()');
+        
+        //
+        // let loader = new GltfLoader();
+        // let uri = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoxTextured/glTF/BoxTextured.gltf';
+        // let asset = await loader.load(uri);
+        // let gltf = asset.gltf;
+        // console.log(gltf);
+        // // -> {asset: {…}, scene: 0, scenes: Array(1), nodes: Array(2), meshes: Array(1), …}
+        
+        // let data = await asset.accessorData(0); // fetches BoxTextured0.bin
+        // let image = await asset.imageData.get(0) // fetches CesiumLogoFlat.png
+        // console.log('gltf loaded..?');
+        // console.log('data: ', data);
+        // console.log('img: ', image);
+        //
+
+
         let triangles: Triangle[] = [];
 
         let lines = this.loadFile(filePath).split('\n')

@@ -23,11 +23,11 @@ export class Renderer {
         this._gauge = gauge;
     }
 
-    public start(): void {
+    public start(triangles: Triangle[]): void {
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this.loadTeddyScene();
+        this.loadTeddyScene(triangles);
         this._isRendering = true;
 
         let startTime = Date.now();
@@ -79,7 +79,7 @@ export class Renderer {
         this.restart();
     }
 
-    public loadTeddyScene(): void {
+    public loadTeddyScene(triangles: Triangle[]): void {
         let lights: Light[] = [
             new Light(vec3.fromValues(0.0, 5.75, 20.25), 0.25, 35.0),
             new Light(vec3.fromValues(20.25, 22.75, 0.25), 1.5, 10.0),
@@ -90,9 +90,10 @@ export class Renderer {
 
         this._scene = new Scene(camera);
         this._scene.setLights(lights);
-        this._scene.loadModel('assets/models/teddy.obj');
+        // this._scene.loadModel('assets/models/teddy.obj');
         // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
-
+        this._scene.setTriangles(triangles);
+    
         this.restart();
     }
 

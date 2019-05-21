@@ -12,6 +12,7 @@
     "@types/webgl2": "0.0.4",
     "@vxna/gltf-loader": "^1.0.3",
     "file-loader": "^3.0.1",
+    "gltf-loader-ts": "^0.3.1",
     "ts-loader": "^6.0.0",
     "typescript": "^3.4.5",
     "webpack": "^4.31.0",
