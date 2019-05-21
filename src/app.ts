@@ -60,18 +60,18 @@ async function loadGLTF() {
 
     // create mesh vertices
     let meshVertices: vec3[] = [];
-    for (let i = 0; i < vertexData.length / 12; i++) {
+    for (let i = 0; i < vertexData.length / 24; i++) {
         // console.log('vertex:', new Float32Array(
         //     vertexData.slice(i * 12, i * 12 + 12).buffer
         // ));
 
-        let vertexArray = new Float32Array(vertexData.slice(i * 12, i * 12 + 12).buffer);
+        let vertexArray = new Float32Array(vertexData.slice(i * 24, i * 24 + 12).buffer);
         // console.log('vertexArray', vertexArray);
         let vertex: vec3 = vec3.fromValues(vertexArray[0], vertexArray[1], vertexArray[2]);
 
         meshVertices.push(vertex);
     }
-    // console.log('mesh: ', meshVertices);
+    console.log('meshVertices: ', meshVertices);
 
     //create mesh vertex indices
     // SCALAR
@@ -81,7 +81,7 @@ async function loadGLTF() {
     // console.log('vertexAccesorId: ', vertexAccesorId, ' indicesAccesorId: ', indicesAccesorId);
     
     let meshIndices = new Uint16Array(indicesData.slice(0, indicesData.length).buffer);
-    // console.log('meshIndices: ', meshIndices);
+    console.log('meshIndices: ', meshIndices);
 
     let triangles: Triangle[] = [];
     for (let i = 0; i < meshIndices.length / 3; i++) {

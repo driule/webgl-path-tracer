@@ -5,7 +5,7 @@
 #define BOUNCES 3
 #define EPSILON 0.0001
 #define INFINITY 10000.0
-#define STACK_SIZE 64
+#define STACK_SIZE 128
 
 struct Sphere
 {
@@ -241,7 +241,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
             // }
 
             // ToDo: check why "i < node.first" crashes
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 20; i++) {
                 if (i >= node.count) {
                     break;
                 }

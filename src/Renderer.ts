@@ -81,12 +81,12 @@ export class Renderer {
 
     public loadTeddyScene(triangles: Triangle[]): void {
         let lights: Light[] = [
-            new Light(vec3.fromValues(0.0, 5.75, 20.25), 0.25, 35.0),
-            new Light(vec3.fromValues(20.25, 22.75, 0.25), 1.5, 10.0),
-            new Light(vec3.fromValues(-20.25, 20.75, 0.25), 0.15, 15.0)
+            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 35.0),
+            new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 10.0),
+            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
         ];
 
-        let camera = new Camera(this._canvas, [0.2, 5.75, 75.0], 2.0);
+        let camera = new Camera(this._canvas, [0.2, 5.75, 275.0], 2.0);
 
         this._scene = new Scene(camera);
         this._scene.setLights(lights);
