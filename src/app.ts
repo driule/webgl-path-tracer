@@ -65,7 +65,7 @@ async function loadGLTF() {
         //     vertexData.slice(i * 12, i * 12 + 12).buffer
         // ));
 
-        let vertexArray = new Float32Array(vertexData.slice(i * 24, i * 24 + 12).buffer);
+        let vertexArray = new Float32Array(vertexData.slice(vertexData.length / 2 + i * 12, vertexData.length / 2 + i * 12 + 12).buffer);
         // console.log('vertexArray', vertexArray);
         let vertex: vec3 = vec3.fromValues(vertexArray[0], vertexArray[1], vertexArray[2]);
 
