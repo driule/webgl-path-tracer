@@ -39,50 +39,27 @@ window.onload = async function() {
 
 async function loadGLTF() {
     let loader = new GltfLoader();
-    let uri = 'assets/models/duck/Duck0.bin';
+    let uri = 'assets/models/duck/Duck.gltf';
     
-    let asset: GltfAsset = await loader.load('assets/models/duck/Duck.gltf');
-    // await asset.preFetchAll();
-
-    // // let gltf: GlTf = asset.gltf;
-    // console.log('start parsing GLTF file:');
-    // console.log('vertexAccesor ID:', vertexAccesorId);
-    // let randomBuffer = await asset.accessorData(0);
-    // console.log('randomBuffer: ', randomBuffer);
-    // console.log('vertexBuffer: ', vertexBuffer);
-
+    let asset: GltfAsset = await loader.load(uri);
     let vertexAccesorId = await asset.gltf.meshes[0].primitives[0].attributes['POSITION'];
     let vertexData = await asset.accessorData(vertexAccesorId);
-    // let vertexBuffer = vertexData.buffer;
-    console.log(vertexData.length);
-    // let vertexes = new Float32Array(vertexData.buffer);
-    // console.log('vertexes: ', vertexes);
 
-    // create mesh vertices
+    // create mesh vertices (parsin VEC3)
     let meshVertices: vec3[] = [];
     for (let i = 0; i < vertexData.length / 24; i++) {
-        // console.log('vertex:', new Float32Array(
-        //     vertexData.slice(i * 12, i * 12 + 12).buffer
-        // ));
-
-        let vertexArray = new Float32Array(vertexData.slice(vertexData.length / 2 + i * 12, vertexData.length / 2 + i * 12 + 12).buffer);
-        // console.log('vertexArray', vertexArray);
-        let vertex: vec3 = vec3.fromValues(vertexArray[0], vertexArray[1], vertexArray[2]);
+        let vertexValues = new Float32Array(vertexData.slice(vertexData.length / 2 + i * 12, vertexData.length / 2 + i * 12 + 12).buffer);
+        let vertex: vec3 = vec3.fromValues(vertexValues[0], vertexValues[1], vertexValues[2]);
 
         meshVertices.push(vertex);
     }
-    console.log('meshVertices: ', meshVertices);
 
-    //create mesh vertex indices
-    // SCALAR
-    
+    //create mesh vertex indices (parsing SCALAR)
     let indicesAccesorId = await asset.gltf.meshes[0].primitives[0].indices;
     let indicesData = await asset.accessorData(indicesAccesorId);
-    // console.log('vertexAccesorId: ', vertexAccesorId, ' indicesAccesorId: ', indicesAccesorId);
-    
     let meshIndices = new Uint16Array(indicesData.slice(0, indicesData.length).buffer);
-    console.log('meshIndices: ', meshIndices);
 
+    // compose triangles
     let triangles: Triangle[] = [];
     for (let i = 0; i < meshIndices.length / 3; i++) {
         let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
@@ -91,14 +68,6 @@ async function loadGLTF() {
 
         triangles.push(new Triangle(a, b, c));
     }
-    console.log('triangles: ', triangles);
-
-    // let arrayBuffer = new ArrayBuffer(0, vertexBuffer);
-
-    // let data = await asset.accessorData(0); // fetches BoxTextured0.bin
-    // let image = await asset.imageData.get(0) // fetches CesiumLogoFlat.png
-    // console.log('data', data);
-    // console.log('image', image);
 
     return triangles;
 }
