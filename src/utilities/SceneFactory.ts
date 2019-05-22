@@ -7,6 +7,26 @@ import { Triangle } from "../geometry/Triangle";
 
 export class SceneFactory  {
 
+    static async createSponzaScene(canvas: HTMLCanvasElement) {
+        console.log('Please wait! Loading sponza scene...');
+
+        let lights: Light[] = [
+            new Light(vec3.fromValues(0.0, 1.75, 25.25), 0.25, 35.0),
+            new Light(vec3.fromValues(45.25, 12.75, 0.25), 1.5, 10.0),
+            new Light(vec3.fromValues(-75.25, 20.75, 0.25), 0.15, 15.0)
+        ];
+        let camera = new Camera(canvas, [0.75, 15.75, 175.5], [0.0, 225.0, 0.0], 12.5);
+        let triangles = await GeometryLoader.loadGltf('assets/models/sponza/Sponza.gltf');
+    
+        let scene = new Scene(camera);
+        scene.setLights(lights);
+        scene.setTriangles(triangles);
+    
+        console.log('Scene loaded.');
+
+        return scene;
+    }
+
     static async createAvocadoScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
             new Light(vec3.fromValues(0.0, 1.75, 2.25), 0.25, 35.0),

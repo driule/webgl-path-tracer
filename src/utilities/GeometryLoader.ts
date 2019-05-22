@@ -15,6 +15,10 @@ const accessorTypeToNumComponentsMap: any = {
 
 export class GeometryLoader  {
 
+    // include GLTF file example:
+    // const duckModel = require('./assets/models/duck/Duck.gltf');
+
+    // note:
     // mesh contains primitives which attribute POSITION refers to the accessor which describes how to use bufferView (slice of the whole buffer).
 
     public static async loadGltf(

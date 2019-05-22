@@ -26,7 +26,7 @@
             }
         </style>
         <link rel="icon" type="image/png" href="assets/images/favicon.png"/>
-        
+
         <script type="text/javascript" src="js/pathTracer.js"></script>
     </head>
     <body>
@@ -35,6 +35,10 @@
 
         <!-- small window -->
         <canvas id="pathTracer" width="640" height="480"></canvas>
+
+        <!-- mini window -->
+        <!-- <canvas id="pathTracer" width="64" height="48"></canvas> -->
+
         <br/>
         <label id="fps">fps measurement is loading...</label> | <label id="primitiveCount"></label>
         | Does your browser exploit GPU power? Settings for <a href="assets/images/nvidia-settings.png">NVIDIA</a><br/>
@@ -42,11 +46,13 @@
         <br/>
         <button class="playbackButton" id="render" disabled="true">Render</button>
         <button class="playbackButton" id="stop">Stop</button>
-        |    
+        <br/>
+        <br/>
         <button class="sceneButton" id="changeScene1">Basic Geometry</button>
         <button class="sceneButton" id="changeScene2">Duck</button>
         <button class="sceneButton" id="changeScene3">Bottle</button>
         <button class="sceneButton" id="changeScene4">Avocado</button>
+        <button class="sceneButton" id="changeScene5">Sponza</button>
 
         <hr/>
         <table>
