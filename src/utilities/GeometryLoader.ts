@@ -26,54 +26,60 @@ export class GeometryLoader  {
         let asset: GltfAsset = await loader.load(uri);
         let triangles: Triangle[] = [];
 
-        // '4' or 'undefined' defines triangular mode
-        let renderingMode = asset.gltf.meshes[0].primitives[0].mode;
-        if (renderingMode != 4 && renderingMode != undefined) {
-            console.log('Geometry rendering mode is not triangular! Cannot read GLTF file with mode: ', renderingMode);
-            return [];
-        }
+        // for each primitive of each mesh compose geometry data
+        for (let m = 0; m < asset.gltf.meshes.length; m++) {
+            for (let p = 0; p < asset.gltf.meshes[m].primitives.length; p++) {
 
-        // load vertex data
-        let vertexAccesorId = asset.gltf.meshes[0].primitives[0].attributes.POSITION;
-        let vertexAccesor = asset.gltf.accessors[vertexAccesorId];
-        let vertexData = await asset.accessorData(vertexAccesorId);
+                // '4' or 'undefined' defines triangular mode
+                let renderingMode = asset.gltf.meshes[m].primitives[p].mode;
+                if (renderingMode != 4 && renderingMode != undefined) {
+                    console.log('Geometry rendering mode is not triangular! Cannot read GLTF file with mode: ', renderingMode);
+                    return [];
+                }
 
-        let vertexArray = this.loadTypedArray(
-            vertexData.buffer,
-            asset.gltf.accessors[vertexAccesorId],
-            asset.gltf.bufferViews[vertexAccesor.bufferView]
-        );
-        
-        let meshVertices: vec3[] = [];
-        for (let i = 0; i < vertexAccesor.count; i++) {
-            let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * scale + translation[0], vertexArray[i * 3 + 1] * scale + translation[1], vertexArray[i * 3 + 2] * scale + translation[2]);
-            meshVertices.push(vertex);
-        }
-    
-        // load vertex indices data
-        let indicesAccesorId = asset.gltf.meshes[0].primitives[0].indices;
-        if (indicesAccesorId != undefined) {
-            let indicesData = await asset.accessorData(indicesAccesorId);
-            let indicesAccesor = asset.gltf.accessors[indicesAccesorId];
+                // load vertex data
+                let vertexAccesorId = asset.gltf.meshes[m].primitives[p].attributes.POSITION;
+                let vertexAccesor = asset.gltf.accessors[vertexAccesorId];
+                let vertexData = await asset.accessorData(vertexAccesorId);
 
-            let meshIndices = this.loadTypedArray(
-                indicesData.buffer,
-                asset.gltf.accessors[indicesAccesorId],
-                asset.gltf.bufferViews[indicesAccesor.bufferView]
-            );
+                let vertexArray = this.loadTypedArray(
+                    vertexData.buffer,
+                    asset.gltf.accessors[vertexAccesorId],
+                    asset.gltf.bufferViews[vertexAccesor.bufferView]
+                );
+                
+                let meshVertices: vec3[] = [];
+                for (let i = 0; i < vertexAccesor.count; i++) {
+                    let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * scale + translation[0], vertexArray[i * 3 + 1] * scale + translation[1], vertexArray[i * 3 + 2] * scale + translation[2]);
+                    meshVertices.push(vertex);
+                }
+            
+                // load vertex indices data
+                let indicesAccesorId = asset.gltf.meshes[m].primitives[p].indices;
+                if (indicesAccesorId != undefined) {
+                    let indicesData = await asset.accessorData(indicesAccesorId);
+                    let indicesAccesor = asset.gltf.accessors[indicesAccesorId];
 
-            // compose indexed triangles
-            for (let i = 0; i < meshIndices.length / 3; i++) {
-                let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
-                let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
-                let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
-        
-                triangles.push(new Triangle(a, b, c));
+                    let meshIndices = this.loadTypedArray(
+                        indicesData.buffer,
+                        asset.gltf.accessors[indicesAccesorId],
+                        asset.gltf.bufferViews[indicesAccesor.bufferView]
+                    );
+
+                    // compose indexed triangles
+                    for (let i = 0; i < meshIndices.length / 3; i++) {
+                        let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
+                        let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
+                        let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
+                
+                        triangles.push(new Triangle(a, b, c));
+                    }
+                } else {
+                    // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
+                    console.log('Cannot read non-indexed geometry!');
+                    return [];
+                }
             }
-        } else {
-            // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
-            console.log('Cannot read non-indexed geometry!');
-            return [];
         }
     
         return triangles;
