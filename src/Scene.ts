@@ -17,8 +17,6 @@ export class Scene {
 
         this._triangles = [];
         this._lights = [];
-        
-        this._bvh = new BVH();
     }
 
     public get camera(): Camera {
@@ -43,6 +41,6 @@ export class Scene {
 
     public setTriangles(triangles: Triangle[] = []): void {
         this._triangles = triangles;
-        this._bvh.build(this._triangles);
+        this._bvh = new BVH(this._triangles);
     }
 }

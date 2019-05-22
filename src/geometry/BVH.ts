@@ -24,13 +24,12 @@ export class BVH {
         return this._nodeStack;
     }
 
-    public build(triangles: Triangle[]): void {
+    public constructor(triangles: Triangle[]) {
         this._nodeStack = [];
         this._triangles = triangles;
 
         this._triangleIndices = new Array(this._triangles.length);
-        for (let i = 0; i < this._triangles.length; i++)
-        {
+        for (let i = 0; i < this._triangles.length; i++) {
             this._triangleIndices[i] = i;
         }
     
@@ -47,10 +46,8 @@ export class BVH {
         let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
         let minX = Infinity, minY = Infinity, minZ = Infinity;
     
-        for (let i = node.first; i < node.first + node.count; i++)
-        {
+        for (let i = node.first; i < node.first + node.count; i++) {
             let index = this._triangleIndices[i];
-            // console.log(index);
             minX = Math.min(this._triangles[index].boundingBox.min[0], minX);
             minY = Math.min(this._triangles[index].boundingBox.min[1], minY);
             minZ = Math.min(this._triangles[index].boundingBox.min[2], minZ);
@@ -67,7 +64,6 @@ export class BVH {
 
     private subdivide(node: BoundingBox, depth: number): void {
         if (node.count <= 3 || depth >= 15) {
-            // console.log('BVH leaf: ', depth, node.count);
             node.isLeaf = true;
             return;
         } else {
@@ -94,8 +90,7 @@ export class BVH {
         let optimalRightCount = node.count - optimalLeftCount;
     
         let optimalObjectIndices: number[] = new Array(node.count);
-        for (let i = 0; i < node.count; i++)
-        {
+        for (let i = 0; i < node.count; i++) {
             optimalObjectIndices[i] = this._triangleIndices[node.first + i];
         }
     
@@ -103,21 +98,19 @@ export class BVH {
         let bins: number[][] = [];
 
         let binWidth: vec3 = vec3.subtract(vec3.create(), node.max, node.min);
-        binWidth[0] = Math.floor(binWidth[0] / binCount);
-        binWidth[1] = Math.floor(binWidth[1] / binCount);
-        binWidth[2] = Math.floor(binWidth[2] / binCount);
+        binWidth[0] = binWidth[0] / binCount;
+        binWidth[1] = binWidth[1] / binCount;
+        binWidth[2] = binWidth[2] / binCount;
 
         if (binWidth[0] == 0) binWidth[0] = 1;
         if (binWidth[1] == 0) binWidth[1] = 1;
         if (binWidth[2] == 0) binWidth[2] = 1;
     
-        for (let axis = 0; axis < 3; axis++)
-        {
+        for (let axis = 0; axis < 3; axis++) {
             for (let i = 0; i < binCount; i++) bins[i] = [];
     
             // divide objects to bins
-            for (let i = node.first; i < node.first + node.count; i++)
-            {
+            for (let i = node.first; i < node.first + node.count; i++) {
                 let index = this._triangleIndices[i], binIndex: number;
     
                 if (axis == 0)		binIndex = Math.floor((this._triangles[index].boundingBox.center[0] - node.min[0]) / binWidth[0]);
@@ -130,21 +123,17 @@ export class BVH {
     
             // sort objects
             let count = 0;
-            for (let i = 0; i < binCount; i++)
-            {
-                for (let j = 0; j < bins[i].length; j++)
-                {
+            for (let i = 0; i < binCount; i++) {
+                for (let j = 0; j < bins[i].length; j++) {
                     this._triangleIndices[node.first + count] = bins[i][j];
                     count++;
                 }
             }
     
             // evaluate bin combinations
-            for (let i = 0; i < binCount - 1; i++)
-            {
+            for (let i = 0; i < binCount - 1; i++) {
                 let leftCount = 0, rightCount = 0;
-                for (let j = 0; j <= i; j++)
-                {
+                for (let j = 0; j <= i; j++) {
                     leftCount += bins[j].length;
                 }
                 rightCount = node.count - leftCount;
@@ -165,14 +154,12 @@ export class BVH {
                 let SAH = surfaceAreaLeft * node.left.count + surfaceAreaRight * node.right.count;
     
                 // save the optimal split according Surface Area Heuristic
-                if (SAH < optimalSAH && SAH < (surfaceAreaLeft + surfaceAreaRight) * node.count)
-                {
+                if (SAH < optimalSAH && SAH < (surfaceAreaLeft + surfaceAreaRight) * node.count) {
                     optimalSAH = SAH;
                     optimalLeftCount = leftCount;
                     optimalRightCount = rightCount;
     
-                    for (let j = 0; j < node.count; j++)
-                    {
+                    for (let j = 0; j < node.count; j++) {
                         optimalObjectIndices[j] = this._triangleIndices[node.first + j];
                     }
                 }
@@ -180,8 +167,7 @@ export class BVH {
         }
     
         // set optimal split values
-        for (let i = 0; i < node.count; i++)
-        {
+        for (let i = 0; i < node.count; i++) {
             this._triangleIndices[node.first + i] = optimalObjectIndices[i];
         }
     

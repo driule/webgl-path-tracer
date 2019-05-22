@@ -3,6 +3,7 @@ import { Gauge } from "./utilities/Gauge";
 
 import { GLUtilities } from "./gl/GLUtilities";
 import { SceneFactory } from "./utilities/SceneFactory";
+import { Scene } from "./Scene";
 
 let renderer: Renderer;
 let gauge: Gauge;
@@ -13,7 +14,8 @@ window.onload = async function() {
     canvas = GLUtilities.initialize('pathTracer');
     gauge = new Gauge();
     renderer = new Renderer(canvas, gauge);
-    renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
+    let scene: Scene = await SceneFactory.createBottleScene(canvas);
+    renderer.setScene(scene);
     renderer.start();
 
     // primitive count and FPS measurement
