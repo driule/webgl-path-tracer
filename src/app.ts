@@ -2,9 +2,9 @@ import { Renderer } from "./Renderer";
 import { Gauge } from "./utilities/Gauge";
 
 import { GltfLoader, GltfAsset } from 'gltf-loader-ts';
-import { GlTf } from "gltf-loader-ts/lib/gltf";
 import { Triangle } from "./geometry/Triangle";
 import { vec3 } from "gl-matrix";
+import { GeometryLoader } from "./utilities/GeometryLoader";
 
 // var gltfUtilities: any;
 declare var gltfUtilities: any;
@@ -17,10 +17,8 @@ window.onload = async function() {
     gauge = new Gauge();
     renderer = new Renderer(gauge);
 
-    let triangles = await loadGLTF();
-    // console.log('GLTF file loaded:', asset);
-    // console.log(await asset.accessorData(0));
-    // console.log(await asset.accessorData(1));
+    // let triangles = await GeometryLoader.loadGltf('assets/models/bottle/WaterBottle.gltf');
+    let triangles = await GeometryLoader.loadGltf('assets/models/duck/Duck.gltf');
 
     renderer.start(triangles);
 
@@ -37,40 +35,40 @@ window.onload = async function() {
     preventDefaultControls();
 }
 
-async function loadGLTF() {
-    let loader = new GltfLoader();
-    let uri = 'assets/models/duck/Duck.gltf';
+// async function loadGLTF() {
+//     let loader = new GltfLoader();
+//     let uri = 'assets/models/duck/Duck.gltf';
     
-    let asset: GltfAsset = await loader.load(uri);
-    let vertexAccesorId = await asset.gltf.meshes[0].primitives[0].attributes['POSITION'];
-    let vertexData = await asset.accessorData(vertexAccesorId);
+//     let asset: GltfAsset = await loader.load(uri);
+//     let vertexAccesorId = await asset.gltf.meshes[0].primitives[0].attributes['POSITION'];
+//     let vertexData = await asset.accessorData(vertexAccesorId);
 
-    // create mesh vertices (parsin VEC3)
-    let meshVertices: vec3[] = [];
-    for (let i = 0; i < vertexData.length / 24; i++) {
-        let vertexValues = new Float32Array(vertexData.slice(vertexData.length / 2 + i * 12, vertexData.length / 2 + i * 12 + 12).buffer);
-        let vertex: vec3 = vec3.fromValues(vertexValues[0], vertexValues[1], vertexValues[2]);
+//     // create mesh vertices (parsin VEC3)
+//     let meshVertices: vec3[] = [];
+//     for (let i = 0; i < vertexData.length / 24; i++) {
+//         let vertexValues = new Float32Array(vertexData.slice(vertexData.length / 2 + i * 12, vertexData.length / 2 + i * 12 + 12).buffer);
+//         let vertex: vec3 = vec3.fromValues(vertexValues[0], vertexValues[1], vertexValues[2]);
 
-        meshVertices.push(vertex);
-    }
+//         meshVertices.push(vertex);
+//     }
 
-    //create mesh vertex indices (parsing SCALAR)
-    let indicesAccesorId = await asset.gltf.meshes[0].primitives[0].indices;
-    let indicesData = await asset.accessorData(indicesAccesorId);
-    let meshIndices = new Uint16Array(indicesData.slice(0, indicesData.length).buffer);
+//     // create mesh vertex indices (parsing SCALAR)
+//     let indicesAccesorId = await asset.gltf.meshes[0].primitives[0].indices;
+//     let indicesData = await asset.accessorData(indicesAccesorId);
+//     let meshIndices = new Uint16Array(indicesData.slice(0, indicesData.length).buffer);
 
-    // compose triangles
-    let triangles: Triangle[] = [];
-    for (let i = 0; i < meshIndices.length / 3; i++) {
-        let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
-        let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
-        let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
+//     // compose triangles
+//     let triangles: Triangle[] = [];
+//     for (let i = 0; i < meshIndices.length / 3; i++) {
+//         let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
+//         let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
+//         let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
 
-        triangles.push(new Triangle(a, b, c));
-    }
+//         triangles.push(new Triangle(a, b, c));
+//     }
 
-    return triangles;
-}
+//     return triangles;
+// }
 
 // handle keyboard input
 document.onkeydown = function(event) {
@@ -190,7 +188,7 @@ function onButtonDown(event: MouseEvent): void {
         } if (element.id == 'changeScene1') {
             renderer.loadBasicScene();
         } if (element.id == 'changeScene2') {
-            renderer.loadTeddyScene();
+            // renderer.loadTeddyScene();
         } if (element.id == 'changeScene3') {
             renderer.loadTexturedScene();
         }

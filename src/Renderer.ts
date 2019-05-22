@@ -87,7 +87,7 @@ export class Renderer {
         ];
 
         let camera = new Camera(this._canvas, [0.2, 5.75, 275.0], 2.0);
-
+        
         this._scene = new Scene(camera);
         this._scene.setLights(lights);
         // this._scene.loadModel('assets/models/teddy.obj');
