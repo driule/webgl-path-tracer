@@ -42,7 +42,7 @@ export class GeometryLoader  {
         
         let meshVertices: vec3[] = [];
         for (let i = 0; i < vertexAccesor.count; i++) {
-            let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0], vertexArray[i * 3 + 1], vertexArray[i * 3 + 2]);
+            let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * 100, vertexArray[i * 3 + 1] * 100, vertexArray[i * 3 + 2] * 100);
             meshVertices.push(vertex);
         }
     

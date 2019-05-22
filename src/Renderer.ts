@@ -17,17 +17,17 @@ export class Renderer {
 
     private _isRendering: boolean;
 
-    public constructor(gauge: Gauge) {
-        this._canvas = GLUtilities.initialize('pathTracer');
+    public constructor(canvas: HTMLCanvasElement, gauge: Gauge) {
+        this._canvas = canvas;
         this._pathTracer = new PathTracer(this._canvas);
         this._gauge = gauge;
     }
 
-    public start(triangles: Triangle[]): void {
+    public start(scene: Scene): void {
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this.loadTeddyScene(triangles);
+        this.setScene(scene);
         this._isRendering = true;
 
         let startTime = Date.now();
@@ -60,6 +60,11 @@ export class Renderer {
         this._pathTracer.restart();
     }
 
+    public setScene(scene: Scene): void {
+        this._scene = scene;
+        this.restart();
+    }
+
     public loadTexturedScene(): void {
         let lights: Light[] = [
             new Light(vec3.fromValues(0.0, 5.75, 20.25), 0.25, 35.0),
@@ -80,18 +85,31 @@ export class Renderer {
     }
 
     public loadTeddyScene(triangles: Triangle[]): void {
+        // duck
+        // let lights: Light[] = [
+        //     new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 35.0),
+        //     new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 10.0),
+        //     new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
+        // ];
+
+        // avocado
         let lights: Light[] = [
-            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 35.0),
-            new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 10.0),
-            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
+            new Light(vec3.fromValues(0.0, 1.75, 2.25), 0.25, 350.0),
+            new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 100.0),
+            new Light(vec3.fromValues(-12.25, 20.75, 0.25), 0.15, 150.0)
         ];
 
-        let camera = new Camera(this._canvas, [0.2, 5.75, 275.0], 2.0);
-        
+        // duck
+        // let camera = new Camera(this._canvas, [0.2, 5.75, 275.0], 2.0);
+
+        // avocado
+        let camera = new Camera(this._canvas, [0.2, 5.75, 5.0], 2.0);
+
         this._scene = new Scene(camera);
         this._scene.setLights(lights);
         // this._scene.loadModel('assets/models/teddy.obj');
         // this._scene.loadModel('assets/teddy.obj', [40, 0, 0]);
+        console.log(triangles);
         this._scene.setTriangles(triangles);
     
         this.restart();

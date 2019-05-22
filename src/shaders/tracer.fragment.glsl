@@ -240,8 +240,8 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
             //     pixelColor = pixelColor + vec4(0.0, 0.1, 0.0, 1.0);
             // }
 
-            // ToDo: check why "i < node.first" crashes
-            for (int i = 0; i < 20; i++) {
+            // ToDo: check why "i < node.count" crashes
+            for (int i = 0; i < 50; i++) {
                 if (i >= node.count) {
                     break;
                 }

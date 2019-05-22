@@ -1,26 +1,29 @@
 import { Renderer } from "./Renderer";
 import { Gauge } from "./utilities/Gauge";
 
-import { GltfLoader, GltfAsset } from 'gltf-loader-ts';
-import { Triangle } from "./geometry/Triangle";
-import { vec3 } from "gl-matrix";
 import { GeometryLoader } from "./utilities/GeometryLoader";
-
-// var gltfUtilities: any;
-declare var gltfUtilities: any;
+import { Scene } from "./Scene";
+import { Light } from "./geometry/Light";
+import { Camera } from "./Camera";
+import { vec3 } from "gl-matrix";
+import { GLUtilities } from "./gl/GLUtilities";
 
 let renderer: Renderer;
 let gauge: Gauge;
+let canvas: HTMLCanvasElement;
 
 // initialize application when page loading
 window.onload = async function() {
+    canvas = GLUtilities.initialize('pathTracer');
     gauge = new Gauge();
-    renderer = new Renderer(gauge);
+    renderer = new Renderer(canvas, gauge);
 
     // let triangles = await GeometryLoader.loadGltf('assets/models/bottle/WaterBottle.gltf');
-    let triangles = await GeometryLoader.loadGltf('assets/models/duck/Duck.gltf');
+    // let triangles = await GeometryLoader.loadGltf('assets/models/duck/Duck.gltf');
+    // let triangles = await GeometryLoader.loadGltf('assets/models/avocado/Avocado.gltf');
 
-    renderer.start(triangles);
+    let avocadoScene = await createAvocadoScene();
+    renderer.start(avocadoScene);
 
     // primitive count and FPS measurement
     let fpsLabel = document.getElementById('fps');
@@ -35,40 +38,21 @@ window.onload = async function() {
     preventDefaultControls();
 }
 
-// async function loadGLTF() {
-//     let loader = new GltfLoader();
-//     let uri = 'assets/models/duck/Duck.gltf';
-    
-//     let asset: GltfAsset = await loader.load(uri);
-//     let vertexAccesorId = await asset.gltf.meshes[0].primitives[0].attributes['POSITION'];
-//     let vertexData = await asset.accessorData(vertexAccesorId);
+async function createAvocadoScene() {
+    let lights: Light[] = [
+        new Light(vec3.fromValues(0.0, 1.75, 2.25), 0.25, 350.0),
+        new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 100.0),
+        new Light(vec3.fromValues(-12.25, 20.75, 0.25), 0.15, 150.0)
+    ];
+    let camera = new Camera(canvas, [0.75, 15.75, 12.5], 0.25);
+    let triangles = await GeometryLoader.loadGltf('assets/models/avocado/Avocado.gltf');
 
-//     // create mesh vertices (parsin VEC3)
-//     let meshVertices: vec3[] = [];
-//     for (let i = 0; i < vertexData.length / 24; i++) {
-//         let vertexValues = new Float32Array(vertexData.slice(vertexData.length / 2 + i * 12, vertexData.length / 2 + i * 12 + 12).buffer);
-//         let vertex: vec3 = vec3.fromValues(vertexValues[0], vertexValues[1], vertexValues[2]);
+    let scene = new Scene(camera);
+    scene.setLights(lights);
+    scene.setTriangles(triangles);
 
-//         meshVertices.push(vertex);
-//     }
-
-//     // create mesh vertex indices (parsing SCALAR)
-//     let indicesAccesorId = await asset.gltf.meshes[0].primitives[0].indices;
-//     let indicesData = await asset.accessorData(indicesAccesorId);
-//     let meshIndices = new Uint16Array(indicesData.slice(0, indicesData.length).buffer);
-
-//     // compose triangles
-//     let triangles: Triangle[] = [];
-//     for (let i = 0; i < meshIndices.length / 3; i++) {
-//         let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
-//         let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
-//         let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
-
-//         triangles.push(new Triangle(a, b, c));
-//     }
-
-//     return triangles;
-// }
+    return scene;
+}
 
 // handle keyboard input
 document.onkeydown = function(event) {
