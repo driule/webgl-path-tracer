@@ -24,7 +24,7 @@ export class Shader {
 
     public getAttributeLocation(name: string): number {
         if (this._attributes[name] === undefined) {
-            throw new Error(`Unable to find attribute '${name}' in shader '${this._name}'`);
+            throw new Error(`Unable to find attribute "${name}" in shader "${this._name}"`);
         }
 
         return this._attributes[name];
@@ -32,7 +32,7 @@ export class Shader {
 
     public getUniformLocation(name: string): WebGLUniformLocation {
         if (this._uniforms[name] === undefined) {
-            throw new Error(`Unable to find uniform '${name}' in shader '${this._name}'`);
+            throw new Error(`Unable to find uniform "${name}" in shader "${this._name}"`);
         }
 
         return this._uniforms[name];
@@ -229,7 +229,7 @@ export class Shader {
 
         let shaderInfoLog = gl.getShaderInfoLog(shader);
         if (shaderInfoLog !== "") {
-            throw new Error(`Error compiling shader '${this._name}': '${shaderInfoLog}'`);
+            throw new Error(`Error compiling shader "${this._name}": "${shaderInfoLog}"`);
         }
 
         return shader;
@@ -244,7 +244,7 @@ export class Shader {
 
         let programInfoLog = gl.getProgramInfoLog(this._program);
         if (programInfoLog !== "") {
-            throw new Error(`Error linking shader '${this._name}': ${programInfoLog}'`);
+            throw new Error(`Error linking shader "${this._name}": ${programInfoLog}"`);
         }
     }
 

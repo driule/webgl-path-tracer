@@ -25,7 +25,7 @@ export class PathTracer {
         this._framebuffer = gl.createFramebuffer();
     
         // create textures
-        var type = gl.getExtension('OES_texture_float') ? gl.FLOAT : gl.UNSIGNED_BYTE;
+        var type = gl.getExtension("OES_texture_float") ? gl.FLOAT : gl.UNSIGNED_BYTE;
         this._textures = [];
         for (var i = 0; i < 2; i++) {
             this._textures.push(gl.createTexture());
@@ -39,11 +39,11 @@ export class PathTracer {
         gl.bindTexture(gl.TEXTURE_2D, null);
     
         // create shaders
-        this._tracerShader = new Shader('tracer', require('./shaders/tracer.vertex.glsl'), require('./shaders/tracer.fragment.glsl'));
-        this._renderShader = new Shader('render', require('./shaders/render.vertex.glsl'), require('./shaders/render.fragment.glsl'));
+        this._tracerShader = new Shader("tracer", require("./shaders/tracer.vertex.glsl"), require("./shaders/tracer.fragment.glsl"));
+        this._renderShader = new Shader("render", require("./shaders/render.vertex.glsl"), require("./shaders/render.fragment.glsl"));
 
         let renderVertexAttribute = new AttributeInformation();
-        renderVertexAttribute.location = this._renderShader.getAttributeLocation('vertex');
+        renderVertexAttribute.location = this._renderShader.getAttributeLocation("vertex");
         renderVertexAttribute.offset = 0;
         renderVertexAttribute.size = 2;
 

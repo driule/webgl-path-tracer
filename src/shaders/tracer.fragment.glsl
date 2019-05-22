@@ -234,14 +234,19 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
 
         if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) continue;
 
+        // DEBUG: visualize each bounding box
+        // if (true) {
+        //     pixelColor = pixelColor + vec4(0.05, 00, 0.0, 1.0);
+        // }
+
         if (node.isLeaf) {
-            // visualize leaf bounding boxes
+            // DEBUG: visualize leaf bounding boxes
             // if (true) {
             //     pixelColor = pixelColor + vec4(0.0, 0.1, 0.0, 1.0);
             // }
 
-            // ToDo: check why "i < node.count" crashes
-            for (int i = 0; i < 50; i++) {
+            // ToDo: check why "i < node.count" slows everything down
+            for (int i = 0; i < 25; i++) {
                 if (i >= node.count) {
                     break;
                 }

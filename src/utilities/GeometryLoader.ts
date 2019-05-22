@@ -1,28 +1,28 @@
-import { GltfLoader, GltfAsset } from 'gltf-loader-ts';
-import { vec3 } from 'gl-matrix';
-import { Triangle } from '../geometry/Triangle';
-import { Accessor, BufferView } from 'gltf-loader-ts/lib/gltf';
+import { GltfLoader, GltfAsset } from "gltf-loader-ts";
+import { vec3 } from "gl-matrix";
+import { Triangle } from "../geometry/Triangle";
+import { Accessor, BufferView } from "gltf-loader-ts/lib/gltf";
     
 const accessorTypeToNumComponentsMap: any = {
-    'SCALAR': 1,
-    'VEC2': 2,
-    'VEC3': 3,
-    'VEC4': 4,
-    'MAT2': 4,
-    'MAT3': 9,
-    'MAT4': 16
+    "SCALAR": 1,
+    "VEC2": 2,
+    "VEC3": 3,
+    "VEC4": 4,
+    "MAT2": 4,
+    "MAT3": 9,
+    "MAT4": 16
 };
 
 export class GeometryLoader  {
 
     // include GLTF file example:
-    // const duckModel = require('./assets/models/duck/Duck.gltf');
+    // const duckModel = require("./assets/models/duck/Duck.gltf");
 
     // note:
     // mesh contains primitives which attribute POSITION refers to the accessor which describes how to use bufferView (slice of the whole buffer).
 
     public static async loadGltf(
-        uri: string = 'assets/models/duck/Duck.gltf',
+        uri: string = "assets/models/duck/Duck.gltf",
         scale: number = 1.0,
         translation: vec3 = vec3.fromValues(0, 0, 0)
     ) {
@@ -34,10 +34,10 @@ export class GeometryLoader  {
         for (let m = 0; m < asset.gltf.meshes.length; m++) {
             for (let p = 0; p < asset.gltf.meshes[m].primitives.length; p++) {
 
-                // '4' or 'undefined' defines triangular mode
+                // "4" or "undefined" defines triangular mode
                 let renderingMode = asset.gltf.meshes[m].primitives[p].mode;
                 if (renderingMode != 4 && renderingMode != undefined) {
-                    console.log('Geometry rendering mode is not triangular! Cannot read GLTF file with mode: ', renderingMode);
+                    console.log("Geometry rendering mode is not triangular! Cannot read GLTF file with mode: ", renderingMode);
                     return [];
                 }
 
@@ -80,7 +80,7 @@ export class GeometryLoader  {
                     }
                 } else {
                     // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
-                    console.log('Cannot read non-indexed geometry!');
+                    console.log("Cannot read non-indexed geometry!");
                     return [];
                 }
             }
@@ -115,7 +115,7 @@ export class GeometryLoader  {
             // BYTE (1 byte)
             typedArray = new Int8Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
         } else {
-            console.log('GLTF accessor component type cannot be read: ' + accessor.componentType);
+            console.log("GLTF accessor component type cannot be read: " + accessor.componentType);
         }
 
         return typedArray;
