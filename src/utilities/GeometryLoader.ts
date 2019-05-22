@@ -1,6 +1,7 @@
 import { GltfLoader, GltfAsset } from 'gltf-loader-ts';
 import { vec3 } from 'gl-matrix';
 import { Triangle } from '../geometry/Triangle';
+import { Accessor, BufferView } from 'gltf-loader-ts/lib/gltf';
     
 const accessorTypeToNumComponentsMap: any = {
     'SCALAR': 1,
@@ -28,48 +29,34 @@ export class GeometryLoader  {
             return [];
         }
 
+        // load vertex data
         let vertexAccesorId = asset.gltf.meshes[0].primitives[0].attributes.POSITION;
         let vertexAccesor = asset.gltf.accessors[vertexAccesorId];
-        let vertexBufferView = asset.gltf.bufferViews[vertexAccesor.bufferView];
         let vertexData = await asset.accessorData(vertexAccesorId);
-        let vertexBuffer = vertexData.buffer;
-        // console.log('vertexBuffer', vertexBuffer.slice(vertexBufferView.byteOffset, 1));
 
-        // testing code
-        let buffer = vertexData.buffer;
-        let accessor = asset.gltf.accessors[vertexAccesorId];
-        let bufferView = vertexBufferView;
-
-        let accessorOffset = 0;
-        let bufferViewOffset = 0;
-        accessor.byteOffset != undefined ? accessorOffset = accessor.byteOffset : accessorOffset = 0;
-        bufferView.byteOffset != undefined ? bufferViewOffset = vertexBufferView.byteOffset : accessorOffset = 0;
-        var typedView = new Float32Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
-        // console.log('buffer', buffer);
-        // console.log('typedView', typedView);
-
+        let vertexArray = this.loadTypedArray(
+            vertexData.buffer,
+            asset.gltf.accessors[vertexAccesorId],
+            asset.gltf.bufferViews[vertexAccesor.bufferView]
+        );
+        
         let meshVertices: vec3[] = [];
-        for (let i = 0; i < accessor.count; i++) {
-            let vertex: vec3 = vec3.fromValues(typedView[i * 3 + 0], typedView[i * 3 + 1], typedView[i * 3 + 2]);
+        for (let i = 0; i < vertexAccesor.count; i++) {
+            let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0], vertexArray[i * 3 + 1], vertexArray[i * 3 + 2]);
             meshVertices.push(vertex);
         }
-        //
     
-        // create mesh vertices (parsing VEC3)
-        // let meshVertices: vec3[] = [];
-        // console.log(asset.gltf.accessors[vertexAccesorId].count);
-        // for (let i = 0; i < asset.gltf.accessors[vertexAccesorId].count; i++) {
-        //     let vertexValues = new Float32Array(vertexData.slice(i * 12, i * 12 + 12).buffer);
-        //     let vertex: vec3 = vec3.fromValues(vertexValues[0], vertexValues[1], vertexValues[2]);
-    
-        //     meshVertices.push(vertex);
-        // }
-    
-        let indicesAccesorId = await asset.gltf.meshes[0].primitives[0].indices;
-
+        // load vertex indices data
+        let indicesAccesorId = asset.gltf.meshes[0].primitives[0].indices;
         if (indicesAccesorId != undefined) {
             let indicesData = await asset.accessorData(indicesAccesorId);
-            let meshIndices = new Uint16Array(indicesData.slice(0, indicesData.length).buffer);
+            let indicesAccesor = asset.gltf.accessors[indicesAccesorId];
+
+            let meshIndices = this.loadTypedArray(
+                indicesData.buffer,
+                asset.gltf.accessors[indicesAccesorId],
+                asset.gltf.bufferViews[indicesAccesor.bufferView]
+            );
 
             // compose indexed triangles
             for (let i = 0; i < meshIndices.length / 3; i++) {
@@ -86,5 +73,37 @@ export class GeometryLoader  {
         }
     
         return triangles;
+    }
+
+    private static loadTypedArray(buffer: ArrayBuffer, accessor: Accessor, bufferView: BufferView): any {
+        let typedArray: any = [];
+
+        let accessorOffset = 0, bufferViewOffset = 0;
+        accessor.byteOffset != undefined ? accessorOffset = accessor.byteOffset : accessorOffset = 0;
+        bufferView.byteOffset != undefined ? bufferViewOffset = bufferView.byteOffset : accessorOffset = 0;
+        
+        if (accessor.componentType == 5126) {
+            // FLOAT (4 bytes)
+            typedArray = new Float32Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
+        } else if (accessor.componentType == 5125) {
+            // UNSIGNED_INT (4 bytes)
+            typedArray = new Uint32Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
+        } else if (accessor.componentType == 5123) {
+            // UNSIGNED_SHORT (2 bytes)
+            typedArray = new Uint16Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
+        } else if (accessor.componentType == 5122) {
+            // SHORT (2 bytes)
+            typedArray = new Int16Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
+        } else if (accessor.componentType == 5121) {
+            // UNSIGNED_BYTE (1 byte)
+            typedArray = new Uint8Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
+        } else if (accessor.componentType == 5120) {
+            // BYTE (1 byte)
+            typedArray = new Int8Array(buffer, accessorOffset + bufferViewOffset, accessor.count * accessorTypeToNumComponentsMap[accessor.type]);
+        } else {
+            console.log('GLTF accessor component type cannot be read: ' + accessor.componentType);
+        }
+
+        return typedArray;
     }
 }
