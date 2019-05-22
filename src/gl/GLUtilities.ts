@@ -15,7 +15,6 @@ export class GLUtilities {
         if (gl === undefined) {
             throw new Error("Unable to initialize WebGL!");
         }
-        // gl.getExtension('EXT_color_buffer_float');
 
         console.log(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
 

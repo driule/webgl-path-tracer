@@ -26,8 +26,7 @@ export class BoundingBox {
         return this._center;
     }
 
-    public calculateSurfaceArea(): number
-    {
+    public calculateSurfaceArea(): number {
         let diagonal: vec3 = vec3.subtract(vec3.create(), this.max, this.min);
         diagonal = vec3.fromValues(Math.abs(diagonal[0]), Math.abs(diagonal[1]), Math.abs(diagonal[2]));
 
