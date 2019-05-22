@@ -17,7 +17,11 @@ export class GeometryLoader  {
 
     // mesh contains primitives which attribute POSITION refers to the accessor which describes how to use bufferView (slice of the whole buffer).
 
-    public static async loadGltf(uri: string = 'assets/models/duck/Duck.gltf') {
+    public static async loadGltf(
+        uri: string = 'assets/models/duck/Duck.gltf',
+        scale: number = 1.0,
+        translation: vec3 = vec3.fromValues(0, 0, 0)
+    ) {
         let loader = new GltfLoader();
         let asset: GltfAsset = await loader.load(uri);
         let triangles: Triangle[] = [];
@@ -42,7 +46,7 @@ export class GeometryLoader  {
         
         let meshVertices: vec3[] = [];
         for (let i = 0; i < vertexAccesor.count; i++) {
-            let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * 100, vertexArray[i * 3 + 1] * 100, vertexArray[i * 3 + 2] * 100);
+            let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * scale + translation[0], vertexArray[i * 3 + 1] * scale + translation[1], vertexArray[i * 3 + 2] * scale + translation[2]);
             meshVertices.push(vertex);
         }
     

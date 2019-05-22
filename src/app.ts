@@ -7,6 +7,7 @@ import { Light } from "./geometry/Light";
 import { Camera } from "./Camera";
 import { vec3 } from "gl-matrix";
 import { GLUtilities } from "./gl/GLUtilities";
+import { Triangle } from "./geometry/Triangle";
 
 let renderer: Renderer;
 let gauge: Gauge;
@@ -17,13 +18,8 @@ window.onload = async function() {
     canvas = GLUtilities.initialize('pathTracer');
     gauge = new Gauge();
     renderer = new Renderer(canvas, gauge);
-
-    // let triangles = await GeometryLoader.loadGltf('assets/models/bottle/WaterBottle.gltf');
-    // let triangles = await GeometryLoader.loadGltf('assets/models/duck/Duck.gltf');
-    // let triangles = await GeometryLoader.loadGltf('assets/models/avocado/Avocado.gltf');
-
-    let avocadoScene = await createAvocadoScene();
-    renderer.start(avocadoScene);
+    renderer.setScene(await createAvocadoScene());
+    renderer.start();
 
     // primitive count and FPS measurement
     let fpsLabel = document.getElementById('fps');
@@ -40,16 +36,74 @@ window.onload = async function() {
 
 async function createAvocadoScene() {
     let lights: Light[] = [
-        new Light(vec3.fromValues(0.0, 1.75, 2.25), 0.25, 350.0),
-        new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 100.0),
-        new Light(vec3.fromValues(-12.25, 20.75, 0.25), 0.15, 150.0)
+        new Light(vec3.fromValues(0.0, 1.75, 2.25), 0.25, 35.0),
+        new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 10.0),
+        new Light(vec3.fromValues(-12.25, 20.75, 0.25), 0.15, 15.0)
     ];
-    let camera = new Camera(canvas, [0.75, 15.75, 12.5], 0.25);
-    let triangles = await GeometryLoader.loadGltf('assets/models/avocado/Avocado.gltf');
+    let camera = new Camera(canvas, [0.75, 15.75, 12.5], [0.0, 2.5, 0.0], 0.25);
+    let triangles = await GeometryLoader.loadGltf('assets/models/avocado/Avocado.gltf', 100);
 
     let scene = new Scene(camera);
     scene.setLights(lights);
     scene.setTriangles(triangles);
+
+    return scene;
+}
+
+async function createDuckScene() {
+    let lights: Light[] = [
+        new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 35.0),
+        new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 10.0),
+        new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
+    ];
+    let camera = new Camera(canvas, [0.2, 0.75, 275.0], [0.0, 75.0, 0.0], 2.0);
+    let triangles = await GeometryLoader.loadGltf('assets/models/duck/Duck.gltf');
+
+    let scene = new Scene(camera);
+    scene.setLights(lights);
+    scene.setTriangles(triangles);
+
+    return scene;
+}
+
+async function createBottleScene() {
+    let lights: Light[] = [
+        new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 35.0),
+        new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 10.0),
+        new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
+    ];
+    let camera = new Camera(canvas, [0.2, 5.75, 0.5], [0.0, 0.0, 0.0], 0.05);
+    let triangles = await GeometryLoader.loadGltf('assets/models/bottle/WaterBottle.gltf');
+
+    let scene = new Scene(camera);
+    scene.setLights(lights);
+    scene.setTriangles(triangles);
+
+    return scene;
+}
+
+async function createBasicScene() {
+    let lights: Light[] = [
+        new Light(vec3.fromValues(0.0, 1.75, 0.25), 0.25, 12.5),
+    ];
+    let camera = new Camera(canvas, [0.0, 0.0, 2.5]);
+
+    let scene = new Scene(camera);
+    scene.setLights(lights);
+
+    scene.setTriangles([
+        // ground plane
+        new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(0.75, -0.95, 0.75), vec3.fromValues(0.75, -0.95, -0.75)),
+        new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(-0.75, -0.95, 0.75), vec3.fromValues(0.75, -0.95, 0.75)),
+
+        // left wall
+        new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(-0.75, 0.95, 0.75), vec3.fromValues(-0.75, -0.95, 0.75)),
+        new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75),  vec3.fromValues(-0.75, 0.95, 0.75)),
+
+        // back wall
+        new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(0.75, -0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75)),
+        new Triangle(vec3.fromValues(0.75, -0.95, -0.75), vec3.fromValues(0.75, 0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75))
+    ]);
 
     return scene;
 }
@@ -118,7 +172,7 @@ document.onkeydown = function(event) {
     }
 };
 
-function onButtonDown(event: MouseEvent): void {
+async function onButtonDown(event: MouseEvent) {
     let element: HTMLElement = <HTMLElement>event.target;
 
     if (gauge.mouseDownId == null) {
@@ -170,11 +224,13 @@ function onButtonDown(event: MouseEvent): void {
 
             renderer.pause();
         } if (element.id == 'changeScene1') {
-            renderer.loadBasicScene();
+            renderer.setScene(await createBasicScene());
         } if (element.id == 'changeScene2') {
-            // renderer.loadTeddyScene();
+            renderer.setScene(await createDuckScene());
         } if (element.id == 'changeScene3') {
-            renderer.loadTexturedScene();
+            renderer.setScene(await createBottleScene());
+        } if (element.id == 'changeScene4') {
+            renderer.setScene(await createAvocadoScene());
         }
     }
 }
@@ -259,6 +315,11 @@ function addEventListeners(): void {
     (<HTMLButtonElement>document.getElementById('changeScene3')).addEventListener('mouseup', onButtonUp, false);
     (<HTMLButtonElement>document.getElementById('changeScene3')).addEventListener('touchstart', onButtonDown, false);
     (<HTMLButtonElement>document.getElementById('changeScene3')).addEventListener('touchend', onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById('changeScene4')).addEventListener('mousedown', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene4')).addEventListener('mouseup', onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById('changeScene4')).addEventListener('touchstart', onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById('changeScene4')).addEventListener('touchend', onButtonUp, false);
 }
 
 function preventDefaultControls(): void {

@@ -17,16 +17,16 @@ export class Camera {
     private _eye: any; // vec3
     private _viewProjectionMatrix: any; //mat4
 
-    public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0], movementSpeed: number = 0.1) {
+    public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0], initialAxes: any = [0.0, 0.0, 0.0], movementSpeed: number = 0.1) {
         this._canvas = canvas;
 
         this._angleX = initialView[0];
         this._angleY = initialView[1];
         this._zoomZ = initialView[2];
 
-        this._axisX = 0.0;
-        this._axisY = 0.0;
-        this._axisZ = 0.0;
+        this._axisX = initialAxes[0];
+        this._axisY = initialAxes[1];
+        this._axisZ = initialAxes[2];
 
         this._movementSpeed = movementSpeed;
 
