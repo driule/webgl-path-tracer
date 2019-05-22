@@ -1,5 +1,5 @@
 import { GltfLoader, GltfAsset } from "gltf-loader-ts";
-import { vec3 } from "gl-matrix";
+import { vec3, vec2 } from "gl-matrix";
 import { Triangle } from "../geometry/Triangle";
 import { Accessor, BufferView } from "gltf-loader-ts/lib/gltf";
     
@@ -25,10 +25,14 @@ export class GeometryLoader  {
         uri: string = "assets/models/duck/Duck.gltf",
         scale: number = 1.0,
         translation: vec3 = vec3.fromValues(0, 0, 0)
-    ) {
+    ): Promise<any> {
         let loader = new GltfLoader();
         let asset: GltfAsset = await loader.load(uri);
+
         let triangles: Triangle[] = [];
+        let textureCoordinates: vec2[] = [];
+        let imageUri: string;
+        let textureSampler: any[];
 
         // for each primitive of each mesh compose geometry data
         for (let m = 0; m < asset.gltf.meshes.length; m++) {
@@ -83,10 +87,48 @@ export class GeometryLoader  {
                     console.log("Cannot read non-indexed geometry!");
                     return [];
                 }
+
+                // load texture coordinates
+                let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
+                let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
+                let texCoordData = await asset.accessorData(texCoordAccesorId);
+                
+                let texCoordArray = this.loadTypedArray(
+                    texCoordData.buffer,
+                    asset.gltf.accessors[texCoordAccesorId],
+                    asset.gltf.bufferViews[texCoordAccesor.bufferView]
+                );
+                
+                for (let i = 0; i < vertexAccesor.count; i++) {
+                    let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
+                    textureCoordinates.push(texCoord);
+                }
+                console.log('texture coordinates: ', textureCoordinates);
+
+                // load texture image
+                let texture = asset.gltf.textures[0];
+                imageUri = "assets/models/avocado/" + asset.gltf.images[texture.source].uri;
+                console.log("imageUri", imageUri);
+                
+                if (texture.sampler != undefined) {
+                    console.log("texture.sampler", texture.sampler);
+                    textureSampler = [
+                        asset.gltf.samplers[texture.sampler].magFilter,
+                        asset.gltf.samplers[texture.sampler].minFilter,
+                        asset.gltf.samplers[texture.sampler].wrapS,
+                        asset.gltf.samplers[texture.sampler].wrapT
+                    ];
+                    console.log('sampler: ', textureSampler);
+                }
             }
         }
     
-        return triangles;
+        return {
+            "triangles": triangles,
+            "textureCoordinates": textureCoordinates,
+            "textureImage": imageUri,
+            // "textureSampler": textureSampler
+        };
     }
 
     private static loadTypedArray(buffer: ArrayBuffer, accessor: Accessor, bufferView: BufferView): any {
