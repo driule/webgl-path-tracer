@@ -24,12 +24,12 @@ export class Renderer {
 
         this._isRendering = true;
 
-        let startTime = Date.now();
-        this.tick((Date.now() - startTime) * 0.001);
+        let startTime = new Date().getTime();
+        this.tick(new Date().getTime() - startTime);
     }
 
     public tick(timeSinceStart: number): void {
-        this._pathTracer.update(timeSinceStart);
+        this._pathTracer.update(timeSinceStart / 1000.0);
         this._pathTracer.render();
 
         this._gauge.measureFPS();

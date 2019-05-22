@@ -56,50 +56,27 @@ export class PathTracer {
         ]);
         this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
     }
-        
+
     public update(timeSinceStart: number): void {
 
         // calculate uniforms
         let uniforms: any = {};
-        uniforms.resolution = [this._canvas.width, this._canvas.height];
-        uniforms.eye = this._scene.camera.eye;
-        uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1,);
-        uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1,);
-        uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1,);
-        uniforms.ray11 = this._scene.camera.getEyeRay(+1, +1,);
+        uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1);
+        uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1);
+        uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1);
+        uniforms.ray11 = this._scene.camera.getEyeRay(+1, +1);
         uniforms.timeSinceStart = timeSinceStart;
         uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
-
-        // triangle data
-        uniforms.triangles = this._scene.triangles;
-        uniforms.totalTriangles = this._scene.triangles.length;
-        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 3));
-
-        // BVH data
-        uniforms.bvhNodeList = this._scene.bvh.nodeStack;
-        uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
-
-        // {min}, {max}, {isLeaf, first, count}, {left, right, 0} - 4 rgb units
-        uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
-
-        uniforms.triangleIndices = this._scene.bvh.triangleIndices;
-        uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
-
-        // light data
-        uniforms.lights = this._scene.lights;
-        uniforms.totalLights = this._scene.lights.length;
-        uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
         
         // set uniforms
         this._tracerShader.use();
+        this._tracerShader.setUniforms(uniforms);
 
         // render to texture
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._framebuffer);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._textures[1], 0);
-
-        this._tracerShader.setUniforms(uniforms);
 
         this._vertexBuffer.upload();
         this._vertexBuffer.draw();
@@ -125,5 +102,38 @@ export class PathTracer {
     
     public restart(): void {
         this._sampleCount = 0;
+        this.setShaderGeometry();
+    }
+    
+    private setShaderGeometry(): void {
+        let uniforms: any = {};
+
+        uniforms.resolution = [this._canvas.width, this._canvas.height];
+        uniforms.eye = this._scene.camera.eye;
+        uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
+
+        // triangle data
+        uniforms.triangles = this._scene.triangles;
+        uniforms.totalTriangles = this._scene.triangles.length;
+        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 3));
+
+        // BVH data
+        uniforms.bvhNodeList = this._scene.bvh.nodeStack;
+        uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
+
+        // {min}, {max}, {isLeaf, first, count}, {leftID, rightID, ID} - 4 rgb units
+        uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
+
+        uniforms.triangleIndices = this._scene.bvh.triangleIndices;
+        uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
+
+        // light data
+        uniforms.lights = this._scene.lights;
+        uniforms.totalLights = this._scene.lights.length;
+        uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
+        
+        // set uniforms
+        this._tracerShader.use();
+        this._tracerShader.setUniforms(uniforms);
     }
 }
