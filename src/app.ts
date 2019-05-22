@@ -12,7 +12,11 @@ window.onload = async function() {
     canvas = GLUtilities.initialize("pathTracer");
     gauge = new Gauge();
     renderer = new Renderer(canvas, gauge);
-    renderer.setScene(await SceneFactory.createBasicScene(canvas));
+    renderer.setScene(await SceneFactory.createBottleScene(canvas));
+
+    // ToDO: check why some triangles are missing in the duck scene view
+    // renderer.setScene(await SceneFactory.createDuckScene(canvas));
+
     renderer.start();
 
     // primitive count and FPS measurement
@@ -25,7 +29,6 @@ window.onload = async function() {
 
     // control buttons event listeners
     addEventListeners();
-    preventDefaultControls();
 }
 
 // handle keyboard input
@@ -247,6 +250,8 @@ function addEventListeners(): void {
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("mouseup", onButtonUp, false);
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("touchstart", onButtonDown, false);
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("touchend", onButtonUp, false);
+
+    preventDefaultControls();
 }
 
 function preventDefaultControls(): void {

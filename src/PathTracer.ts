@@ -97,12 +97,12 @@ export class PathTracer {
 
     public setScene(scene: Scene): void {
         this._scene = scene;
+        this.setShaderGeometry();
         this.restart();
     }
     
     public restart(): void {
         this._sampleCount = 0;
-        this.setShaderGeometry();
     }
     
     private setShaderGeometry(): void {

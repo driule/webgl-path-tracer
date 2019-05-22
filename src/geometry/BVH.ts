@@ -66,9 +66,9 @@ export class BVH {
         if (node.count <= 3 || depth >= 15) {
             node.isLeaf = true;
             return;
-        } else {
-            node.isLeaf = false;
         }
+        
+        node.isLeaf = false;
 
         node.left = new BoundingBox(this._nodeStack.length);
         this._nodeStack.push(node.left);
