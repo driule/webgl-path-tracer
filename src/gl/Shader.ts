@@ -47,29 +47,25 @@ export class Shader {
 
                 let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
                 for (let i = 0; i < uniforms.totalTriangles; i++) {
-                    triangleList[i * 3 * 6 + 0] = uniforms.triangles[i].a[0];
-                    triangleList[i * 3 * 6 + 1] = uniforms.triangles[i].a[1];
-                    triangleList[i * 3 * 6 + 2] = uniforms.triangles[i].a[2];
+                    triangleList[i * 3 * 5 + 0] = uniforms.triangles[i].a[0];
+                    triangleList[i * 3 * 5 + 1] = uniforms.triangles[i].a[1];
+                    triangleList[i * 3 * 5 + 2] = uniforms.triangles[i].a[2];
 
-                    triangleList[i * 3 * 6 + 3] = uniforms.triangles[i].b[0];
-                    triangleList[i * 3 * 6 + 4] = uniforms.triangles[i].b[1];
-                    triangleList[i * 3 * 6 + 5] = uniforms.triangles[i].b[2];
+                    triangleList[i * 3 * 5 + 3] = uniforms.triangles[i].b[0];
+                    triangleList[i * 3 * 5 + 4] = uniforms.triangles[i].b[1];
+                    triangleList[i * 3 * 5 + 5] = uniforms.triangles[i].b[2];
 
-                    triangleList[i * 3 * 6 + 6] = uniforms.triangles[i].c[0];
-                    triangleList[i * 3 * 6 + 7] = uniforms.triangles[i].c[1];
-                    triangleList[i * 3 * 6 + 8] = uniforms.triangles[i].c[2];
+                    triangleList[i * 3 * 5 + 6] = uniforms.triangles[i].c[0];
+                    triangleList[i * 3 * 5 + 7] = uniforms.triangles[i].c[1];
+                    triangleList[i * 3 * 5 + 8] = uniforms.triangles[i].c[2];
 
-                    triangleList[i * 3 * 6 + 9] = uniforms.triangles[i].uvA[0];
-                    triangleList[i * 3 * 6 + 10] = uniforms.triangles[i].uvA[1];
-                    triangleList[i * 3 * 6 + 11] = 0.0; // ToDo: use for normal
-
-                    triangleList[i * 3 * 6 + 12] = uniforms.triangles[i].uvB[0];
-                    triangleList[i * 3 * 6 + 13] = uniforms.triangles[i].uvB[1];
-                    triangleList[i * 3 * 6 + 14] = 0.0;
-
-                    triangleList[i * 3 * 6 + 15] = uniforms.triangles[i].uvC[0];
-                    triangleList[i * 3 * 6 + 16] = uniforms.triangles[i].uvC[1];
-                    triangleList[i * 3 * 6 + 17] = 0.0;
+                    triangleList[i * 3 * 5 + 9] = uniforms.triangles[i].uvA[0];
+                    triangleList[i * 3 * 5 + 10] = uniforms.triangles[i].uvA[1];
+                    triangleList[i * 3 * 5 + 11] = uniforms.triangles[i].uvB[0];
+                    
+                    triangleList[i * 3 * 5 + 12] = uniforms.triangles[i].uvB[1];
+                    triangleList[i * 3 * 5 + 13] = uniforms.triangles[i].uvC[0];
+                    triangleList[i * 3 * 5 + 14] = uniforms.triangles[i].uvC[1];
                 }
 
                 gl.activeTexture(gl.TEXTURE1);

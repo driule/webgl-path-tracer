@@ -113,22 +113,22 @@ export class PathTracer {
         // triangle data
         uniforms.triangles = this._scene.triangles;
         uniforms.totalTriangles = this._scene.triangles.length;
-        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 6)) + 1;
+        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 5));
 
         // BVH data
         uniforms.bvhNodeList = this._scene.bvh.nodeStack;
         uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
 
         // {min}, {max}, {isLeaf, first, count}, {leftID, rightID, ID} - 4 rgb units
-        uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4)) + 1;
+        uniforms.bvhDataTextureSize = Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
 
         uniforms.triangleIndices = this._scene.bvh.triangleIndices;
-        uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length)) + 1;
+        uniforms.triangleIndicesDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
 
         // light data
         uniforms.lights = this._scene.lights;
         uniforms.totalLights = this._scene.lights.length;
-        uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2)) + 1;
+        uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
 
         // texturing
         if (this._scene.textureImage != undefined) {

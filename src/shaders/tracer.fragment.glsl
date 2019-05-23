@@ -84,15 +84,14 @@ vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
 }
 
 Triangle fetchTriangle(int id) {
-    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 6 + 0), triangleDataTextureSize);
-    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 6 + 1), triangleDataTextureSize);
-    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 6 + 2), triangleDataTextureSize);
+    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 5 + 0), triangleDataTextureSize);
+    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 5 + 1), triangleDataTextureSize);
+    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 5 + 2), triangleDataTextureSize);
     
-    vec3 uvA = getValueFromTexture(triangleDataTexture, float(id * 6 + 3), triangleDataTextureSize);
-    vec3 uvB = getValueFromTexture(triangleDataTexture, float(id * 6 + 4), triangleDataTextureSize);
-    vec3 uvC = getValueFromTexture(triangleDataTexture, float(id * 6 + 5), triangleDataTextureSize);
+    vec3 uv1 = getValueFromTexture(triangleDataTexture, float(id * 5 + 3), triangleDataTextureSize);
+    vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 5 + 4), triangleDataTextureSize);
     
-    return Triangle(coordA, coordB, coordC, vec2(uvA[0], uvA[1]), vec2(uvB[0], uvB[1]), vec2(uvC[0], uvC[1]));
+    return Triangle(coordA, coordB, coordC, vec2(uv1[0], uv1[1]), vec2(uv1[2], uv2[0]), vec2(uv2[1], uv2[2]));
 }
 
 Light fetchLight(int id) {
