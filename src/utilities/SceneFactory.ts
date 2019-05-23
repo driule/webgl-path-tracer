@@ -56,9 +56,9 @@ export class SceneFactory  {
     
     static async createDuckScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
-            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 35.0),
-            new Light(vec3.fromValues(200.25, 22.75, -20.25), 1.5, 10.0),
-            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
+            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 3.0),
+            new Light(vec3.fromValues(200.25, 22.75, -20.25), 1.5, 1.0),
+            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.0)
         ];
         let camera = new Camera(canvas, [0.2, 0.75, 275.0], [0.0, 75.0, 0.0], 2.0);
         let geometry: any = await GeometryLoader.loadGltf("assets/models/duck/", "Duck.gltf");

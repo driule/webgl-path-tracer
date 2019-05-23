@@ -254,7 +254,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
             // }
 
             // ToDo: check why "i < node.count" slows everything down
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 25; i++) {
                 if (i >= node.count) {
                     break;
                 }
