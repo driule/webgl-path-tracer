@@ -73,14 +73,13 @@ export class PathTracer {
         this.restart();
     }
     
-    private restart(): void {
+    public restart(): void {
         this._sampleCount = 0;
     }
     
     private update(timeSinceStart: number): void {
-
-        // calculate uniforms
         let uniforms: any = {};
+        uniforms.eye = this._scene.camera.eye;
         uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1);
         uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1);
         uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1);
@@ -88,7 +87,6 @@ export class PathTracer {
         uniforms.timeSinceStart = timeSinceStart;
         uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
         
-        // set uniforms
         this._tracerShader.use();
         this._tracerShader.setUniforms(uniforms);
 
@@ -110,7 +108,6 @@ export class PathTracer {
         let uniforms: any = {};
 
         uniforms.resolution = [this._canvas.width, this._canvas.height];
-        uniforms.eye = this._scene.camera.eye;
         uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
         // triangle data
@@ -138,7 +135,6 @@ export class PathTracer {
             uniforms.textureImage = this._scene.textureImage;
         }
         
-        // set uniforms
         this._tracerShader.use();
         this._tracerShader.setUniforms(uniforms);
     }

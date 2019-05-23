@@ -49,14 +49,12 @@ export class Renderer {
     private restart(): void {
         this._gauge.primitiveCount = this._scene.triangles.length;
         this._scene.camera.calculateViewProjection();
-        this._pathTracer.setScene(this._scene);
-        // this._pathTracer.restart();
+        this._pathTracer.restart();
     }
 
     public setScene(scene: Scene): void {
         this._scene = scene;
         this._pathTracer.setScene(this._scene);
-        // this._pathTracer.restart();
     }
 
     //
