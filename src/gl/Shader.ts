@@ -71,7 +71,7 @@ export class Shader {
                 gl.activeTexture(gl.TEXTURE1);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
-                // maybe working or read sampler from gltf file (?)
+                // maybe working; or read sampler from gltf file (?)
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -102,7 +102,7 @@ export class Shader {
 
                     lightList[i * 3 * 2 + 3] = uniforms.lights[i].radius;
                     lightList[i * 3 * 2 + 4] = uniforms.lights[i].intensity;
-                    lightList[i * 3 * 2 + 5] = 0.0;
+                    lightList[i * 3 * 2 + 5] = 1.0;
                 }
 
                 gl.activeTexture(gl.TEXTURE2);
@@ -141,8 +141,8 @@ export class Shader {
                         bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                         bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
                     } else {
-                        bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
-                        bvhNodeDataList[i * 3 * 4 + 10] = 0.0;
+                        bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].id;
+                        bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].id;
                     }
                     bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
                 }
