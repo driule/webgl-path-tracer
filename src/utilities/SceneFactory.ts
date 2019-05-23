@@ -33,7 +33,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 10.0),
             new Light(vec3.fromValues(-12.25, 20.75, 0.25), 0.15, 15.0)
         ];
-        let camera = new Camera(canvas, [0.75, 15.75, 12.5], [0.0, 2.5, 0.0], 0.25);
+        let camera = new Camera(canvas, [0.75, 10.75, 12.5], [0.0, 2.5, 0.0], 0.25);
         let geometry: any = await GeometryLoader.loadGltf("assets/models/avocado/Avocado.gltf", 100);
     
         let scene = new Scene(camera);
