@@ -133,7 +133,9 @@ export class PathTracer {
         uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
 
         // texturing
-        uniforms.textureImage = this._scene.textureImage;
+        if (this._scene.textureImage != undefined) {
+            uniforms.textureImage = this._scene.textureImage;
+        }
         
         // set uniforms
         this._tracerShader.use();

@@ -5,7 +5,7 @@
 #define BOUNCES 3
 #define EPSILON 0.0001
 #define INFINITY 10000.0
-#define STACK_SIZE 128
+#define STACK_SIZE 256
 
 struct Sphere
 {
@@ -254,7 +254,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
             // }
 
             // ToDo: check why "i < node.count" slows everything down
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < 50; i++) {
                 if (i >= node.count) {
                     break;
                 }
@@ -371,27 +371,17 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             normal = getTriangleNormal(intersection.triangle);
 
             //
-            // ToDo: map texture right here
+            // texture mapping
             //
+            Triangle tri = intersection.triangle;
 
-            // intersected triangles shortcut
-            Triangle tr = intersection.triangle;
-
-            vec2 uv;
-
-            float baryA = ((tr.b[1] - tr.c[1]) * (hit[0] - tr.c[0]) + (tr.c[0] - tr.b[0]) * (hit[1] - tr.c[1])) / ((tr.b[1] - tr.c[1]) * (tr.a[0] - tr.c[0]) + (tr.c[0] - tr.b[0]) * (tr.a[1] - tr.c[1]));
-            float baryB = ((tr.c[1] - tr.a[1]) * (hit[0] - tr.c[0]) + (tr.a[0] - tr.c[0]) * (hit[1] - tr.c[1])) / ((tr.b[1] - tr.c[1]) * (tr.a[0] - tr.c[0]) + (tr.c[0] - tr.b[0]) * (tr.a[1] - tr.c[1]));
+            float baryA = ((tri.b[1] - tri.c[1]) * (hit[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (hit[1] - tri.c[1])) / ((tri.b[1] - tri.c[1]) * (tri.a[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (tri.a[1] - tri.c[1]));
+            float baryB = ((tri.c[1] - tri.a[1]) * (hit[0] - tri.c[0]) + (tri.a[0] - tri.c[0]) * (hit[1] - tri.c[1])) / ((tri.b[1] - tri.c[1]) * (tri.a[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (tri.a[1] - tri.c[1]));
             float baryC = 1.0 - baryA - baryB;
 
-            uv = baryA * tr.uvA + baryB * tr.uvB + baryC * tr.uvC;
+            vec2 uv = baryA * tri.uvA + baryB * tri.uvB + baryC * tri.uvC;
 
             surfaceColor = texture(textureImage, uv).rgb;
-
-            // if (sin(hit[0]) > 0.0 && sin(hit[2]) > 0.0) {
-            //     surfaceColor = vec3(0.25, 0.00, 0.00);
-            // } else {
-            //     surfaceColor = vec3(0.0, 0.25, 0.00);
-            // }
         }
 
         float tLight = INFINITY;

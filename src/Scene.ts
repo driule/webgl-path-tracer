@@ -19,6 +19,9 @@ export class Scene {
 
         this._triangles = [];
         this._lights = [];
+
+        // ToDo: check
+        this.textureImage = undefined;
     }
 
     public get camera(): Camera {

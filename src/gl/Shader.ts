@@ -66,7 +66,7 @@ export class Shader {
 
                     triangleList[i * 3 * 6 + 9] = uniforms.triangles[i].uvA[0];
                     triangleList[i * 3 * 6 + 10] = uniforms.triangles[i].uvA[1];
-                    triangleList[i * 3 * 6 + 11] = 0.0;
+                    triangleList[i * 3 * 6 + 11] = 0.0; // ToDo: use for normal
 
                     triangleList[i * 3 * 6 + 12] = uniforms.triangles[i].uvB[0];
                     triangleList[i * 3 * 6 + 13] = uniforms.triangles[i].uvB[1];
@@ -190,46 +190,17 @@ export class Shader {
             }
 
             if (name.toString() === "textureImage") {
-
-                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);
-                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
-                let textureImageLocation = gl.getUniformLocation(this._program, "textureImage");
-
-                // let image = new Image();
-                // image.src = uniforms.textureImage;
-                // image.onload = async function() {
                 gl.activeTexture(gl.TEXTURE5);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-                // console.log('debug image: ', uniforms.textureImage, uniforms.textureImage.width, uniforms.textureImage.height);
 
-                const level = 0;
-                const internalFormat = gl.RGBA;
-                const srcFormat = gl.RGBA;
-                const srcType = gl.UNSIGNED_BYTE;
-                gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, uniforms.textureImage);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, uniforms.textureImage);
 
-                // WebGL1 has different requirements for power of 2 images
-                // vs non power of 2 images so check if the image is a
-                // power of 2 in both dimensions.
-                // if (this.isPowerOf2(image.width) && this.isPowerOf2(image.height)) {
-                //     console.log('wtf im doing in here?');
-                //     // Yes, it's a power of 2. Generate mips.
-                //     gl.generateMipmap(gl.TEXTURE_2D);
-                // } else {
-                    // No, it's not a power of 2. Turn off mips and set
-                    // wrapping to clamp to edge
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                // }
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
+                let textureImageLocation = gl.getUniformLocation(this._program, "textureImage");
                 gl.uniform1i(textureImageLocation, 5);
-                // }
-                
-                // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, image.width, image.height, 0, gl.RGB, gl.FLOAT, image);
 
                 continue;
             }

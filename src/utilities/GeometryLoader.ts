@@ -46,6 +46,7 @@ export class GeometryLoader  {
                     console.log("Geometry rendering mode is not triangular! Cannot read GLTF file with mode: ", renderingMode);
                     return [];
                 }
+                //
 
                 // load vertex data
                 let vertexAccesorId = asset.gltf.meshes[m].primitives[p].attributes.POSITION;
@@ -63,8 +64,8 @@ export class GeometryLoader  {
                     let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * scale + translation[0], vertexArray[i * 3 + 1] * scale + translation[1], vertexArray[i * 3 + 2] * scale + translation[2]);
                     meshVertices.push(vertex);
                 }
-
                 //
+
                 // load texture coordinates
                 let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
                 let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
@@ -80,7 +81,6 @@ export class GeometryLoader  {
                     let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
                     textureCoordinates.push(texCoord);
                 }
-                // console.log('texture coordinates: ', textureCoordinates);
                 //
             
                 // load vertex indices data
@@ -108,12 +108,12 @@ export class GeometryLoader  {
                 
                         triangles.push(triangle);
                     }
-                    // console.log('triangles with UV: ', triangles);
                 } else {
                     // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
                     console.log("Cannot read non-indexed geometry!");
                     return [];
                 }
+                //
 
                 // load texture image
                 let texture = asset.gltf.textures[0];
@@ -121,14 +121,12 @@ export class GeometryLoader  {
                 console.log("imageUri", imageUri);
                 
                 if (texture.sampler != undefined) {
-                    // console.log("texture.sampler", texture.sampler);
                     textureSampler = [
                         asset.gltf.samplers[texture.sampler].magFilter,
                         asset.gltf.samplers[texture.sampler].minFilter,
                         asset.gltf.samplers[texture.sampler].wrapS,
                         asset.gltf.samplers[texture.sampler].wrapT
                     ];
-                    // console.log('sampler: ', textureSampler);
                 }
             }
         }
