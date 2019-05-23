@@ -12,6 +12,8 @@ export class Scene {
     
     private _bvh: BVH;
 
+    public textureImage: any;
+
     public constructor(camera: Camera) {
         this._camera = camera;
 

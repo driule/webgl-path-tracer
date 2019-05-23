@@ -115,7 +115,7 @@ export class PathTracer {
         // triangle data
         uniforms.triangles = this._scene.triangles;
         uniforms.totalTriangles = this._scene.triangles.length;
-        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 3));
+        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 6));
 
         // BVH data
         uniforms.bvhNodeList = this._scene.bvh.nodeStack;
@@ -131,6 +131,9 @@ export class PathTracer {
         uniforms.lights = this._scene.lights;
         uniforms.totalLights = this._scene.lights.length;
         uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
+
+        // texturing
+        uniforms.textureImage = this._scene.textureImage;
         
         // set uniforms
         this._tracerShader.use();

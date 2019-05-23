@@ -34,6 +34,7 @@ export class GeometryLoader  {
         let imageUri: string;
         let textureSampler: any[];
 
+
         // for each primitive of each mesh compose geometry data
         for (let m = 0; m < asset.gltf.meshes.length; m++) {
             for (let p = 0; p < asset.gltf.meshes[m].primitives.length; p++) {
@@ -61,6 +62,25 @@ export class GeometryLoader  {
                     let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * scale + translation[0], vertexArray[i * 3 + 1] * scale + translation[1], vertexArray[i * 3 + 2] * scale + translation[2]);
                     meshVertices.push(vertex);
                 }
+
+                //
+                // load texture coordinates
+                let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
+                let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
+                let texCoordData = await asset.accessorData(texCoordAccesorId);
+                
+                let texCoordArray = this.loadTypedArray(
+                    texCoordData.buffer,
+                    asset.gltf.accessors[texCoordAccesorId],
+                    asset.gltf.bufferViews[texCoordAccesor.bufferView]
+                );
+                
+                for (let i = 0; i < texCoordAccesor.count; i++) {
+                    let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
+                    textureCoordinates.push(texCoord);
+                }
+                console.log('texture coordinates: ', textureCoordinates);
+                //
             
                 // load vertex indices data
                 let indicesAccesorId = asset.gltf.meshes[m].primitives[p].indices;
@@ -79,31 +99,20 @@ export class GeometryLoader  {
                         let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
                         let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
                         let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
+
+                        let triangle: Triangle = new Triangle(a, b, c);
+                        triangle.uvA = textureCoordinates[meshIndices[i * 3 + 0]];
+                        triangle.uvB = textureCoordinates[meshIndices[i * 3 + 1]];
+                        triangle.uvC = textureCoordinates[meshIndices[i * 3 + 2]];
                 
-                        triangles.push(new Triangle(a, b, c));
+                        triangles.push(triangle);
                     }
+                    console.log('triangles with UV: ', triangles);
                 } else {
                     // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
                     console.log("Cannot read non-indexed geometry!");
                     return [];
                 }
-
-                // load texture coordinates
-                let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
-                let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
-                let texCoordData = await asset.accessorData(texCoordAccesorId);
-                
-                let texCoordArray = this.loadTypedArray(
-                    texCoordData.buffer,
-                    asset.gltf.accessors[texCoordAccesorId],
-                    asset.gltf.bufferViews[texCoordAccesor.bufferView]
-                );
-                
-                for (let i = 0; i < vertexAccesor.count; i++) {
-                    let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
-                    textureCoordinates.push(texCoord);
-                }
-                console.log('texture coordinates: ', textureCoordinates);
 
                 // load texture image
                 let texture = asset.gltf.textures[0];

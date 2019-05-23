@@ -1,6 +1,6 @@
 import { BoundingBox } from "./BoundingBox";
 
-import { vec3 } from "gl-matrix";
+import { vec3, vec2 } from "gl-matrix";
 
 export class Triangle {
 
@@ -8,12 +8,21 @@ export class Triangle {
     private _b: vec3;
     private _c: vec3;
 
+    // UV values for each triangle vertex
+    public uvA: vec2;
+    public uvB: vec2;
+    public uvC: vec2;
+
     private _boundingBox: BoundingBox;
 
     public constructor(a: vec3, b: vec3, c: vec3) {
         this._a = a;
         this._b = b;
         this._c = c;
+
+        this.uvA = vec2.fromValues(0.0, 0.0);
+        this.uvB = vec2.fromValues(0.0, 0.0);
+        this.uvC = vec2.fromValues(0.0, 0.0);
 
         let minX: number = Math.min(this._a[0], this._b[0], this._c[0]);
         let minY: number = Math.min(this._a[1], this._b[1], this._c[1]);

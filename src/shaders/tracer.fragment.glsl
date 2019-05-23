@@ -16,6 +16,7 @@ struct Sphere
 struct Triangle
 {
     vec3 a, b, c;
+    vec2 uvA, uvB, uvC;
 };
 
 struct Light
@@ -62,6 +63,9 @@ uniform sampler2D bvhDataTexture;
 uniform float triangleIndicesDataTextureSize;
 uniform sampler2D triangleIndicesDataTexture;
 
+// texturing
+uniform sampler2D textureImage;
+
 // lights
 uniform int totalLights;
 uniform float lightDataTextureSize;
@@ -80,11 +84,15 @@ vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
 }
 
 Triangle fetchTriangle(int id) {
-    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3 + 0), triangleDataTextureSize);
-    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);
-    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);
+    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 6 + 0), triangleDataTextureSize);
+    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 6 + 1), triangleDataTextureSize);
+    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 6 + 2), triangleDataTextureSize);
     
-    return Triangle(coordA, coordB, coordC);
+    vec3 uvA = getValueFromTexture(triangleDataTexture, float(id * 6 + 3), triangleDataTextureSize);
+    vec3 uvB = getValueFromTexture(triangleDataTexture, float(id * 6 + 4), triangleDataTextureSize);
+    vec3 uvC = getValueFromTexture(triangleDataTexture, float(id * 6 + 5), triangleDataTextureSize);
+    
+    return Triangle(coordA, coordB, coordC, vec2(uvA[0], uvA[1]), vec2(uvB[0], uvB[1]), vec2(uvC[0], uvC[1]));
 }
 
 Light fetchLight(int id) {
@@ -361,7 +369,29 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             t = intersection.t;
             hit = origin + ray * t;
             normal = getTriangleNormal(intersection.triangle);
-            surfaceColor = vec3(0.25, 0.00, 0.00);
+
+            //
+            // ToDo: map texture right here
+            //
+
+            // intersected triangles shortcut
+            Triangle tr = intersection.triangle;
+
+            vec2 uv;
+
+            float baryA = ((tr.b[1] - tr.c[1]) * (hit[0] - tr.c[0]) + (tr.c[0] - tr.b[0]) * (hit[1] - tr.c[1])) / ((tr.b[1] - tr.c[1]) * (tr.a[0] - tr.c[0]) + (tr.c[0] - tr.b[0]) * (tr.a[1] - tr.c[1]));
+            float baryB = ((tr.c[1] - tr.a[1]) * (hit[0] - tr.c[0]) + (tr.a[0] - tr.c[0]) * (hit[1] - tr.c[1])) / ((tr.b[1] - tr.c[1]) * (tr.a[0] - tr.c[0]) + (tr.c[0] - tr.b[0]) * (tr.a[1] - tr.c[1]));
+            float baryC = 1.0 - baryA - baryB;
+
+            uv = baryA * tr.uvA + baryB * tr.uvB + baryC * tr.uvC;
+
+            surfaceColor = texture(textureImage, uv).rgb;
+
+            // if (sin(hit[0]) > 0.0 && sin(hit[2]) > 0.0) {
+            //     surfaceColor = vec3(0.25, 0.00, 0.00);
+            // } else {
+            //     surfaceColor = vec3(0.0, 0.25, 0.00);
+            // }
         }
 
         float tLight = INFINITY;
