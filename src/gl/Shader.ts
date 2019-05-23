@@ -38,11 +38,6 @@ export class Shader {
         return this._uniforms[name];
     }
 
-    private isPowerOf2(value: number): boolean {
-        console.log('isPowerof2? : ', value);
-        return (value & (value - 1)) == 0;
-    }
-
     // TODO: this is very badly harcoded way to set uniforms
     public setUniforms(uniforms: any): void {
         for (let name in uniforms) {
@@ -80,10 +75,18 @@ export class Shader {
                 gl.activeTexture(gl.TEXTURE1);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
+                // maybe working or read sampler from gltf file (?)
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                // from duck gltf
+                // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texParameter
+                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR); // ( i ? f )
+                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
                 

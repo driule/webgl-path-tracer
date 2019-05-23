@@ -405,7 +405,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
         vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
         float diffuse = max(0.0, dot(normalize(toLight), normal));
-        float shadowIntensity = getShadowIntensity(hit + normal, toLight);
+        float shadowIntensity = getShadowIntensity(hit + normal + EPSILON, toLight);
         
         colorMask *= surfaceColor;
         accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity) * energyMultiplier;

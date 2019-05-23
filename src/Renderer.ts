@@ -29,8 +29,7 @@ export class Renderer {
     }
 
     public tick(timeSinceStart: number): void {
-        this._pathTracer.update(timeSinceStart / 1000.0);
-        this._pathTracer.render();
+        this._pathTracer.render(timeSinceStart / 1000.0);
 
         this._gauge.measureFPS();
 
@@ -51,12 +50,13 @@ export class Renderer {
         this._gauge.primitiveCount = this._scene.triangles.length;
         this._scene.camera.calculateViewProjection();
         this._pathTracer.setScene(this._scene);
-        this._pathTracer.restart();
+        // this._pathTracer.restart();
     }
 
     public setScene(scene: Scene): void {
         this._scene = scene;
-        this.restart();
+        this._pathTracer.setScene(this._scene);
+        // this._pathTracer.restart();
     }
 
     //

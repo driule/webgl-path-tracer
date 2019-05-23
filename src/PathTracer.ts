@@ -57,7 +57,27 @@ export class PathTracer {
         this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
     }
 
-    public update(timeSinceStart: number): void {
+    public render(timeSinceStart: number): void {
+        this.update(timeSinceStart);
+        this._renderShader.use();
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
+        
+        this._vertexBuffer.draw();
+    }
+
+    public setScene(scene: Scene): void {
+        this._scene = scene;
+        this.setShaderGeometry();
+        this.restart();
+    }
+    
+    private restart(): void {
+        this._sampleCount = 0;
+    }
+    
+    private update(timeSinceStart: number): void {
 
         // calculate uniforms
         let uniforms: any = {};
@@ -84,25 +104,6 @@ export class PathTracer {
         // ping pong textures
         this._textures.reverse();
         this._sampleCount++;
-    }
-
-    public render(): void {
-        this._renderShader.use();
-
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
-        
-        this._vertexBuffer.draw();
-    }
-
-    public setScene(scene: Scene): void {
-        this._scene = scene;
-        this.setShaderGeometry();
-        this.restart();
-    }
-    
-    public restart(): void {
-        this._sampleCount = 0;
     }
     
     private setShaderGeometry(): void {

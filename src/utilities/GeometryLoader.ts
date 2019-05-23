@@ -118,7 +118,7 @@ export class GeometryLoader  {
                 // load texture image
                 let texture = asset.gltf.textures[0];
                 imageUri = path + asset.gltf.images[texture.source].uri;
-                console.log("imageUri", imageUri);
+                // console.log("imageUri", imageUri);
                 
                 if (texture.sampler != undefined) {
                     textureSampler = [
