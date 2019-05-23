@@ -22,12 +22,13 @@ export class GeometryLoader  {
     // mesh contains primitives which attribute POSITION refers to the accessor which describes how to use bufferView (slice of the whole buffer).
 
     public static async loadGltf(
-        uri: string = "assets/models/duck/Duck.gltf",
+        path: string = "assets/models/duck/",
+        fileName: string = "Duck.gltf",
         scale: number = 1.0,
         translation: vec3 = vec3.fromValues(0, 0, 0)
     ): Promise<any> {
         let loader = new GltfLoader();
-        let asset: GltfAsset = await loader.load(uri);
+        let asset: GltfAsset = await loader.load(path + fileName);
 
         let triangles: Triangle[] = [];
         let textureCoordinates: vec2[] = [];
@@ -79,7 +80,7 @@ export class GeometryLoader  {
                     let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
                     textureCoordinates.push(texCoord);
                 }
-                console.log('texture coordinates: ', textureCoordinates);
+                // console.log('texture coordinates: ', textureCoordinates);
                 //
             
                 // load vertex indices data
@@ -107,7 +108,7 @@ export class GeometryLoader  {
                 
                         triangles.push(triangle);
                     }
-                    console.log('triangles with UV: ', triangles);
+                    // console.log('triangles with UV: ', triangles);
                 } else {
                     // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
                     console.log("Cannot read non-indexed geometry!");
@@ -116,18 +117,18 @@ export class GeometryLoader  {
 
                 // load texture image
                 let texture = asset.gltf.textures[0];
-                imageUri = "assets/models/avocado/" + asset.gltf.images[texture.source].uri;
+                imageUri = path + asset.gltf.images[texture.source].uri;
                 console.log("imageUri", imageUri);
                 
                 if (texture.sampler != undefined) {
-                    console.log("texture.sampler", texture.sampler);
+                    // console.log("texture.sampler", texture.sampler);
                     textureSampler = [
                         asset.gltf.samplers[texture.sampler].magFilter,
                         asset.gltf.samplers[texture.sampler].minFilter,
                         asset.gltf.samplers[texture.sampler].wrapS,
                         asset.gltf.samplers[texture.sampler].wrapT
                     ];
-                    console.log('sampler: ', textureSampler);
+                    // console.log('sampler: ', textureSampler);
                 }
             }
         }

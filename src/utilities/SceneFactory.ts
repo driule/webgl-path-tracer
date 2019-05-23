@@ -7,6 +7,15 @@ import { Triangle } from "../geometry/Triangle";
 
 export class SceneFactory  {
 
+    private static async loadImage(src: string){
+        return new Promise((resolve, reject) => {
+            let image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = src;
+        });
+    }
+
     static async createSponzaScene(canvas: HTMLCanvasElement) {
         console.log("Please wait! Loading sponza scene...");
 
@@ -16,7 +25,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-75.25, 20.75, 0.25), 0.15, 15.0)
         ];
         let camera = new Camera(canvas, [0.75, 15.75, 175.5], [0.0, 225.0, 0.0], 12.5);
-        let geometry: any = await GeometryLoader.loadGltf("assets/models/sponza/Sponza.gltf");
+        let geometry: any = await GeometryLoader.loadGltf("assets/models/sponza/", "Sponza.gltf");
     
         let scene = new Scene(camera);
         scene.setLights(lights);
@@ -34,14 +43,13 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-2.25, 2.75, -1.75), 0.15, 15.0)
         ];
         let camera = new Camera(canvas, [0.75, 10.75, 12.5], [0.0, 2.5, 0.0], 0.25);
-        let geometry: any = await GeometryLoader.loadGltf("assets/models/avocado/Avocado.gltf", 100);
+        let geometry: any = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", 100);
     
         let scene = new Scene(camera);
         scene.setLights(lights);
         scene.setTriangles(geometry["triangles"]);
 
-        scene.textureImage = new Image();
-        scene.textureImage.src = geometry["textureImage"];
+        scene.textureImage = await this.loadImage(geometry["textureImage"]);
     
         return scene;
     }
@@ -53,11 +61,13 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
         ];
         let camera = new Camera(canvas, [0.2, 0.75, 275.0], [0.0, 75.0, 0.0], 2.0);
-        let geometry: any = await GeometryLoader.loadGltf("assets/models/duck/Duck.gltf");
+        let geometry: any = await GeometryLoader.loadGltf("assets/models/duck/", "Duck.gltf");
     
         let scene = new Scene(camera);
         scene.setLights(lights);
         scene.setTriangles(geometry["triangles"]);
+
+        scene.textureImage = await this.loadImage(geometry["textureImage"]);
     
         return scene;
     }
@@ -69,11 +79,13 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
         ];
         let camera = new Camera(canvas, [0.2, 5.75, 0.5], [0.0, 0.0, 0.0], 0.05);
-        let geometry: any = await GeometryLoader.loadGltf("assets/models/bottle/WaterBottle.gltf");
+        let geometry: any = await GeometryLoader.loadGltf("assets/models/bottle/", "WaterBottle.gltf");
     
         let scene = new Scene(camera);
         scene.setLights(lights);
         scene.setTriangles(geometry["triangles"]);
+
+        scene.textureImage = await this.loadImage(geometry["textureImage"]);
     
         return scene;
     }
