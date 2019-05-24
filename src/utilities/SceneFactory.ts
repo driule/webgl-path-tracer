@@ -7,9 +7,9 @@ import { Triangle } from "../geometry/Triangle";
 
 export class SceneFactory  {
 
-    private static async loadImage(src: string){
+    private static async loadImage(src: string): Promise<HTMLImageElement> {
         return new Promise((resolve, reject) => {
-            let image = new Image();
+            let image: HTMLImageElement = new Image();
             image.onload = () => resolve(image);
             image.onerror = reject;
             image.src = src;

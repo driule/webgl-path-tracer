@@ -12,7 +12,7 @@ export class Scene {
     
     private _bvh: BVH;
 
-    public textureImage: any;
+    public textureImage: HTMLImageElement;
 
     public constructor(camera: Camera) {
         this._camera = camera;
