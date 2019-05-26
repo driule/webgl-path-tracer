@@ -346,6 +346,8 @@ Light getRandomLight() {
 }
 
 vec3 calculateColor(vec3 origin, vec3 ray) {
+    ray = normalize(ray);
+
     vec3 accumulatedColor = vec3(0.0);
     vec3 surfaceColor = vec3(0.75);
     vec3 lightColor = vec3(1.0, 1.0, 0.85);
@@ -376,9 +378,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             hit = origin + ray * t;
             normal = getTriangleNormal(intersection.triangle);
 
-            //
             // texture mapping
-            //
             Triangle tri = intersection.triangle;
 
             float baryA = ((tri.b[1] - tri.c[1]) * (hit[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (hit[1] - tri.c[1])) / ((tri.b[1] - tri.c[1]) * (tri.a[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (tri.a[1] - tri.c[1]));
@@ -388,6 +388,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             vec2 uv = baryA * tri.uvA + baryB * tri.uvB + baryC * tri.uvC;
 
             surfaceColor = texture(textureImage, uv).rgb;
+            //
         }
 
         float tLight = INFINITY;
@@ -404,13 +405,12 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         if (abs(t - INFINITY) < EPSILON) {
 
             // skydome sampling
-            ray = normalize(ray); // important to normalize!!
             float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
             float v = acos(ray.y) * INVERSE_PI;
 
-            int pixel = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
+            int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
 
-            accumulatedColor += colorMask * getValueFromTexture(skydomeTexture, float(pixel), skydomeTextureSize);
+            accumulatedColor += colorMask * getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
             //
 
             break;
