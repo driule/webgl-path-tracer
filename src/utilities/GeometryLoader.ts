@@ -22,17 +22,19 @@ export class GeometryLoader  {
     // mesh contains primitives which attribute POSITION refers to the accessor which describes how to use bufferView (slice of the whole buffer).
 
     public static async loadGltf(
-        uri: string = "assets/models/duck/Duck.gltf",
+        path: string = "assets/models/duck/",
+        fileName: string = "Duck.gltf",
         scale: number = 1.0,
         translation: vec3 = vec3.fromValues(0, 0, 0)
     ): Promise<any> {
         let loader = new GltfLoader();
-        let asset: GltfAsset = await loader.load(uri);
+        let asset: GltfAsset = await loader.load(path + fileName);
 
         let triangles: Triangle[] = [];
         let textureCoordinates: vec2[] = [];
         let imageUri: string;
         let textureSampler: any[];
+
 
         // for each primitive of each mesh compose geometry data
         for (let m = 0; m < asset.gltf.meshes.length; m++) {
@@ -44,6 +46,7 @@ export class GeometryLoader  {
                     console.log("Geometry rendering mode is not triangular! Cannot read GLTF file with mode: ", renderingMode);
                     return [];
                 }
+                //
 
                 // load vertex data
                 let vertexAccesorId = asset.gltf.meshes[m].primitives[p].attributes.POSITION;
@@ -61,6 +64,24 @@ export class GeometryLoader  {
                     let vertex: vec3 = vec3.fromValues(vertexArray[i * 3 + 0] * scale + translation[0], vertexArray[i * 3 + 1] * scale + translation[1], vertexArray[i * 3 + 2] * scale + translation[2]);
                     meshVertices.push(vertex);
                 }
+                //
+
+                // load texture coordinates
+                let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
+                let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
+                let texCoordData = await asset.accessorData(texCoordAccesorId);
+                
+                let texCoordArray = this.loadTypedArray(
+                    texCoordData.buffer,
+                    asset.gltf.accessors[texCoordAccesorId],
+                    asset.gltf.bufferViews[texCoordAccesor.bufferView]
+                );
+                
+                for (let i = 0; i < texCoordAccesor.count; i++) {
+                    let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
+                    textureCoordinates.push(texCoord);
+                }
+                //
             
                 // load vertex indices data
                 let indicesAccesorId = asset.gltf.meshes[m].primitives[p].indices;
@@ -79,46 +100,33 @@ export class GeometryLoader  {
                         let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
                         let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
                         let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
+
+                        let triangle: Triangle = new Triangle(a, b, c);
+                        triangle.uvA = textureCoordinates[meshIndices[i * 3 + 0]];
+                        triangle.uvB = textureCoordinates[meshIndices[i * 3 + 1]];
+                        triangle.uvC = textureCoordinates[meshIndices[i * 3 + 2]];
                 
-                        triangles.push(new Triangle(a, b, c));
+                        triangles.push(triangle);
                     }
                 } else {
                     // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
                     console.log("Cannot read non-indexed geometry!");
                     return [];
                 }
-
-                // load texture coordinates
-                let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
-                let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
-                let texCoordData = await asset.accessorData(texCoordAccesorId);
-                
-                let texCoordArray = this.loadTypedArray(
-                    texCoordData.buffer,
-                    asset.gltf.accessors[texCoordAccesorId],
-                    asset.gltf.bufferViews[texCoordAccesor.bufferView]
-                );
-                
-                for (let i = 0; i < vertexAccesor.count; i++) {
-                    let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
-                    textureCoordinates.push(texCoord);
-                }
-                console.log('texture coordinates: ', textureCoordinates);
+                //
 
                 // load texture image
                 let texture = asset.gltf.textures[0];
-                imageUri = "assets/models/avocado/" + asset.gltf.images[texture.source].uri;
-                console.log("imageUri", imageUri);
+                imageUri = path + asset.gltf.images[texture.source].uri;
+                // console.log("imageUri", imageUri);
                 
                 if (texture.sampler != undefined) {
-                    console.log("texture.sampler", texture.sampler);
                     textureSampler = [
                         asset.gltf.samplers[texture.sampler].magFilter,
                         asset.gltf.samplers[texture.sampler].minFilter,
                         asset.gltf.samplers[texture.sampler].wrapS,
                         asset.gltf.samplers[texture.sampler].wrapT
                     ];
-                    console.log('sampler: ', textureSampler);
                 }
             }
         }

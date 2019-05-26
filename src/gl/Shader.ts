@@ -47,26 +47,42 @@ export class Shader {
 
                 let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
                 for (let i = 0; i < uniforms.totalTriangles; i++) {
-                    triangleList[i * 3 * 3 + 0] = uniforms.triangles[i].a[0];
-                    triangleList[i * 3 * 3 + 1] = uniforms.triangles[i].a[1];
-                    triangleList[i * 3 * 3 + 2] = uniforms.triangles[i].a[2];
+                    triangleList[i * 3 * 5 + 0] = uniforms.triangles[i].a[0];
+                    triangleList[i * 3 * 5 + 1] = uniforms.triangles[i].a[1];
+                    triangleList[i * 3 * 5 + 2] = uniforms.triangles[i].a[2];
 
-                    triangleList[i * 3 * 3 + 3] = uniforms.triangles[i].b[0];
-                    triangleList[i * 3 * 3 + 4] = uniforms.triangles[i].b[1];
-                    triangleList[i * 3 * 3 + 5] = uniforms.triangles[i].b[2];
+                    triangleList[i * 3 * 5 + 3] = uniforms.triangles[i].b[0];
+                    triangleList[i * 3 * 5 + 4] = uniforms.triangles[i].b[1];
+                    triangleList[i * 3 * 5 + 5] = uniforms.triangles[i].b[2];
 
-                    triangleList[i * 3 * 3 + 6] = uniforms.triangles[i].c[0];
-                    triangleList[i * 3 * 3 + 7] = uniforms.triangles[i].c[1];
-                    triangleList[i * 3 * 3 + 8] = uniforms.triangles[i].c[2];
+                    triangleList[i * 3 * 5 + 6] = uniforms.triangles[i].c[0];
+                    triangleList[i * 3 * 5 + 7] = uniforms.triangles[i].c[1];
+                    triangleList[i * 3 * 5 + 8] = uniforms.triangles[i].c[2];
+
+                    triangleList[i * 3 * 5 + 9] = uniforms.triangles[i].uvA[0];
+                    triangleList[i * 3 * 5 + 10] = uniforms.triangles[i].uvA[1];
+                    triangleList[i * 3 * 5 + 11] = uniforms.triangles[i].uvB[0];
+                    
+                    triangleList[i * 3 * 5 + 12] = uniforms.triangles[i].uvB[1];
+                    triangleList[i * 3 * 5 + 13] = uniforms.triangles[i].uvC[0];
+                    triangleList[i * 3 * 5 + 14] = uniforms.triangles[i].uvC[1];
                 }
 
                 gl.activeTexture(gl.TEXTURE1);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
+                // maybe working; or read sampler from gltf file (?)
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                // from duck gltf
+                // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texParameter
+                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR); // ( i ? f )
+                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
                 
@@ -86,7 +102,7 @@ export class Shader {
 
                     lightList[i * 3 * 2 + 3] = uniforms.lights[i].radius;
                     lightList[i * 3 * 2 + 4] = uniforms.lights[i].intensity;
-                    lightList[i * 3 * 2 + 5] = 0.0;
+                    lightList[i * 3 * 2 + 5] = 1.0;
                 }
 
                 gl.activeTexture(gl.TEXTURE2);
@@ -125,8 +141,8 @@ export class Shader {
                         bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                         bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
                     } else {
-                        bvhNodeDataList[i * 3 * 4 + 9] = 0.0;
-                        bvhNodeDataList[i * 3 * 4 + 10] = 0.0;
+                        bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].id;
+                        bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].id;
                     }
                     bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
                 }
@@ -172,6 +188,46 @@ export class Shader {
                 continue;
             }
 
+            if (name.toString() === "textureImage") {
+                gl.activeTexture(gl.TEXTURE5);
+                gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, uniforms.textureImage);
+
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+                let textureImageLocation = gl.getUniformLocation(this._program, "textureImage");
+                gl.uniform1i(textureImageLocation, 5);
+
+                continue;
+            }
+
+            if (name.toString() === "skydome") {
+                let rgbList = new Float32Array(uniforms.skydomeTextureSize * uniforms.skydomeTextureSize * 3);
+                for (let i = 0; i < uniforms.skydomeWidth * uniforms.skydomeHeight; i++) {
+                    rgbList[i * 3 + 0] = uniforms.skydome.data[i * 4 + 0];
+                    rgbList[i * 3 + 1] = uniforms.skydome.data[i * 4 + 1];
+                    rgbList[i * 3 + 2] = uniforms.skydome.data[i * 4 + 2];
+                }
+
+                gl.activeTexture(gl.TEXTURE6);
+                gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.skydomeTextureSize, uniforms.skydomeTextureSize, 0, gl.RGB, gl.FLOAT, rgbList);
+
+                let skydomeTextureLocation = gl.getUniformLocation(this._program, "skydomeTexture");
+                gl.uniform1i(skydomeTextureLocation, 6);
+
+                continue;
+            }
+
             let location = gl.getUniformLocation(this._program, name);
             if (location == null) continue;
 
@@ -189,7 +245,10 @@ export class Shader {
             var intUniforms = [
                 "totalTriangles",
                 "totalBvhNodes",
-                "totalLights"
+                "totalLights",
+                "isSkydomeLoaded",
+                "skydomeWidth",
+                "skydomeHeight",
             ];
             var floatUniforms = [
                 "timeSinceStart",
@@ -197,7 +256,8 @@ export class Shader {
                 "triangleDataTextureSize",
                 "bvhDataTextureSize",
                 "triangleIndicesDataTextureSize",
-                "lightDataTextureSize"
+                "lightDataTextureSize",
+                "skydomeTextureSize"
             ];
     
             let value = uniforms[name];

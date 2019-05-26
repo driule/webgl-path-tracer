@@ -57,36 +57,8 @@ export class PathTracer {
         this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
     }
 
-    public update(timeSinceStart: number): void {
-
-        // calculate uniforms
-        let uniforms: any = {};
-        uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1);
-        uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1);
-        uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1);
-        uniforms.ray11 = this._scene.camera.getEyeRay(+1, +1);
-        uniforms.timeSinceStart = timeSinceStart;
-        uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
-        
-        // set uniforms
-        this._tracerShader.use();
-        this._tracerShader.setUniforms(uniforms);
-
-        // render to texture
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._framebuffer);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._textures[1], 0);
-
-        this._vertexBuffer.upload();
-        this._vertexBuffer.draw();
-        
-        // ping pong textures
-        this._textures.reverse();
-        this._sampleCount++;
-    }
-
-    public render(): void {
+    public render(timeSinceStart: number): void {
+        this.update(timeSinceStart);
         this._renderShader.use();
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -105,17 +77,43 @@ export class PathTracer {
         this._sampleCount = 0;
     }
     
+    private update(timeSinceStart: number): void {
+        let uniforms: any = {};
+        uniforms.eye = this._scene.camera.eye;
+        uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1);
+        uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1);
+        uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1);
+        uniforms.ray11 = this._scene.camera.getEyeRay(+1, +1);
+        uniforms.timeSinceStart = timeSinceStart;
+        uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
+        
+        this._tracerShader.use();
+        this._tracerShader.setUniforms(uniforms);
+
+        // render to texture
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this._framebuffer);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._textures[1], 0);
+
+        this._vertexBuffer.upload();
+        this._vertexBuffer.draw();
+        
+        // ping pong textures
+        this._textures.reverse();
+        this._sampleCount++;
+    }
+    
     private setShaderGeometry(): void {
         let uniforms: any = {};
 
         uniforms.resolution = [this._canvas.width, this._canvas.height];
-        uniforms.eye = this._scene.camera.eye;
         uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
         // triangle data
         uniforms.triangles = this._scene.triangles;
         uniforms.totalTriangles = this._scene.triangles.length;
-        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 3));
+        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 5));
 
         // BVH data
         uniforms.bvhNodeList = this._scene.bvh.nodeStack;
@@ -131,8 +129,22 @@ export class PathTracer {
         uniforms.lights = this._scene.lights;
         uniforms.totalLights = this._scene.lights.length;
         uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
+
+        // texturing
+        if (this._scene.textureImage != undefined) {
+            uniforms.textureImage = this._scene.textureImage;
+        }
+
+        // skydome
+        uniforms.isSkydomeLoaded = false;
+        if (this._scene.skydome != undefined) {
+            uniforms.isSkydomeLoaded = true;
+            uniforms.skydome = this._scene.skydome;
+            uniforms.skydomeTextureSize = Math.ceil(Math.sqrt(this._scene.skydome.shape[0] * this._scene.skydome.shape[0] * 3));
+            uniforms.skydomeWidth = this._scene.skydome.shape[0];
+            uniforms.skydomeHeight = this._scene.skydome.shape[1];
+        }
         
-        // set uniforms
         this._tracerShader.use();
         this._tracerShader.setUniforms(uniforms);
     }

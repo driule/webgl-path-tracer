@@ -12,11 +12,17 @@ export class Scene {
     
     private _bvh: BVH;
 
+    public textureImage: HTMLImageElement;
+    public skydome: any;
+
     public constructor(camera: Camera) {
         this._camera = camera;
 
         this._triangles = [];
         this._lights = [];
+
+        // ToDo: check
+        this.textureImage = undefined;
     }
 
     public get camera(): Camera {

@@ -29,14 +29,19 @@ export class Renderer {
     }
 
     public tick(timeSinceStart: number): void {
-        this._pathTracer.update(timeSinceStart / 1000.0);
-        this._pathTracer.render();
+        this._pathTracer.render(timeSinceStart / 1000.0);
 
         this._gauge.measureFPS();
 
         if (this._isRendering) {
             requestAnimationFrame(this.tick.bind(this));
         }
+    }
+
+    public setScene(scene: Scene): void {
+        this._scene = scene;
+        this._pathTracer.setScene(this._scene);
+        this._gauge.primitiveCount = this._scene.triangles.length;
     }
 
     public pause(): void {
@@ -48,15 +53,8 @@ export class Renderer {
     }
 
     private restart(): void {
-        this._gauge.primitiveCount = this._scene.triangles.length;
         this._scene.camera.calculateViewProjection();
-        this._pathTracer.setScene(this._scene);
         this._pathTracer.restart();
-    }
-
-    public setScene(scene: Scene): void {
-        this._scene = scene;
-        this.restart();
     }
 
     //

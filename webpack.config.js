@@ -26,7 +26,7 @@ const path = require('path');
       ]
     },
     resolve: {
-      extensions: [ '.tsx', '.ts', '.js', '.glsl', 'gltf' ]
+      extensions: [ '.tsx', '.ts', '.js', '.glsl', '.gltf' ]
     },
     output: {
       filename: 'pathTracer.js',

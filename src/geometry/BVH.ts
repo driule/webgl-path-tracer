@@ -63,8 +63,13 @@ export class BVH {
     }
 
     private subdivide(node: BoundingBox, depth: number): void {
-        if (node.count <= 3 || depth >= 15) {
+        if (node.count <= 3 || depth >= 25) {
             node.isLeaf = true;
+
+            if (node.count > 15) {
+                console.log("node; depth:", node, depth);
+            }
+
             return;
         }
         

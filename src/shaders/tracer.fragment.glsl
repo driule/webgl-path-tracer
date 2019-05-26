@@ -5,7 +5,10 @@
 #define BOUNCES 3
 #define EPSILON 0.0001
 #define INFINITY 10000.0
-#define STACK_SIZE 128
+#define STACK_SIZE 256
+
+#define PI 3.14159
+#define INVERSE_PI 1.0 / PI
 
 struct Sphere
 {
@@ -16,6 +19,7 @@ struct Sphere
 struct Triangle
 {
     vec3 a, b, c;
+    vec2 uvA, uvB, uvC;
 };
 
 struct Light
@@ -62,6 +66,16 @@ uniform sampler2D bvhDataTexture;
 uniform float triangleIndicesDataTextureSize;
 uniform sampler2D triangleIndicesDataTexture;
 
+// texturing
+uniform sampler2D textureImage;
+
+// skydome
+uniform bool isSkydomeLoaded;
+uniform float skydomeTextureSize;
+uniform sampler2D skydomeTexture;
+uniform int skydomeWidth;
+uniform int skydomeHeight;
+
 // lights
 uniform int totalLights;
 uniform float lightDataTextureSize;
@@ -80,11 +94,14 @@ vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
 }
 
 Triangle fetchTriangle(int id) {
-    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 3 + 0), triangleDataTextureSize);
-    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 3 + 1), triangleDataTextureSize);
-    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 3 + 2), triangleDataTextureSize);
+    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 5 + 0), triangleDataTextureSize);
+    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 5 + 1), triangleDataTextureSize);
+    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 5 + 2), triangleDataTextureSize);
     
-    return Triangle(coordA, coordB, coordC);
+    vec3 uv1 = getValueFromTexture(triangleDataTexture, float(id * 5 + 3), triangleDataTextureSize);
+    vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 5 + 4), triangleDataTextureSize);
+    
+    return Triangle(coordA, coordB, coordC, vec2(uv1[0], uv1[1]), vec2(uv1[2], uv2[0]), vec2(uv2[1], uv2[2]));
 }
 
 Light fetchLight(int id) {
@@ -332,6 +349,8 @@ Light getRandomLight() {
 }
 
 vec3 calculateColor(vec3 origin, vec3 ray) {
+    ray = normalize(ray);
+
     vec3 accumulatedColor = vec3(0.0);
     vec3 surfaceColor = vec3(0.75);
     vec3 lightColor = vec3(1.0, 1.0, 0.85);
@@ -361,7 +380,18 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             t = intersection.t;
             hit = origin + ray * t;
             normal = getTriangleNormal(intersection.triangle);
-            surfaceColor = vec3(0.25, 0.00, 0.00);
+
+            // texture mapping
+            Triangle tri = intersection.triangle;
+
+            float baryA = ((tri.b[1] - tri.c[1]) * (hit[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (hit[1] - tri.c[1])) / ((tri.b[1] - tri.c[1]) * (tri.a[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (tri.a[1] - tri.c[1]));
+            float baryB = ((tri.c[1] - tri.a[1]) * (hit[0] - tri.c[0]) + (tri.a[0] - tri.c[0]) * (hit[1] - tri.c[1])) / ((tri.b[1] - tri.c[1]) * (tri.a[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (tri.a[1] - tri.c[1]));
+            float baryC = 1.0 - baryA - baryB;
+
+            vec2 uv = baryA * tri.uvA + baryB * tri.uvB + baryC * tri.uvC;
+
+            surfaceColor = texture(textureImage, uv).rgb;
+            //
         }
 
         float tLight = INFINITY;
@@ -376,6 +406,17 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         }
         
         if (abs(t - INFINITY) < EPSILON) {
+
+            // skydome sampling
+            if (isSkydomeLoaded) {
+                float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
+                float v = acos(ray.y) * INVERSE_PI;
+
+                int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
+
+                accumulatedColor += colorMask * getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
+            }
+
             break;
         } else {
             ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
@@ -385,7 +426,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
         vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
         float diffuse = max(0.0, dot(normalize(toLight), normal));
-        float shadowIntensity = getShadowIntensity(hit + normal, toLight);
+        float shadowIntensity = getShadowIntensity(hit + normal + EPSILON, toLight);
         
         colorMask *= surfaceColor;
         accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity) * energyMultiplier;
