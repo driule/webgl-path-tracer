@@ -28,7 +28,7 @@ export class SceneFactory  {
         });
     }
 
-    static async createSponzaScene(canvas: HTMLCanvasElement) {
+    public static async createSponzaScene(canvas: HTMLCanvasElement) {
         console.log("Please wait! Loading sponza scene...");
 
         let lights: Light[] = [
@@ -48,7 +48,7 @@ export class SceneFactory  {
         return scene;
     }
 
-    static async createAvocadoScene(canvas: HTMLCanvasElement) {
+    public static async createAvocadoScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
             new Light(vec3.fromValues(-0.5, 2.75, 12.5), 0.25, 7.5),
             new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 10.0),
@@ -62,12 +62,12 @@ export class SceneFactory  {
         scene.setTriangles(geometry["triangles"]);
 
         scene.textureImage = await this.loadImage(geometry["textureImage"]);
-        scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/space.hdr"));
+        // scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/space.hdr"));
     
         return scene;
     }
     
-    static async createDuckScene(canvas: HTMLCanvasElement) {
+    public static async createDuckScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
             new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 3.0),
             new Light(vec3.fromValues(200.25, 22.75, -20.25), 1.5, 1.0),
@@ -86,25 +86,26 @@ export class SceneFactory  {
         return scene;
     }
     
-    static async createBottleScene(canvas: HTMLCanvasElement) {
+    public static async createSuzanneScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
-            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 35.0),
-            new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 10.0),
-            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 15.0)
+            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 1.0),
+            new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 1.0),
+            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.5)
         ];
-        let camera = new Camera(canvas, [0.2, 5.75, 0.5], [0.0, 0.0, 0.0], 0.05);
-        let geometry: any = await GeometryLoader.loadGltf("assets/models/bottle/", "WaterBottle.gltf");
+        let camera = new Camera(canvas, [0.2, 5.75, 2.5], [0.0, 0.0, 0.0], 0.05);
+        let geometry: any = await GeometryLoader.loadGltf("assets/models/suzanne/", "Suzanne.gltf");
     
         let scene = new Scene(camera);
         scene.setLights(lights);
         scene.setTriangles(geometry["triangles"]);
 
         scene.textureImage = await this.loadImage(geometry["textureImage"]);
+        scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/space.hdr"));
     
         return scene;
     }
     
-    static async createBasicScene(canvas: HTMLCanvasElement) {
+    public static async createBasicScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
             new Light(vec3.fromValues(0.0, 1.75, 0.25), 0.25, 12.5),
         ];

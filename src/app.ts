@@ -151,7 +151,7 @@ async function onButtonDown(event: MouseEvent) {
         } if (element.id == "changeScene2") {
             renderer.setScene(await SceneFactory.createDuckScene(canvas));
         } if (element.id == "changeScene3") {
-            renderer.setScene(await SceneFactory.createBottleScene(canvas));
+            renderer.setScene(await SceneFactory.createSuzanneScene(canvas));
         } if (element.id == "changeScene4") {
             renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
         } if (element.id == "changeScene5") {
