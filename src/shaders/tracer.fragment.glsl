@@ -6,6 +6,7 @@
 #define EPSILON 0.0001
 #define INFINITY 10000.0
 #define STACK_SIZE 256
+#define INVERSE_PI 1.0 / 3.14159
 
 struct Sphere
 {
@@ -65,6 +66,12 @@ uniform sampler2D triangleIndicesDataTexture;
 
 // texturing
 uniform sampler2D textureImage;
+
+// skydome
+uniform float skydomeTextureSize;
+uniform sampler2D skydomeTexture;
+uniform int skydomeWidth;
+uniform int skydomeHeight;
 
 // lights
 uniform int totalLights;
@@ -395,6 +402,16 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         }
         
         if (abs(t - INFINITY) < EPSILON) {
+
+            // skydome sampling
+            float u = mod(0.5 * (1.0 + atan(ray.x, -ray.z) * INVERSE_PI), 1.0);
+            float v = acos(ray.y) * INVERSE_PI;
+
+            int pixel = int(u * float(skydomeWidth - 1)) + (int(v * float(skydomeHeight - 1)) * skydomeWidth);
+
+            accumulatedColor += colorMask * getValueFromTexture(skydomeTexture, float(pixel), skydomeTextureSize);
+            //
+
             break;
         } else {
             ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);

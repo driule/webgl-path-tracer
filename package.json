@@ -4,7 +4,8 @@
   "description": "Utrecht University WebGL Path Tracer",
   "private": true,
   "dependencies": {
-    "gl-matrix": "^3.0.0"
+    "gl-matrix": "^3.0.0",
+    "parse-hdr": "^1.0.0"
   },
   "devDependencies": {
     "@types/gl-matrix": "^2.4.5",

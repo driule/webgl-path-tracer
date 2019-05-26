@@ -5,6 +5,8 @@ import { GeometryLoader } from "./GeometryLoader";
 import { Scene } from "../Scene";
 import { Triangle } from "../geometry/Triangle";
 
+const parseHDR = require('parse-hdr');
+
 export class SceneFactory  {
 
     private static async loadImage(src: string): Promise<HTMLImageElement> {
@@ -13,6 +15,16 @@ export class SceneFactory  {
             image.onload = () => resolve(image);
             image.onerror = reject;
             image.src = src;
+        });
+    }
+
+    private static async loadSkydome(src: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            let request = new XMLHttpRequest();
+            request.open("GET", src, true);
+            request.responseType = "arraybuffer";
+            request.onload = () => resolve(request.response);
+            request.send(null);
         });
     }
 
@@ -50,6 +62,7 @@ export class SceneFactory  {
         scene.setTriangles(geometry["triangles"]);
 
         scene.textureImage = await this.loadImage(geometry["textureImage"]);
+        scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/autumn.hdr"));
     
         return scene;
     }

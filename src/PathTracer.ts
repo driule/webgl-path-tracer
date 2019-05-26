@@ -134,6 +134,14 @@ export class PathTracer {
         if (this._scene.textureImage != undefined) {
             uniforms.textureImage = this._scene.textureImage;
         }
+
+        // skydome
+        if (this._scene.skydome != undefined) {
+            uniforms.skydome = this._scene.skydome;
+            uniforms.skydomeTextureSize = 2048;//Math.ceil(Math.sqrt(this._scene.skydome.data.length) * 3);
+            uniforms.skydomeWidth = this._scene.skydome.shape[0];
+            uniforms.skydomeHeight = this._scene.skydome.shape[1];
+        }
         
         this._tracerShader.use();
         this._tracerShader.setUniforms(uniforms);

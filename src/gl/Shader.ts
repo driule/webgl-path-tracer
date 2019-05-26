@@ -204,6 +204,30 @@ export class Shader {
                 continue;
             }
 
+            if (name.toString() === "skydome") {
+                // console.log('uniforms.skydomeTextureSize', uniforms.skydomeTextureSize);
+                // console.log('uniforms.skydome.data', uniforms.skydome.data);
+                // console.log('uniforms.skydomeWidth', uniforms.skydomeWidth);
+                // console.log('uniforms.skydomeHeight', uniforms.skydomeHeight);
+
+                gl.activeTexture(gl.TEXTURE6);
+                gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, uniforms.skydomeTextureSize, uniforms.skydomeTextureSize, 0, gl.RGBA, gl.FLOAT, uniforms.skydome.data);
+                
+                let skydomeTextureLocation = gl.getUniformLocation(this._program, "skydomeTexture");
+                gl.uniform1i(skydomeTextureLocation, 6);
+
+                continue;
+            }
+
             let location = gl.getUniformLocation(this._program, name);
             if (location == null) continue;
 
@@ -221,7 +245,9 @@ export class Shader {
             var intUniforms = [
                 "totalTriangles",
                 "totalBvhNodes",
-                "totalLights"
+                "totalLights",
+                "skydomeWidth",
+                "skydomeHeight"
             ];
             var floatUniforms = [
                 "timeSinceStart",
@@ -229,7 +255,8 @@ export class Shader {
                 "triangleDataTextureSize",
                 "bvhDataTextureSize",
                 "triangleIndicesDataTextureSize",
-                "lightDataTextureSize"
+                "lightDataTextureSize",
+                "skydomeTextureSize"
             ];
     
             let value = uniforms[name];
