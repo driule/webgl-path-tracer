@@ -68,6 +68,7 @@ uniform sampler2D triangleIndicesDataTexture;
 uniform sampler2D textureImage;
 
 // skydome
+uniform bool isSkydomeLoaded;
 uniform float skydomeTextureSize;
 uniform sampler2D skydomeTexture;
 uniform int skydomeWidth;
@@ -405,13 +406,14 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         if (abs(t - INFINITY) < EPSILON) {
 
             // skydome sampling
-            float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
-            float v = acos(ray.y) * INVERSE_PI;
+            if (isSkydomeLoaded) {
+                float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
+                float v = acos(ray.y) * INVERSE_PI;
 
-            int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
+                int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
 
-            accumulatedColor += colorMask * getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
-            //
+                accumulatedColor += colorMask * getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
+            }
 
             break;
         } else {

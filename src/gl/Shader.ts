@@ -205,12 +205,6 @@ export class Shader {
             }
 
             if (name.toString() === "skydome") {
-                // console.log('uniforms.skydomeTextureSize', uniforms.skydomeTextureSize);
-                // console.log('uniforms.skydome.data', uniforms.skydome.data);
-                // console.log('uniforms.skydomeWidth', uniforms.skydomeWidth);
-                // console.log('uniforms.skydomeHeight', uniforms.skydomeHeight);
-                // console.log('width * height * 3: ', uniforms.skydomeWidth * uniforms.skydomeHeight * 3);
-
                 let rgbList = new Float32Array(uniforms.skydomeTextureSize * uniforms.skydomeTextureSize * 3);
                 for (let i = 0; i < uniforms.skydomeWidth * uniforms.skydomeHeight; i++) {
                     rgbList[i * 3 + 0] = uniforms.skydome.data[i * 4 + 0];
@@ -221,14 +215,11 @@ export class Shader {
                 gl.activeTexture(gl.TEXTURE6);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
-                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.skydomeTextureSize, uniforms.skydomeTextureSize, 0, gl.RGB, gl.FLOAT, rgbList);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.skydomeTextureSize, uniforms.skydomeTextureSize, 0, gl.RGB, gl.FLOAT, rgbList);
 
                 let skydomeTextureLocation = gl.getUniformLocation(this._program, "skydomeTexture");
@@ -255,8 +246,9 @@ export class Shader {
                 "totalTriangles",
                 "totalBvhNodes",
                 "totalLights",
+                "isSkydomeLoaded",
                 "skydomeWidth",
-                "skydomeHeight"
+                "skydomeHeight",
             ];
             var floatUniforms = [
                 "timeSinceStart",
