@@ -4,7 +4,7 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 
 ### Progress
 - [+] Skydome sampling
-- [+] Basic color texturing implemented;
+- [+] Base color texturing implemented;
 - [+] Loading geometry from GLTF files implemented; Preparation for texturing
 - [+] Improved user interface: added more controls (by clicking buttons); change scene, stop/render; etc.
 - [+] Camera control buttons implemented
