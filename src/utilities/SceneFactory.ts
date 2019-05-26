@@ -81,6 +81,7 @@ export class SceneFactory  {
         scene.setTriangles(geometry["triangles"]);
 
         scene.textureImage = await this.loadImage(geometry["textureImage"]);
+        scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/LH/sky2.hdr"));
     
         return scene;
     }
