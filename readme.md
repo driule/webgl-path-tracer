@@ -3,6 +3,8 @@
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
 ### Progress
+- [+] Skydome sampling
+- [+] Basic color texturing implemented;
 - [+] Loading geometry from GLTF files implemented; Preparation for texturing
 - [+] Improved user interface: added more controls (by clicking buttons); change scene, stop/render; etc.
 - [+] Camera control buttons implemented
@@ -14,10 +16,8 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 - [+] Pass triangles and lights to the scene via texture
 
 ### ToDo
+- [-] Load all primtives as meshes from GLTF file with all textures (currently only one texture per scene supported)
 - [-] Generalize uniforms passing to the shader (avoid hardcoding by name); initialize dataTexture uniform type or smth.
-- [-] Initialize materials
-- [-] Texturing
-- [-] Skydome
 
 ### How to run?
 - Install all dependencies listed in *package.json*: **npm install**
