@@ -22,8 +22,8 @@ export class GeometryLoader  {
     // mesh contains primitives which attribute POSITION refers to the accessor which describes how to use bufferView (slice of the whole buffer).
 
     public static async loadGltf(
-        path: string = "assets/models/duck/",
-        fileName: string = "Duck.gltf",
+        path: string,
+        fileName: string,
         scale: number = 1.0,
         translation: vec3 = vec3.fromValues(0, 0, 0)
     ): Promise<any> {

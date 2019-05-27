@@ -9,6 +9,7 @@ const parseHDR = require('parse-hdr');
 
 export class SceneFactory  {
 
+    // ToDo: move to GeometryLoader
     private static async loadImage(src: string): Promise<HTMLImageElement> {
         return new Promise((resolve, reject) => {
             let image: HTMLImageElement = new Image();
@@ -18,6 +19,7 @@ export class SceneFactory  {
         });
     }
 
+    // ToDo: move to GeometryLoader
     private static async loadSkydome(src: string): Promise<any> {
         return new Promise((resolve, reject) => {
             let request = new XMLHttpRequest();
@@ -62,7 +64,7 @@ export class SceneFactory  {
         scene.setTriangles(geometry["triangles"]);
 
         scene.textureImage = await this.loadImage(geometry["textureImage"]);
-        // scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/space.hdr"));
+        // scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/sky1.hdr"));
     
         return scene;
     }
