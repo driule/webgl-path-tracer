@@ -15,6 +15,25 @@ const accessorTypeToNumComponentsMap: any = {
 
 export class GeometryLoader  {
 
+    public static async loadImage(src: string): Promise<HTMLImageElement> {
+        return new Promise((resolve, reject) => {
+            let image: HTMLImageElement = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = src;
+        });
+    }
+
+    public static async loadSkydome(src: string): Promise<ArrayBuffer> {
+        return new Promise((resolve) => {
+            let request = new XMLHttpRequest();
+            request.open("GET", src, true);
+            request.responseType = "arraybuffer";
+            request.onload = () => resolve(request.response);
+            request.send(null);
+        });
+    }
+
     // include GLTF file example:
     // const duckModel = require("./assets/models/duck/Duck.gltf");
 

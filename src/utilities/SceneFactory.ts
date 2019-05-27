@@ -9,27 +9,6 @@ const parseHDR = require('parse-hdr');
 
 export class SceneFactory  {
 
-    // ToDo: move to GeometryLoader
-    private static async loadImage(src: string): Promise<HTMLImageElement> {
-        return new Promise((resolve, reject) => {
-            let image: HTMLImageElement = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = reject;
-            image.src = src;
-        });
-    }
-
-    // ToDo: move to GeometryLoader
-    private static async loadSkydome(src: string): Promise<any> {
-        return new Promise((resolve, reject) => {
-            let request = new XMLHttpRequest();
-            request.open("GET", src, true);
-            request.responseType = "arraybuffer";
-            request.onload = () => resolve(request.response);
-            request.send(null);
-        });
-    }
-
     public static async createSponzaScene(canvas: HTMLCanvasElement) {
         console.log("Please wait! Loading sponza scene...");
 
@@ -63,7 +42,7 @@ export class SceneFactory  {
         scene.setLights(lights);
         scene.setTriangles(geometry["triangles"]);
 
-        scene.textureImage = await this.loadImage(geometry["textureImage"]);
+        scene.textureImage = await GeometryLoader.loadImage(geometry["textureImage"]);
         // scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/sky1.hdr"));
     
         return scene;
@@ -82,8 +61,8 @@ export class SceneFactory  {
         scene.setLights(lights);
         scene.setTriangles(geometry["triangles"]);
 
-        scene.textureImage = await this.loadImage(geometry["textureImage"]);
-        scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/LH/sky2.hdr"));
+        scene.textureImage = await GeometryLoader.loadImage(geometry["textureImage"]);
+        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/LH/sky2.hdr"));
     
         return scene;
     }
@@ -101,8 +80,8 @@ export class SceneFactory  {
         scene.setLights(lights);
         scene.setTriangles(geometry["triangles"]);
 
-        scene.textureImage = await this.loadImage(geometry["textureImage"]);
-        scene.skydome = parseHDR(await this.loadSkydome("assets/skydome/space.hdr"));
+        scene.textureImage = await GeometryLoader.loadImage(geometry["textureImage"]);
+        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/space.hdr"));
     
         return scene;
     }
