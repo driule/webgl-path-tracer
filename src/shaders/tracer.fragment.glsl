@@ -6,6 +6,7 @@
 #define EPSILON 0.0001
 #define INFINITY 10000.0
 #define STACK_SIZE 256
+#define MAX_TEXTURES 7
 
 #define PI 3.14159
 #define INVERSE_PI 1.0 / PI
@@ -13,8 +14,9 @@
 struct Material
 {
     vec3 color;
-    bool isTextureDefined;
-    int textureId;
+
+    bool isAlbedoTextureDefined;
+    int albedoTextureId;
 };
 
 struct Sphere
@@ -75,7 +77,7 @@ uniform float triangleIndicesDataTextureSize;
 uniform sampler2D triangleIndicesDataTexture;
 
 // texturing
-uniform sampler2D textureImages[7];
+uniform sampler2D textureImages[MAX_TEXTURES];
 uniform sampler2D materialsTexture;
 uniform float materialsTextureSize;
 
@@ -109,8 +111,11 @@ Material fetchMaterial(int id) {
 
     Material material;
     material.color = color;
-    material.isTextureDefined = bool(int(data[0]));
-    material.textureId = int(data[1]);
+    material.isAlbedoTextureDefined = bool(int(data[0]));
+
+    if (material.isAlbedoTextureDefined) {
+        material.albedoTextureId = int(data[1]);
+    }
 
     return material;
 }
@@ -424,9 +429,9 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             vec2 uv = baryA * tri.uvA + baryB * tri.uvB + baryC * tri.uvC;
 
             Material material = fetchMaterial(tri.material);
-            if (material.isTextureDefined) {
-                for (int i = 0; i < 10; i++) {
-                    if (i == material.textureId) {
+            if (material.isAlbedoTextureDefined) {
+                for (int i = 0; i < MAX_TEXTURES; i++) {
+                    if (i == material.albedoTextureId) {
                         surfaceColor = texture(textureImages[i], uv).rgb;
                     }
                 }
