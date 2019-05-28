@@ -2,6 +2,7 @@ import { GltfLoader, GltfAsset } from "gltf-loader-ts";
 import { vec3, vec2 } from "gl-matrix";
 import { Triangle } from "../geometry/Triangle";
 import { Accessor, BufferView } from "gltf-loader-ts/lib/gltf";
+import { Material } from "../geometry/Material";
     
 const accessorTypeToNumComponentsMap: any = {
     "SCALAR": 1,
@@ -43,17 +44,36 @@ export class GeometryLoader  {
     public static async loadGltf(
         path: string,
         fileName: string,
+        materialOffset: number,
         scale: number = 1.0,
         translation: vec3 = vec3.fromValues(0, 0, 0)
-    ): Promise<any> {
+    ): Promise<[Triangle[], Material[]]> {
         let loader = new GltfLoader();
         let asset: GltfAsset = await loader.load(path + fileName);
 
         let triangles: Triangle[] = [];
-        let textureCoordinates: vec2[] = [];
-        let imageUri: string;
-        let textureSampler: any[];
 
+        // ToDo: first compose all material into one list, then assign them to triangles
+        let materials: Material[] = [];
+        for (let i = 0; i < asset.gltf.materials.length; i++) {
+            let material = new Material(materialOffset + i); // ToDo: set globaly unique ID
+
+            let baseColorTexture = asset.gltf.materials[i].pbrMetallicRoughness.baseColorTexture;
+            if (baseColorTexture != undefined) {
+                let texture = asset.gltf.textures[baseColorTexture.index];
+                let imageUri = path + asset.gltf.images[texture.source].uri;
+                material.setAlbedoTexture(await this.loadImage(imageUri));
+                // console.log("imageUri", imageUri);
+            }
+
+            let baseColor = asset.gltf.materials[i].pbrMetallicRoughness.baseColorFactor;
+            if (baseColor != undefined) {
+                material.setColor(vec3.fromValues(baseColor[0], baseColor[1], baseColor[2]));
+            }
+
+            materials.push(material);
+        }
+        //
 
         // for each primitive of each mesh compose geometry data
         for (let m = 0; m < asset.gltf.meshes.length; m++) {
@@ -63,7 +83,7 @@ export class GeometryLoader  {
                 let renderingMode = asset.gltf.meshes[m].primitives[p].mode;
                 if (renderingMode != 4 && renderingMode != undefined) {
                     console.log("Geometry rendering mode is not triangular! Cannot read GLTF file with mode: ", renderingMode);
-                    return [];
+                    return [[], []];
                 }
                 //
 
@@ -96,11 +116,26 @@ export class GeometryLoader  {
                     asset.gltf.bufferViews[texCoordAccesor.bufferView]
                 );
                 
+                let textureCoordinates: vec2[] = [];
                 for (let i = 0; i < texCoordAccesor.count; i++) {
                     let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
                     textureCoordinates.push(texCoord);
                 }
                 //
+                
+                // load texture image; ToDo: check if defined for each primitive
+                let materialId = asset.gltf.meshes[m].primitives[p].material;
+                let material = materials[materialId];
+                // material.setAlbedoTexture(await this.loadImage(imageUri));
+                
+                // if (texture.sampler != undefined) {
+                //     textureSampler = [
+                //         asset.gltf.samplers[texture.sampler].magFilter,
+                //         asset.gltf.samplers[texture.sampler].minFilter,
+                //         asset.gltf.samplers[texture.sampler].wrapS,
+                //         asset.gltf.samplers[texture.sampler].wrapT
+                //     ];
+                // }
             
                 // load vertex indices data
                 let indicesAccesorId = asset.gltf.meshes[m].primitives[p].indices;
@@ -120,42 +155,22 @@ export class GeometryLoader  {
                         let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
                         let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
 
-                        let triangle: Triangle = new Triangle(a, b, c);
+                        let triangle: Triangle = new Triangle(a, b, c, material);
                         triangle.uvA = textureCoordinates[meshIndices[i * 3 + 0]];
                         triangle.uvB = textureCoordinates[meshIndices[i * 3 + 1]];
                         triangle.uvC = textureCoordinates[meshIndices[i * 3 + 2]];
-                
+
                         triangles.push(triangle);
                     }
                 } else {
                     // ToDo: implement non-indexed triangles (3 vertexes in a row form a triangle)
                     console.log("Cannot read non-indexed geometry!");
-                    return [];
-                }
-                //
-
-                // load texture image
-                let texture = asset.gltf.textures[0];
-                imageUri = path + asset.gltf.images[texture.source].uri;
-                // console.log("imageUri", imageUri);
-                
-                if (texture.sampler != undefined) {
-                    textureSampler = [
-                        asset.gltf.samplers[texture.sampler].magFilter,
-                        asset.gltf.samplers[texture.sampler].minFilter,
-                        asset.gltf.samplers[texture.sampler].wrapS,
-                        asset.gltf.samplers[texture.sampler].wrapT
-                    ];
+                    return [[], []];
                 }
             }
         }
     
-        return {
-            "triangles": triangles,
-            "textureCoordinates": textureCoordinates,
-            "textureImage": imageUri,
-            // "textureSampler": textureSampler
-        };
+        return [triangles, materials];
     }
 
     private static loadTypedArray(buffer: ArrayBuffer, accessor: Accessor, bufferView: BufferView): any {

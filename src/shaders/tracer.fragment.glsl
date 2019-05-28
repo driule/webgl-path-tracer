@@ -10,6 +10,13 @@
 #define PI 3.14159
 #define INVERSE_PI 1.0 / PI
 
+struct Material
+{
+    vec3 color;
+    bool isTextureDefined;
+    int textureId;
+};
+
 struct Sphere
 {
     vec3 center;
@@ -20,6 +27,7 @@ struct Triangle
 {
     vec3 a, b, c;
     vec2 uvA, uvB, uvC;
+    int material;
 };
 
 struct Light
@@ -54,12 +62,12 @@ uniform float timeSinceStart;
 uniform sampler2D textureSampler;
 
 // geometry
-uniform int totalTriangles;
+uniform int totalTriangles; // not used
 uniform float triangleDataTextureSize;
 uniform sampler2D triangleDataTexture;
 
 // bvh
-uniform int totalBvhNodes;
+uniform int totalBvhNodes; // not used
 uniform float bvhDataTextureSize;
 uniform sampler2D bvhDataTexture;
 
@@ -67,7 +75,9 @@ uniform float triangleIndicesDataTextureSize;
 uniform sampler2D triangleIndicesDataTexture;
 
 // texturing
-uniform sampler2D textureImage;
+uniform sampler2D textureImages[7];
+uniform sampler2D materialsTexture;
+uniform float materialsTextureSize;
 
 // skydome
 uniform bool isSkydomeLoaded;
@@ -93,15 +103,38 @@ vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
     return texture(sampler, uv).rgb;
 }
 
+Material fetchMaterial(int id) {
+    vec3 color = getValueFromTexture(materialsTexture, float(id * 2 + 0), materialsTextureSize);
+    vec3 data = getValueFromTexture(materialsTexture, float(id * 2 + 1), materialsTextureSize);
+
+    Material material;
+    material.color = color;
+    material.isTextureDefined = bool(int(data[0]));
+    material.textureId = int(data[1]);
+
+    return material;
+}
+
 Triangle fetchTriangle(int id) {
-    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 5 + 0), triangleDataTextureSize);
-    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 5 + 1), triangleDataTextureSize);
-    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 5 + 2), triangleDataTextureSize);
+    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 6 + 0), triangleDataTextureSize);
+    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 6 + 1), triangleDataTextureSize);
+    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 6 + 2), triangleDataTextureSize);
     
-    vec3 uv1 = getValueFromTexture(triangleDataTexture, float(id * 5 + 3), triangleDataTextureSize);
-    vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 5 + 4), triangleDataTextureSize);
+    vec3 uv1 = getValueFromTexture(triangleDataTexture, float(id * 6 + 3), triangleDataTextureSize);
+    vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 6 + 4), triangleDataTextureSize);
+
+    vec3 material = getValueFromTexture(triangleDataTexture, float(id * 6 + 5), triangleDataTextureSize);
     
-    return Triangle(coordA, coordB, coordC, vec2(uv1[0], uv1[1]), vec2(uv1[2], uv2[0]), vec2(uv2[1], uv2[2]));
+    Triangle triangle;
+    triangle.a = coordA;
+    triangle.b = coordB;
+    triangle.c = coordC;
+    triangle.uvA = vec2(uv1[0], uv1[1]);
+    triangle.uvB = vec2(uv1[2], uv2[0]);
+    triangle.uvC = vec2(uv2[1], uv2[2]);
+    triangle.material = int(material[0]);
+
+    return triangle;
 }
 
 Light fetchLight(int id) {
@@ -352,7 +385,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
     ray = normalize(ray);
 
     vec3 accumulatedColor = vec3(0.0);
-    vec3 surfaceColor = vec3(0.75);
+    vec3 surfaceColor = vec3(0.15);
     vec3 lightColor = vec3(1.0, 1.0, 0.85);
     vec3 colorMask = vec3(1.0);
 
@@ -390,7 +423,16 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
             vec2 uv = baryA * tri.uvA + baryB * tri.uvB + baryC * tri.uvC;
 
-            surfaceColor = texture(textureImage, uv).rgb;
+            Material material = fetchMaterial(tri.material);
+            if (material.isTextureDefined) {
+                for (int i = 0; i < 10; i++) {
+                    if (i == material.textureId) {
+                        surfaceColor = texture(textureImages[i], uv).rgb;
+                    }
+                }
+            } else {
+                surfaceColor = material.color;
+            }
             //
         }
 

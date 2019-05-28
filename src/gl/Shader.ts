@@ -1,4 +1,5 @@
 import { gl } from "./GLUtilities";
+import { Material } from "../geometry/Material";
 
 export class Shader {
 
@@ -47,42 +48,38 @@ export class Shader {
 
                 let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
                 for (let i = 0; i < uniforms.totalTriangles; i++) {
-                    triangleList[i * 3 * 5 + 0] = uniforms.triangles[i].a[0];
-                    triangleList[i * 3 * 5 + 1] = uniforms.triangles[i].a[1];
-                    triangleList[i * 3 * 5 + 2] = uniforms.triangles[i].a[2];
+                    triangleList[i * 3 * 6 + 0] = uniforms.triangles[i].a[0];
+                    triangleList[i * 3 * 6 + 1] = uniforms.triangles[i].a[1];
+                    triangleList[i * 3 * 6 + 2] = uniforms.triangles[i].a[2];
 
-                    triangleList[i * 3 * 5 + 3] = uniforms.triangles[i].b[0];
-                    triangleList[i * 3 * 5 + 4] = uniforms.triangles[i].b[1];
-                    triangleList[i * 3 * 5 + 5] = uniforms.triangles[i].b[2];
+                    triangleList[i * 3 * 6 + 3] = uniforms.triangles[i].b[0];
+                    triangleList[i * 3 * 6 + 4] = uniforms.triangles[i].b[1];
+                    triangleList[i * 3 * 6 + 5] = uniforms.triangles[i].b[2];
 
-                    triangleList[i * 3 * 5 + 6] = uniforms.triangles[i].c[0];
-                    triangleList[i * 3 * 5 + 7] = uniforms.triangles[i].c[1];
-                    triangleList[i * 3 * 5 + 8] = uniforms.triangles[i].c[2];
+                    triangleList[i * 3 * 6 + 6] = uniforms.triangles[i].c[0];
+                    triangleList[i * 3 * 6 + 7] = uniforms.triangles[i].c[1];
+                    triangleList[i * 3 * 6 + 8] = uniforms.triangles[i].c[2];
 
-                    triangleList[i * 3 * 5 + 9] = uniforms.triangles[i].uvA[0];
-                    triangleList[i * 3 * 5 + 10] = uniforms.triangles[i].uvA[1];
-                    triangleList[i * 3 * 5 + 11] = uniforms.triangles[i].uvB[0];
+                    triangleList[i * 3 * 6 + 9] = uniforms.triangles[i].uvA[0];
+                    triangleList[i * 3 * 6 + 10] = uniforms.triangles[i].uvA[1];
+                    triangleList[i * 3 * 6 + 11] = uniforms.triangles[i].uvB[0];
                     
-                    triangleList[i * 3 * 5 + 12] = uniforms.triangles[i].uvB[1];
-                    triangleList[i * 3 * 5 + 13] = uniforms.triangles[i].uvC[0];
-                    triangleList[i * 3 * 5 + 14] = uniforms.triangles[i].uvC[1];
+                    triangleList[i * 3 * 6 + 12] = uniforms.triangles[i].uvB[1];
+                    triangleList[i * 3 * 6 + 13] = uniforms.triangles[i].uvC[0];
+                    triangleList[i * 3 * 6 + 14] = uniforms.triangles[i].uvC[1];
+
+                    triangleList[i * 3 * 6 + 15] = uniforms.triangles[i].material.getId();
+                    triangleList[i * 3 * 6 + 16] = uniforms.triangles[i].material.getId();
+                    triangleList[i * 3 * 6 + 17] = uniforms.triangles[i].material.getId();
                 }
 
                 gl.activeTexture(gl.TEXTURE1);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
-                // maybe working; or read sampler from gltf file (?)
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-                // from duck gltf
-                // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texParameter
-                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR); // ( i ? f )
-                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-                // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
                 
@@ -188,18 +185,41 @@ export class Shader {
                 continue;
             }
 
-            if (name.toString() === "textureImage") {
+            // specific case for materials
+            if (name.toString() === "materials") {
+                let texturePointer = 1;
+                let materialList = new Float32Array(uniforms.materialsTextureSize * uniforms.materialsTextureSize * 3);
+                for (let i = 0; i < uniforms.materials.length; i++) {
+                    let material: Material = uniforms.materials[i];
+                    materialList[i * 3 * 2 + 0] = material.getColor()[0];
+                    materialList[i * 3 * 2 + 1] = material.getColor()[1];
+                    materialList[i * 3 * 2 + 2] = material.getColor()[2];
+
+                    if (material.getAlbedoTexture() != undefined) {
+                        materialList[i * 3 * 2 + 3] = 1.0;
+                        materialList[i * 3 * 2 + 4] = texturePointer;
+                        materialList[i * 3 * 2 + 5] = texturePointer;
+                        this.setMaterialTexture(texturePointer, material);
+                        texturePointer++;
+                    } else {
+                        materialList[i * 3 * 2 + 3] = 0.0;
+                        materialList[i * 3 * 2 + 4] = 0.0;
+                        materialList[i * 3 * 2 + 5] = 0.0;
+                    }
+                }
+
                 gl.activeTexture(gl.TEXTURE5);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, uniforms.textureImage);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.materialsTextureSize, uniforms.materialsTextureSize, 0, gl.RGB, gl.FLOAT, materialList);
 
-                let textureImageLocation = gl.getUniformLocation(this._program, "textureImage");
-                gl.uniform1i(textureImageLocation, 5);
+                let materialsTextureLocation = gl.getUniformLocation(this._program, "materialsTexture");
+                gl.uniform1i(materialsTextureLocation, 5);
 
                 continue;
             }
@@ -258,7 +278,8 @@ export class Shader {
                 "bvhDataTextureSize",
                 "triangleIndicesDataTextureSize",
                 "lightDataTextureSize",
-                "skydomeTextureSize"
+                "skydomeTextureSize",
+                "materialsTextureSize"
             ];
     
             let value = uniforms[name];
@@ -272,6 +293,21 @@ export class Shader {
                 gl.uniform1f(location, value);
             }
         }
+    }
+
+    private setMaterialTexture(id: number, material: Material): void {
+        // console.log('setting texture for [material, id]: ', material.getAlbedoTexture().src, id);
+        gl.activeTexture(gl.TEXTURE7 + id);
+        gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, material.getAlbedoTexture());
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+        let textureImageLocation = gl.getUniformLocation(this._program, "textureImages[" + id +"]");
+        gl.uniform1i(textureImageLocation, 7 + id);
     }
 
     public use(): void {

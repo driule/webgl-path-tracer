@@ -110,10 +110,14 @@ export class PathTracer {
         uniforms.resolution = [this._canvas.width, this._canvas.height];
         uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
 
+        // materials
+        uniforms.materials = this._scene.materials;
+        uniforms.materialsTextureSize = Math.ceil(Math.sqrt(uniforms.materials.length * 2));
+
         // triangle data
         uniforms.triangles = this._scene.triangles;
-        uniforms.totalTriangles = this._scene.triangles.length;
-        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(this._scene.triangles.length * 5));
+        uniforms.totalTriangles = uniforms.triangles.length;
+        uniforms.triangleDataTextureSize = Math.ceil(Math.sqrt(uniforms.triangles.length * 6));// + 1;
 
         // BVH data
         uniforms.bvhNodeList = this._scene.bvh.nodeStack;
@@ -129,11 +133,6 @@ export class PathTracer {
         uniforms.lights = this._scene.lights;
         uniforms.totalLights = this._scene.lights.length;
         uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
-
-        // texturing
-        if (this._scene.textureImage != undefined) {
-            uniforms.textureImage = this._scene.textureImage;
-        }
 
         // skydome
         uniforms.isSkydomeLoaded = false;

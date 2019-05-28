@@ -1,6 +1,7 @@
 import { BoundingBox } from "./BoundingBox";
 
 import { vec3, vec2 } from "gl-matrix";
+import { Material } from "./Material";
 
 export class Triangle {
 
@@ -8,17 +9,23 @@ export class Triangle {
     private _b: vec3;
     private _c: vec3;
 
+    // ToDo: set to private
     // UV values for each triangle vertex
     public uvA: vec2;
     public uvB: vec2;
     public uvC: vec2;
 
+    // ToDo: set to private
+    public material: Material;
+
     private _boundingBox: BoundingBox;
 
-    public constructor(a: vec3, b: vec3, c: vec3) {
+    public constructor(a: vec3, b: vec3, c: vec3, material: Material) {
         this._a = a;
         this._b = b;
         this._c = c;
+
+        this.material = material;
 
         this.uvA = vec2.fromValues(0.0, 0.0);
         this.uvB = vec2.fromValues(0.0, 0.0);
