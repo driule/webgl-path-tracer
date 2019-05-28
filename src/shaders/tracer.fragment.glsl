@@ -77,9 +77,18 @@ uniform float triangleIndicesDataTextureSize;
 uniform sampler2D triangleIndicesDataTexture;
 
 // texturing
-uniform sampler2D textureImages[MAX_TEXTURES];
+// uniform sampler2D textureImages[MAX_TEXTURES];
 uniform sampler2D materialsTexture;
 uniform float materialsTextureSize;
+
+// ToDo: encode all image textures inside one texture
+uniform sampler2D textureImage1;
+uniform sampler2D textureImage2;
+uniform sampler2D textureImage3;
+uniform sampler2D textureImage4;
+uniform sampler2D textureImage5;
+uniform sampler2D textureImage6;
+uniform sampler2D textureImage7;
 
 // skydome
 uniform bool isSkydomeLoaded;
@@ -430,10 +439,26 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
             Material material = fetchMaterial(tri.material);
             if (material.isAlbedoTextureDefined) {
-                for (int i = 0; i < MAX_TEXTURES; i++) {
-                    if (i == material.albedoTextureId) {
-                        surfaceColor = texture(textureImages[i], uv).rgb;
-                    }
+                // for (int i = 0; i < MAX_TEXTURES; i++) {
+                //     if (i == material.albedoTextureId) {
+                //         surfaceColor = texture(textureImages[i], uv).rgb;
+                //     }
+                // }
+
+                if (material.albedoTextureId == 0) {
+                    surfaceColor = texture(textureImage1, uv).rgb;
+                } else if (material.albedoTextureId == 1) {
+                    surfaceColor = texture(textureImage2, uv).rgb;
+                } else if (material.albedoTextureId == 2) {
+                    surfaceColor = texture(textureImage3, uv).rgb;
+                } else if (material.albedoTextureId == 3) {
+                    surfaceColor = texture(textureImage4, uv).rgb;
+                } else if (material.albedoTextureId == 4) {
+                    surfaceColor = texture(textureImage5, uv).rgb;
+                } else if (material.albedoTextureId == 5) {
+                    surfaceColor = texture(textureImage6, uv).rgb;
+                } else if (material.albedoTextureId == 6) {
+                    surfaceColor = texture(textureImage7, uv).rgb;
                 }
             } else {
                 surfaceColor = material.color;

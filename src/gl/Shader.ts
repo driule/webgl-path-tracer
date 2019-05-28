@@ -187,7 +187,7 @@ export class Shader {
 
             // specific case for materials
             if (name.toString() === "materials") {
-                let texturePointer = 1;
+                let texturePointer = 0;
                 let materialList = new Float32Array(uniforms.materialsTextureSize * uniforms.materialsTextureSize * 3);
                 for (let i = 0; i < uniforms.materials.length; i++) {
                     let material: Material = uniforms.materials[i];
@@ -296,7 +296,7 @@ export class Shader {
     }
 
     private setMaterialTexture(id: number, material: Material): void {
-        // console.log('setting texture for [material, id]: ', material.getAlbedoTexture().src, id);
+        // console.log('setting texture for [material, id]: ', material.getAlbedoTexture().src, id, "textureImage" + (id + 1));
         gl.activeTexture(gl.TEXTURE7 + id);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
@@ -306,7 +306,8 @@ export class Shader {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
-        let textureImageLocation = gl.getUniformLocation(this._program, "textureImages[" + id +"]");
+        let textureImageLocation = gl.getUniformLocation(this._program, "textureImage" + (id + 1));
+        // let textureImageLocation = gl.getUniformLocation(this._program, "textureImages[" + id + "]");
         gl.uniform1i(textureImageLocation, 7 + id);
     }
 
