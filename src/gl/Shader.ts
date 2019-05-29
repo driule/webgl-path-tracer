@@ -45,8 +45,8 @@ export class Shader {
 
             // specific case for triangle data texture
             if (name.toString() === "triangles") {
-
                 let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
+                // console.log('triangleList.length', triangleList.length, '>', uniforms.triangles.length * 6 * 3);
                 for (let i = 0; i < uniforms.totalTriangles; i++) {
                     triangleList[i * 3 * 6 + 0] = uniforms.triangles[i].a[0];
                     triangleList[i * 3 * 6 + 1] = uniforms.triangles[i].a[1];
@@ -69,8 +69,8 @@ export class Shader {
                     triangleList[i * 3 * 6 + 14] = uniforms.triangles[i].uvC[1];
 
                     triangleList[i * 3 * 6 + 15] = uniforms.triangles[i].material.getId();
-                    triangleList[i * 3 * 6 + 16] = uniforms.triangles[i].material.getId();
-                    triangleList[i * 3 * 6 + 17] = uniforms.triangles[i].material.getId();
+                    triangleList[i * 3 * 6 + 16] = 1.0;
+                    triangleList[i * 3 * 6 + 17] = 1.0;
                 }
 
                 gl.activeTexture(gl.TEXTURE1);
@@ -121,6 +121,7 @@ export class Shader {
             // specific case for BVH
             if (name.toString() == "bvhNodeList") {
                 let bvhNodeDataList = new Float32Array(uniforms.bvhDataTextureSize * uniforms.bvhDataTextureSize * 3);
+                // console.log('bvhNodeDataList.length', bvhNodeDataList.length, '>', uniforms.bvhNodeList.length * 4 * 3);
                 for (let i = 0; i < uniforms.totalBvhNodes; i++) {
                     bvhNodeDataList[i * 3 * 4 + 0] = uniforms.bvhNodeList[i].min[0];
                     bvhNodeDataList[i * 3 * 4 + 1] = uniforms.bvhNodeList[i].min[1];
@@ -138,8 +139,8 @@ export class Shader {
                         bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
                         bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
                     } else {
-                        bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].id;
-                        bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].id;
+                        bvhNodeDataList[i * 3 * 4 + 9] = 1.0;
+                        bvhNodeDataList[i * 3 * 4 + 10] = 1.0;
                     }
                     bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
                 }
@@ -163,6 +164,7 @@ export class Shader {
             // specific case for triangle indices
             if (name.toString() == "triangleIndices") {
                 let triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
+                // console.log('triangleIndices.length', triangleIndices.length, '>', uniforms.triangleIndices.length * 3);
                 for (let i = 0; i < uniforms.triangleIndices.length; i++) {
                     triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
                     triangleIndices[i * 3 + 1] = uniforms.triangleIndices[i];

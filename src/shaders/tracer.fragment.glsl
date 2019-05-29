@@ -105,13 +105,22 @@ uniform sampler2D lightDataTexture;
 int stackPointer;
 int stack[STACK_SIZE];
 
+// vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
+//     float column = mod(index, size);
+//     float row = floor(index / size);
+
+//     vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);
+
+//     return texture(sampler, uv).rgb;
+// }
+
 vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
-    float column = mod(index, size);
-    float row = floor(index / size);
-
-    vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);
-
-    return texture(sampler, uv).rgb;
+	ivec2 uv = ivec2(
+        mod(index, size),
+        floor(index / size)
+    );
+	
+	return texelFetch(sampler, uv, 0).rgb;
 }
 
 Material fetchMaterial(int id) {
@@ -310,7 +319,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
             // }
 
             // ToDo: check why "i < node.count" slows everything down
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < node.count; i++) {
                 if (i >= node.count) {
                     break;
                 }
@@ -372,7 +381,7 @@ vec3 uniformlyRandomVector(float seed) {
 float getShadowIntensity(vec3 origin, vec3 ray) {
     // for (int i = 0; i < totalTriangles; i++) {
     //     float tTriangle = intersectTriangle(origin, ray, fetchTriangle(i));
-    //     if (tTriangle < 1.0) return 0.0;
+    //     if (tTriangle < EPSILON) return 0.0;
     // }
     
     Intersection intersection = intersectPrimitives(origin, ray);

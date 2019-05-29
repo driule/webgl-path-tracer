@@ -68,7 +68,7 @@ export class SceneFactory  {
         scene.setMaterials(geometry[1]);
         scene.setLights(lights);
 
-        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/LH/sky2.hdr"));
+        // scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/LH/sky2.hdr"));
     
         return scene;
     }
@@ -88,7 +88,7 @@ export class SceneFactory  {
         scene.setMaterials(geometry[1]);
         scene.setLights(lights);
 
-        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/space.hdr"));
+        // scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/space.hdr"));
     
         return scene;
     }
