@@ -18,7 +18,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(45.25, 12.75, 0.25), 1.5, 5.0),
             new Light(vec3.fromValues(-75.25, 20.75, 0.25), 0.15, 5.0)
         ];
-        let camera = new Camera(canvas, [0.75, 15.75, 175.5], [0.0, 225.0, 0.0], 12.5);
+        let camera = new Camera(canvas, [0.75, 15.75, 175.5], [0.0, 225.0, 0.0], 10.0);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/sponza/", "Sponza.gltf", 0);
     
         let scene = new Scene(camera);

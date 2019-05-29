@@ -11,12 +11,9 @@ let canvas: HTMLCanvasElement;
 window.onload = async function() {
     canvas = GLUtilities.initialize("pathTracer");
     gauge = new Gauge();
+    
     renderer = new Renderer(canvas, gauge);
     renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
-
-    // ToDO: check why some triangles are missing in the duck scene view
-    // renderer.setScene(await SceneFactory.createDuckScene(canvas));
-
     renderer.start();
 
     // primitive count and FPS measurement
