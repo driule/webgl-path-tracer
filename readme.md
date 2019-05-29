@@ -3,6 +3,7 @@
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
 ### Progress
+- [+] GLTF file loading improved: multiple meshes with different textures support; few crucial bug fixes: do not calculate texture size at run-time
 - [+] Skydome sampling
 - [+] Base color textures implemented
 - [+] Loading geometry from GLTF files implemented; Preparation for texturing
@@ -16,7 +17,7 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 - [+] Pass triangles and lights to the scene via texture
 
 ### ToDo
-- [-] Load all primtives as meshes from GLTF file with all textures (currently only one texture per scene supported)
+- [-] Pack scene data to use fewer texture units
 - [-] Generalize uniforms passing to the shader (avoid hardcoding by name); initialize dataTexture uniform type or smth.
 
 ### How to run?
