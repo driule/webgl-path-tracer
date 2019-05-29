@@ -3,6 +3,7 @@
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
 ### Progress
+- [+] Proper camera controls implemented
 - [+] GLTF file loading improved: multiple meshes with different textures support; few crucial bug fixes: do not calculate texture size at run-time
 - [+] Skydome sampling
 - [+] Base color textures implemented
