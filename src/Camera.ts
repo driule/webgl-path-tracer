@@ -8,29 +8,29 @@ export class Camera {
     private _angleY: number;
     private _zoomZ: number;
 
-    private _axisX: number;
-    private _axisY: number;
-    private _axisZ: number;
+    private frontDirection: vec3;
+    private upDirection: vec3;
 
-    private _movementSpeed: number;
+    private movementSpeed: number;
+    private rotationSpeed: number;
 
-    private _eye: any; // vec3
-    private _viewProjectionMatrix: any; //mat4
+    private _eye: vec3;
+    private _viewProjectionMatrix: mat4;
 
-    public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0], initialAxes: any = [0.0, 0.0, 0.0], movementSpeed: number = 0.1) {
+    public constructor(canvas: HTMLCanvasElement, initialView: any = [0.2, 5.75, 50.0], movementSpeed: number = 0.1) {
         this._canvas = canvas;
 
         this._angleX = initialView[0];
         this._angleY = initialView[1];
         this._zoomZ = initialView[2];
 
-        this._axisX = initialAxes[0];
-        this._axisY = initialAxes[1];
-        this._axisZ = initialAxes[2];
+        this.movementSpeed = movementSpeed;
+        this.rotationSpeed = 0.1;
 
-        this._movementSpeed = movementSpeed;
+        this.frontDirection = vec3.fromValues(0.0, 0.0, -1.0);
+        this.upDirection = vec3.fromValues(0.0, 1.0, 0.0);
 
-        this._eye = vec3.create();
+        this._eye = vec3.fromValues(0.0, 0.0, 3.0);
         this.calculateViewProjection();
     }
 
@@ -38,19 +38,21 @@ export class Camera {
         return this._eye;
     }
 
-    public get viewProjectionMatrix(): any {
-        return this._viewProjectionMatrix;
-    }
-
     public calculateViewProjection(): void {
-        this._eye[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
-        this._eye[1] = this._zoomZ * Math.sin(this._angleX);
-        this._eye[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
 
-        let view: mat4 = mat4.lookAt(mat4.create(), this._eye, [this._axisX, this._axisY, this._axisZ], [0, 1, 0]);
+        // rotation
+        this.frontDirection[0] = this._zoomZ * Math.sin(this._angleY) * Math.cos(this._angleX);
+        this.frontDirection[1] = this._zoomZ * Math.sin(this._angleX);
+        this.frontDirection[2] = this._zoomZ * Math.cos(this._angleY) * Math.cos(this._angleX);
+
+        let view: mat4 = mat4.lookAt(
+            mat4.create(),
+            this._eye,
+            vec3.add(vec3.create(), this._eye, this.frontDirection),
+            this.upDirection
+        );
         let projection = mat4.perspective(mat4.create(), Math.PI / 3, this._canvas.width / this._canvas.height, 0.1, 1000);
-        this._viewProjectionMatrix = mat4.multiply(mat4.create(), projection, view);
-        this._viewProjectionMatrix = mat4.invert(mat4.create(), this._viewProjectionMatrix);
+        this._viewProjectionMatrix = mat4.invert(mat4.create(), mat4.multiply(mat4.create(), projection, view));
     }
     
     public getEyeRay(x: number, y: number): any {
@@ -65,44 +67,61 @@ export class Camera {
     }
 
     // movement controls
-    public moveUp(step: number = 0.1): void {
-        this._angleX += step;
+    public moveUp(): void {
+        this._eye = vec3.add(vec3.create(), this._eye, vec3.scale(vec3.create(), this.frontDirection, this.movementSpeed));
     }
 
-    public moveDown(step: number = 0.1): void {
-        this._angleX -= step;
+    public moveDown(): void {
+        this._eye = vec3.sub(vec3.create(), this._eye, vec3.scale(vec3.create(), this.frontDirection, this.movementSpeed));
     }
 
-    public moveRight(step: number = 0.1): void {
-        this._angleY += step;
+    public moveRight(): void {
+        this._eye = vec3.add(
+            vec3.create(),
+            this._eye,
+            vec3.scale(
+                vec3.create(),
+                vec3.normalize(vec3.create(), vec3.cross(vec3.create(), this.frontDirection, this.upDirection)),
+                this.movementSpeed
+            )
+        );
     }
 
-    public moveLeft(step: number = 0.1): void {
-        this._angleY -= step;
+    public moveLeft(): void {
+        this._eye = vec3.sub(
+            vec3.create(),
+            this._eye,
+            vec3.scale(
+                vec3.create(),
+                vec3.normalize(vec3.create(), vec3.cross(vec3.create(), this.frontDirection, this.upDirection)),
+                this.movementSpeed
+            )
+        );
     }
 
+    // zoom controls
     public zoomIn(): void {
-        this._zoomZ -= this._movementSpeed;
+        this._zoomZ -= this.movementSpeed;
     }
 
     public zoomOut(): void {
-        this._zoomZ += this._movementSpeed;
+        this._zoomZ += this.movementSpeed;
     }
 
-    // rotatation controls
+    // rotation controls
     public rotateUp(): void {
-        this._axisY += this._movementSpeed;
+        this._angleX += this.rotationSpeed;
     }
 
     public rotateDown(): void {
-        this._axisY -= this._movementSpeed;
+        this._angleX -= this.rotationSpeed;
     }
 
     public rotateRight(): void {
-        this._axisX += this._movementSpeed;
+        this._angleY -= this.rotationSpeed;
     }
 
     public rotateLeft(): void {
-        this._axisX -= this._movementSpeed;
+        this._angleY += this.rotationSpeed;
     }
 }

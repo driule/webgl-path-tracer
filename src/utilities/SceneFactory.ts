@@ -18,7 +18,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(45.25, 12.75, 0.25), 1.5, 5.0),
             new Light(vec3.fromValues(-75.25, 20.75, 0.25), 0.15, 5.0)
         ];
-        let camera = new Camera(canvas, [0.75, 15.75, 175.5], [0.0, 225.0, 0.0], 10.0);
+        let camera = new Camera(canvas, [0.75, 15.75, 175.5], 5.0);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/sponza/", "Sponza.gltf", 0);
     
         let scene = new Scene(camera);
@@ -37,7 +37,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 10.0),
             new Light(vec3.fromValues(-2.25, 2.75, -10.75), 0.15, 15.0)
         ];
-        let camera = new Camera(canvas, [0.75, 10.75, 12.5], [0.0, 2.5, 0.0], 0.25);
+        let camera = new Camera(canvas, [0.75, 10.75, 12.5], 0.05);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", 0, 100);
 
         let scene = new Scene(camera);
@@ -60,7 +60,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(200.25, 22.75, -20.25), 1.5, 1.0),
             new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.0)
         ];
-        let camera = new Camera(canvas, [0.2, 0.75, 275.0], [0.0, 75.0, 0.0], 2.0);
+        let camera = new Camera(canvas, [0.2, 0.75, 275.0], 2.0);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/duck/", "Duck.gltf", 0);
 
         let scene = new Scene(camera);
@@ -79,7 +79,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 1.0),
             new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.5)
         ];
-        let camera = new Camera(canvas, [0.2, 5.75, 2.5], [0.0, 0.0, 0.0], 0.05);
+        let camera = new Camera(canvas, [0.2, 5.75, 2.5], 0.05);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/suzanne/", "Suzanne.gltf", 0);
 
         let scene = new Scene(camera);
