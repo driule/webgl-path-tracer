@@ -89,6 +89,8 @@ uniform sampler2D textureImage4;
 uniform sampler2D textureImage5;
 uniform sampler2D textureImage6;
 uniform sampler2D textureImage7;
+uniform sampler2D textureImage8;
+uniform sampler2D textureImage9;
 
 // skydome
 uniform bool isSkydomeLoaded;
@@ -468,6 +470,10 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
                     surfaceColor = texture(textureImage6, uv).rgb;
                 } else if (material.albedoTextureId == 6) {
                     surfaceColor = texture(textureImage7, uv).rgb;
+                } else if (material.albedoTextureId == 7) {
+                    surfaceColor = texture(textureImage8, uv).rgb;
+                } else if (material.albedoTextureId == 8) {
+                    surfaceColor = texture(textureImage9, uv).rgb;
                 }
             } else {
                 surfaceColor = material.color;

@@ -298,7 +298,7 @@ export class Shader {
     }
 
     private setMaterialTexture(id: number, material: Material): void {
-        // console.log('setting texture for [material, id]: ', material.getAlbedoTexture().src, id, "textureImage" + (id + 1));
+        console.log('setting texture for [material, id]: ', material.getAlbedoTexture().src, id, "textureImage" + (id + 1));
         gl.activeTexture(gl.TEXTURE7 + id);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
