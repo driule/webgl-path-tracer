@@ -79,11 +79,11 @@ export class PathTracer {
     
     private update(timeSinceStart: number): void {
         let uniforms: any = {};
-        uniforms.eye = this._scene.camera.eye;
-        uniforms.ray00 = this._scene.camera.getEyeRay(-1, -1);
-        uniforms.ray01 = this._scene.camera.getEyeRay(-1, +1);
-        uniforms.ray10 = this._scene.camera.getEyeRay(+1, -1);
-        uniforms.ray11 = this._scene.camera.getEyeRay(+1, +1);
+        uniforms.eye = this._scene.camera.getPosition();
+        uniforms.ray00 = this._scene.camera.getRay(-1, -1);
+        uniforms.ray01 = this._scene.camera.getRay(-1, +1);
+        uniforms.ray10 = this._scene.camera.getRay(+1, -1);
+        uniforms.ray11 = this._scene.camera.getRay(+1, +1);
         uniforms.timeSinceStart = timeSinceStart;
         uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
         
