@@ -117,7 +117,7 @@ export class PathTracer {
         // triangle data
         uniforms.triangles = this._scene.triangles;
         uniforms.totalTriangles = uniforms.triangles.length;
-        uniforms.triangleDataTextureSize = 256;//Math.ceil(Math.sqrt(uniforms.triangles.length * 6)); // ToDo: check why '+1' needed
+        uniforms.triangleDataTextureSize = 2048;//Math.ceil(Math.sqrt(uniforms.triangles.length * 6)); // ToDo: check why '+1' needed
         // console.log('uniforms.triangleDataTextureSize:', uniforms.triangleDataTextureSize);
 
         // BVH data
@@ -125,11 +125,11 @@ export class PathTracer {
         uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
 
         // {min}, {max}, {isLeaf, first, count}, {leftID, rightID, ID} - 4 rgb units
-        uniforms.bvhDataTextureSize = 256;//Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
+        uniforms.bvhDataTextureSize = 2048;//Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
         // console.log('uniforms.bvhDataTextureSize:', uniforms.bvhDataTextureSize);
 
         uniforms.triangleIndices = this._scene.bvh.triangleIndices;
-        uniforms.triangleIndicesDataTextureSize = 256;//Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
+        uniforms.triangleIndicesDataTextureSize = 2048;//Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
         // console.log('uniforms.triangleIndicesDataTextureSize:', uniforms.triangleIndicesDataTextureSize);
 
         // light data
@@ -138,14 +138,14 @@ export class PathTracer {
         uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
 
         // skydome
-        // uniforms.isSkydomeLoaded = false;
-        // if (this._scene.skydome != undefined) {
-        //     uniforms.isSkydomeLoaded = true;
-        //     uniforms.skydome = this._scene.skydome;
-        //     uniforms.skydomeTextureSize = Math.ceil(Math.sqrt(this._scene.skydome.shape[0] * this._scene.skydome.shape[0] * 3));
-        //     uniforms.skydomeWidth = this._scene.skydome.shape[0];
-        //     uniforms.skydomeHeight = this._scene.skydome.shape[1];
-        // }
+        uniforms.isSkydomeLoaded = false;
+        if (this._scene.skydome != undefined) {
+            uniforms.isSkydomeLoaded = true;
+            uniforms.skydome = this._scene.skydome;
+            uniforms.skydomeTextureSize = Math.ceil(Math.sqrt(this._scene.skydome.shape[0] * this._scene.skydome.shape[1] * 3));
+            uniforms.skydomeWidth = this._scene.skydome.shape[0];
+            uniforms.skydomeHeight = this._scene.skydome.shape[1];
+        }
         
         this._tracerShader.use();
         this._tracerShader.setUniforms(uniforms);

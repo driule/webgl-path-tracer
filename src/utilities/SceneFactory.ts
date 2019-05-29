@@ -19,7 +19,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-75.25, 20.75, 0.25), 0.15, 15.0)
         ];
         let camera = new Camera(canvas, [0.75, 15.75, 175.5], [0.0, 225.0, 0.0], 12.5);
-        let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/sponza/", "Sponza.gltf", 0, 100);
+        let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/sponza/", "Sponza.gltf", 0);
     
         let scene = new Scene(camera);
         scene.setLights(lights);
@@ -38,12 +38,12 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-2.25, 2.75, -10.75), 0.15, 15.0)
         ];
         let camera = new Camera(canvas, [0.75, 10.75, 12.5], [0.0, 2.5, 0.0], 0.25);
-        let scene = new Scene(camera);
-        
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", 0, 100);
+
+        let scene = new Scene(camera);
+        scene.setLights(lights);
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
-        scene.setLights(lights);
 
         geometry = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", scene.materials.length, 100, vec3.fromValues(6.0, 0.0, 0.0));
         scene.addTriangles(geometry[0]);
@@ -61,14 +61,14 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.0)
         ];
         let camera = new Camera(canvas, [0.2, 0.75, 275.0], [0.0, 75.0, 0.0], 2.0);
-        let scene = new Scene(camera);
-
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/duck/", "Duck.gltf", 0);
+
+        let scene = new Scene(camera);
+        scene.setLights(lights);
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
-        scene.setLights(lights);
 
-        // scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/LH/sky2.hdr"));
+        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/LH/sky2.hdr"));
     
         return scene;
     }
@@ -80,15 +80,14 @@ export class SceneFactory  {
             new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.5)
         ];
         let camera = new Camera(canvas, [0.2, 5.75, 2.5], [0.0, 0.0, 0.0], 0.05);
-        let scene = new Scene(camera);
-
-
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/suzanne/", "Suzanne.gltf", 0);
+
+        let scene = new Scene(camera);
+        scene.setLights(lights);
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
-        scene.setLights(lights);
 
-        // scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/space.hdr"));
+        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/space.hdr"));
     
         return scene;
     }
@@ -98,12 +97,10 @@ export class SceneFactory  {
             new Light(vec3.fromValues(0.0, 1.75, 0.25), 0.25, 12.5),
         ];
         let camera = new Camera(canvas, [0.0, 0.0, 2.5]);
-    
+        let material: Material = new Material(0);
+
         let scene = new Scene(camera);
         scene.setLights(lights);
-    
-        let material: Material = new Material(0);
-        scene.setMaterials([material]);
         scene.setTriangles([
             // ground plane
             new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(0.75, -0.95, 0.75), vec3.fromValues(0.75, -0.95, -0.75), material),
@@ -117,6 +114,7 @@ export class SceneFactory  {
             new Triangle(vec3.fromValues(-0.75, -0.95, -0.75), vec3.fromValues(0.75, -0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75), material),
             new Triangle(vec3.fromValues(0.75, -0.95, -0.75), vec3.fromValues(0.75, 0.95, -0.75), vec3.fromValues(-0.75, 0.95, -0.75), material)
         ]);
+        scene.setMaterials([material]);
     
         return scene;
     }

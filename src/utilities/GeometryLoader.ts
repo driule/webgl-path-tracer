@@ -52,9 +52,12 @@ export class GeometryLoader  {
         let asset: GltfAsset = await loader.load(path + fileName);
 
         let triangles: Triangle[] = [];
-
-        // ToDo: first compose all material into one list, then assign them to triangles
         let materials: Material[] = [];
+
+        // blank material for testing
+        // let material = new Material(0);
+
+        // load all available materials
         for (let i = 0; i < asset.gltf.materials.length; i++) {
             let material = new Material(materialOffset + i); // ToDo: set globaly unique ID
 
@@ -63,7 +66,6 @@ export class GeometryLoader  {
                 let texture = asset.gltf.textures[baseColorTexture.index];
                 let imageUri = path + asset.gltf.images[texture.source].uri;
                 material.setAlbedoTexture(await this.loadImage(imageUri));
-                // console.log("imageUri", imageUri);
             }
 
             let baseColor = asset.gltf.materials[i].pbrMetallicRoughness.baseColorFactor;
@@ -123,19 +125,8 @@ export class GeometryLoader  {
                 }
                 //
                 
-                // load texture image; ToDo: check if defined for each primitive
                 let materialId = asset.gltf.meshes[m].primitives[p].material;
                 let material = materials[materialId];
-                // material.setAlbedoTexture(await this.loadImage(imageUri));
-                
-                // if (texture.sampler != undefined) {
-                //     textureSampler = [
-                //         asset.gltf.samplers[texture.sampler].magFilter,
-                //         asset.gltf.samplers[texture.sampler].minFilter,
-                //         asset.gltf.samplers[texture.sampler].wrapS,
-                //         asset.gltf.samplers[texture.sampler].wrapT
-                //     ];
-                // }
             
                 // load vertex indices data
                 let indicesAccesorId = asset.gltf.meshes[m].primitives[p].indices;
