@@ -7,12 +7,14 @@ export class Camera {
     private position: vec3;
     private angleX: number;
     private angleY: number;
+    private fieldOfView: number;
 
     private frontDirection: vec3;
     private upDirection: vec3;
 
     private movementSpeed: number;
     private rotationSpeed: number;
+    private zoomSpeed: number;
 
     private viewProjectionMatrix: mat4;
 
@@ -29,12 +31,14 @@ export class Camera {
         this.position = position;
         this.angleX = angleX;
         this.angleY = angleY;
+        this.fieldOfView = Math.PI / 3;
 
         this.frontDirection = vec3.fromValues(0.0, 0.0, -1.0);
         this.upDirection = vec3.fromValues(0.0, 1.0, 0.0);
 
         this.movementSpeed = movementSpeed;
         this.rotationSpeed = rotationSpeed;
+        this.zoomSpeed = 0.01;
 
         this.calculateViewProjection();
     }
@@ -54,7 +58,7 @@ export class Camera {
             vec3.add(vec3.create(), this.position, this.frontDirection),
             this.upDirection
         );
-        let projection = mat4.perspective(mat4.create(), Math.PI / 3, this.canvas.width / this.canvas.height, 0.1, 1000);
+        let projection = mat4.perspective(mat4.create(), this.fieldOfView, this.canvas.width / this.canvas.height, 0.1, 1000);
         this.viewProjectionMatrix = mat4.invert(mat4.create(), mat4.multiply(mat4.create(), projection, view));
         
         // console.log('Camera configuration:', this.position, this.angleX, this.angleY);
@@ -106,9 +110,11 @@ export class Camera {
 
     // zoom controls
     public zoomIn(): void {
+        this.fieldOfView -= this.zoomSpeed;
     }
 
     public zoomOut(): void {
+        this.fieldOfView += this.zoomSpeed;
     }
 
     // rotation controls
