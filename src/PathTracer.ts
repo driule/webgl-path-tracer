@@ -112,7 +112,7 @@ export class PathTracer {
 
         // materials
         uniforms.materials = this._scene.materials;
-        uniforms.materialsTextureSize = Math.ceil(Math.sqrt(uniforms.materials.length * 2));
+        uniforms.materialsTextureSize = 512;//Math.ceil(Math.sqrt(uniforms.materials.length * 2));
 
         // triangle data
         uniforms.triangles = this._scene.triangles;
@@ -135,7 +135,7 @@ export class PathTracer {
         // light data
         uniforms.lights = this._scene.lights;
         uniforms.totalLights = this._scene.lights.length;
-        uniforms.lightDataTextureSize = Math.ceil(Math.sqrt(this._scene.lights.length * 2));
+        uniforms.lightDataTextureSize = 512;//Math.ceil(Math.sqrt(this._scene.lights.length * 2));
 
         // skydome
         uniforms.isSkydomeLoaded = false;

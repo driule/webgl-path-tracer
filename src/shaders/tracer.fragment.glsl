@@ -514,9 +514,21 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
         float diffuse = max(0.0, dot(normalize(toLight), normal));
         float shadowIntensity = getShadowIntensity(hit + normal + EPSILON, toLight);
+
+        // skydome contribution for illumination
+        vec3 skydomeColor = vec3(0, 0, 0);
+        if (isSkydomeLoaded) {
+            float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
+            float v = acos(ray.y) * INVERSE_PI;
+
+            int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
+
+            skydomeColor += colorMask * getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
+        }
+        //
         
         colorMask *= surfaceColor;
-        accumulatedColor += colorMask * surfaceColor * (lightColor * light.intensity * diffuse * shadowIntensity) * energyMultiplier;
+        accumulatedColor += colorMask * surfaceColor * ((lightColor * light.intensity * diffuse * shadowIntensity) + skydomeColor) * energyMultiplier;
         
         // Russian-Roulette to determine ray survival probability
         float raySurviveProbability = min(1.0, max(max(accumulatedColor.x, accumulatedColor.y), accumulatedColor.z));
