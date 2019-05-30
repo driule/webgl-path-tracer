@@ -367,13 +367,7 @@ vec3 uniformlyRandomVector(float seed) {
     return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));
 }
 
-float getShadowIntensity(vec3 origin, vec3 ray) {
-    // DEBUG: perform intersection without BVH
-    // for (int i = 0; i < totalTriangles; i++) {
-    //     float tTriangle = intersectTriangle(origin, ray, fetchTriangle(i));
-    //     if (tTriangle < EPSILON) return 0.0;
-    // }
-    
+float getShadowIntensity(vec3 origin, vec3 ray) {    
     Intersection intersection = intersectPrimitives(origin, ray);
     if (intersection.t < 1.0) return 0.0;
 
@@ -403,6 +397,44 @@ vec3 sampleSkydome(vec3 ray) {
     return getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
 }
 
+vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
+    float invDenom = 1.0 / ((triangle.b[1] - triangle.c[1]) * (triangle.a[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (triangle.a[1] - triangle.c[1]));
+    
+    float u = ((triangle.b[1] - triangle.c[1]) * (hit[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (hit[1] - triangle.c[1])) * invDenom;
+    float v = ((triangle.c[1] - triangle.a[1]) * (hit[0] - triangle.c[0]) + (triangle.a[0] - triangle.c[0]) * (hit[1] - triangle.c[1])) * invDenom;
+    float w = 1.0 - u - v;
+
+    return vec3(u, v, w);
+}
+
+vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
+    vec3 barycentricCoord = calculateBarycentricCoordinates(triangle, hit);
+    vec2 uv = barycentricCoord[0] * triangle.uvA + barycentricCoord[1] * triangle.uvB + barycentricCoord[2] * triangle.uvC;
+
+    vec3 color = vec3(0.15);
+    if (material.albedoTextureId == 0) {
+        color = texture(textureImage1, uv).rgb;
+    } else if (material.albedoTextureId == 1) {
+        color = texture(textureImage2, uv).rgb;
+    } else if (material.albedoTextureId == 2) {
+        color = texture(textureImage3, uv).rgb;
+    } else if (material.albedoTextureId == 3) {
+        color = texture(textureImage4, uv).rgb;
+    } else if (material.albedoTextureId == 4) {
+        color = texture(textureImage5, uv).rgb;
+    } else if (material.albedoTextureId == 5) {
+        color = texture(textureImage6, uv).rgb;
+    } else if (material.albedoTextureId == 6) {
+        color = texture(textureImage7, uv).rgb;
+    } else if (material.albedoTextureId == 7) {
+        color = texture(textureImage8, uv).rgb;
+    } else if (material.albedoTextureId == 8) {
+        color = texture(textureImage9, uv).rgb;
+    }
+
+    return color;
+}
+
 vec3 calculateColor(vec3 origin, vec3 ray) {
     ray = normalize(ray);
 
@@ -419,58 +451,18 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         vec3 normal;
         vec3 hit = origin + ray * t;
 
-        // DEBUG: perform intersection without BVH
-        // for (int i = 0; i < totalTriangles; i++) {
-        //     Triangle triangle = fetchTriangle(i);
-        //     float tTriangle = intersectTriangle(origin, ray, triangle);
-        //     if (tTriangle < t) {
-        //         t = tTriangle;
-        //         hit = origin + ray * t;
-        //         normal = getTriangleNormal(triangle);
-        //         surfaceColor = vec3(0.25, 0.00, 0.00);
-        //     }
-        // }
-
         Intersection intersection = intersectPrimitives(origin, ray);
         if (intersection.t < t) {
             t = intersection.t;
             hit = origin + ray * t;
             normal = getTriangleNormal(intersection.triangle);
 
-            // texture mapping
-            Triangle tri = intersection.triangle;
-
-            float baryA = ((tri.b[1] - tri.c[1]) * (hit[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (hit[1] - tri.c[1])) / ((tri.b[1] - tri.c[1]) * (tri.a[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (tri.a[1] - tri.c[1]));
-            float baryB = ((tri.c[1] - tri.a[1]) * (hit[0] - tri.c[0]) + (tri.a[0] - tri.c[0]) * (hit[1] - tri.c[1])) / ((tri.b[1] - tri.c[1]) * (tri.a[0] - tri.c[0]) + (tri.c[0] - tri.b[0]) * (tri.a[1] - tri.c[1]));
-            float baryC = 1.0 - baryA - baryB;
-
-            vec2 uv = baryA * tri.uvA + baryB * tri.uvB + baryC * tri.uvC;
-
-            Material material = fetchMaterial(tri.material);
+            Material material = fetchMaterial(intersection.triangle.material);
             if (material.isAlbedoTextureDefined) {
-                if (material.albedoTextureId == 0) {
-                    surfaceColor = texture(textureImage1, uv).rgb;
-                } else if (material.albedoTextureId == 1) {
-                    surfaceColor = texture(textureImage2, uv).rgb;
-                } else if (material.albedoTextureId == 2) {
-                    surfaceColor = texture(textureImage3, uv).rgb;
-                } else if (material.albedoTextureId == 3) {
-                    surfaceColor = texture(textureImage4, uv).rgb;
-                } else if (material.albedoTextureId == 4) {
-                    surfaceColor = texture(textureImage5, uv).rgb;
-                } else if (material.albedoTextureId == 5) {
-                    surfaceColor = texture(textureImage6, uv).rgb;
-                } else if (material.albedoTextureId == 6) {
-                    surfaceColor = texture(textureImage7, uv).rgb;
-                } else if (material.albedoTextureId == 7) {
-                    surfaceColor = texture(textureImage8, uv).rgb;
-                } else if (material.albedoTextureId == 8) {
-                    surfaceColor = texture(textureImage9, uv).rgb;
-                }
+                surfaceColor = mapTexture(intersection.triangle, material, hit);
             } else {
                 surfaceColor = material.color;
             }
-            //
         }
 
         float tLight = INFINITY;
