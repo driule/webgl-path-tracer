@@ -314,7 +314,6 @@ export class Shader {
         gl.generateMipmap(gl.TEXTURE_2D);
 
         let textureImageLocation = gl.getUniformLocation(this.program, "textureImage" + (id + 1));
-        // let textureImageLocation = gl.getUniformLocation(this.program, "textureImages[" + id + "]");
         gl.uniform1i(textureImageLocation, 7 + id);
     }
 

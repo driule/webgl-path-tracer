@@ -77,7 +77,6 @@ uniform float triangleIndicesDataTextureSize;
 uniform sampler2D triangleIndicesDataTexture;
 
 // texturing
-// uniform sampler2D textureImages[MAX_TEXTURES];
 uniform sampler2D materialsTexture;
 uniform float materialsTextureSize;
 
@@ -106,15 +105,6 @@ uniform sampler2D lightDataTexture;
 
 int stackPointer;
 int stack[STACK_SIZE];
-
-// vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
-//     float column = mod(index, size);
-//     float row = floor(index / size);
-
-//     vec2 uv = vec2((column + 0.5) / size, (row + 0.5) / size);
-
-//     return texture(sampler, uv).rgb;
-// }
 
 vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
 	ivec2 uv = ivec2(
@@ -248,8 +238,6 @@ vec3 getTriangleNormal(Triangle triangle) {
 
 bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox boundingBox, Intersection intersection)
 {
-    // vec3 invertedDirection = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
-
     float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;
 
     txmin = (boundingBox.min.x - origin.x) * invertedDirection.x;
@@ -320,7 +308,6 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray)
             //     pixelColor = pixelColor + vec4(0.0, 0.1, 0.0, 1.0);
             // }
 
-            // ToDo: check why "i < node.count" slows everything down
             for (int i = 0; i < node.count; i++) {
                 if (i >= node.count) {
                     break;
@@ -381,6 +368,7 @@ vec3 uniformlyRandomVector(float seed) {
 }
 
 float getShadowIntensity(vec3 origin, vec3 ray) {
+    // DEBUG: perform intersection without BVH
     // for (int i = 0; i < totalTriangles; i++) {
     //     float tTriangle = intersectTriangle(origin, ray, fetchTriangle(i));
     //     if (tTriangle < EPSILON) return 0.0;
@@ -406,6 +394,15 @@ Light getRandomLight() {
     return fetchLight(0);
 }
 
+vec3 sampleSkydome(vec3 ray) {
+    float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
+    float v = acos(ray.y) * INVERSE_PI;
+
+    int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
+
+    return getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
+}
+
 vec3 calculateColor(vec3 origin, vec3 ray) {
     ray = normalize(ray);
 
@@ -422,6 +419,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         vec3 normal;
         vec3 hit = origin + ray * t;
 
+        // DEBUG: perform intersection without BVH
         // for (int i = 0; i < totalTriangles; i++) {
         //     Triangle triangle = fetchTriangle(i);
         //     float tTriangle = intersectTriangle(origin, ray, triangle);
@@ -450,12 +448,6 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
             Material material = fetchMaterial(tri.material);
             if (material.isAlbedoTextureDefined) {
-                // for (int i = 0; i < MAX_TEXTURES; i++) {
-                //     if (i == material.albedoTextureId) {
-                //         surfaceColor = texture(textureImages[i], uv).rgb;
-                //     }
-                // }
-
                 if (material.albedoTextureId == 0) {
                     surfaceColor = texture(textureImage1, uv).rgb;
                 } else if (material.albedoTextureId == 1) {
@@ -493,17 +485,9 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         }
         
         if (abs(t - INFINITY) < EPSILON) {
-
-            // skydome sampling
             if (isSkydomeLoaded) {
-                float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
-                float v = acos(ray.y) * INVERSE_PI;
-
-                int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
-
-                accumulatedColor += colorMask * getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
+                accumulatedColor += colorMask * sampleSkydome(ray);
             }
-
             break;
         } else {
             ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
@@ -518,14 +502,8 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         // skydome contribution for illumination
         vec3 skydomeColor = vec3(0, 0, 0);
         if (isSkydomeLoaded) {
-            float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
-            float v = acos(ray.y) * INVERSE_PI;
-
-            int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
-
-            skydomeColor += colorMask * getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
+            skydomeColor += colorMask * sampleSkydome(ray);
         }
-        //
         
         colorMask *= surfaceColor;
         accumulatedColor += colorMask * surfaceColor * ((lightColor * light.intensity * diffuse * shadowIntensity) + skydomeColor) * energyMultiplier;
@@ -549,6 +527,6 @@ void main() {
     vec3 texture = texture(textureSampler, gl_FragCoord.xy / resolution).rgb;
     pixelColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
 
-    // debug mode
+    // DEBUG mode
     // vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
 }
