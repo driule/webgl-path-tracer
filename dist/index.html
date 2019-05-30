@@ -6,8 +6,6 @@
             html, body {
                 padding: 0;
                 margin: 10;
-                /* overflow: hidden; */
-                /* background-color: black; */
             }
 
             .playbackButton {
@@ -21,8 +19,50 @@
             }
 
             .controllerButton {
-                height: 40px;
-                width: 40px;
+                height: 75px;
+                width: 75px;
+            }
+
+            @-webkit-keyframes spin {
+                0% { -webkit-transform: rotate(0deg); }
+                100% { -webkit-transform: rotate(360deg); }
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            #loader {
+                display: none;
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                z-index: 1;
+
+                width: 100px;
+                height: 100px;
+                margin: -50px 0 0 -50px;
+                border: 16px solid #f3f3f3;
+                border-radius: 50%;
+                border-top: 16px solid #3498db;
+                width: 120px;
+                height: 120px;
+
+                -webkit-animation: spin 2s linear infinite;
+                animation: spin 2s linear infinite;
+            }
+
+            #renderer {
+                position: relative;
+
+                /* HD */
+                /* width: 1280px;
+                height: 720px; */
+
+                /* small */
+                width: 640px;
+                height: 480px;
             }
         </style>
         <link rel="icon" type="image/png" href="assets/images/favicon.png"/>
@@ -30,17 +70,19 @@
         <script type="text/javascript" src="js/pathTracer.js"></script>
     </head>
     <body>
-        <!-- HD canvas -->
-        <!-- <canvas id="pathTracer" width="1280" height="720"></canvas> -->
+        <div id="renderer">
+            <div id="loader"></div>
 
-        <!-- small canvas -->
-        <canvas id="pathTracer" width="640" height="480"></canvas>
+            <!-- HD canvas -->
+            <!-- <canvas id="pathTracer" width="1280" height="720"></canvas> -->
 
-        <!-- mini canvas -->
-        <!-- <canvas id="pathTracer" width="256" height="192"></canvas> -->
+            <!-- small canvas -->
+            <canvas id="pathTracer" width="640" height="480"></canvas>
+
+        </div>
 
         <br/>
-        <label id="fps">fps measurement is loading...</label> | <label id="primitiveCount"></label>
+        <label id="fps">...</label> | <label id="primitiveCount">...</label>
         | Does your browser exploit GPU power? Settings for <a href="assets/images/nvidia-settings.png">NVIDIA</a><br/>
 
         <br/>
@@ -53,7 +95,6 @@
         <button class="sceneButton" id="changeScene3">Suzanne</button>
         <button class="sceneButton" id="changeScene4">Avocado</button>
         <button class="sceneButton" id="changeScene5">Sponza</button>
-        <!-- <button class="sceneButton" id="changeScene5" disabled="true">Sponza</button> -->
 
         <hr/>
         <table>

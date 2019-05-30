@@ -6,14 +6,18 @@ import { GLUtilities } from "./gl/GLUtilities";
 let renderer: Renderer;
 let gauge: Gauge;
 let canvas: HTMLCanvasElement;
+let loader: HTMLDivElement;
 
 // initialize application when page loading
 window.onload = async function() {
     canvas = GLUtilities.initialize("pathTracer");
+    loader = document.getElementById("loader") as HTMLDivElement;
     gauge = new Gauge();
     
     renderer = new Renderer(canvas, gauge);
+    setLoadingScreen();
     renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
+    removeLoadingScreen();
     renderer.start();
 
     // primitive count and FPS measurement
@@ -144,17 +148,37 @@ async function onButtonDown(event: MouseEvent) {
 
             renderer.pause();
         } if (element.id == "changeScene1") {
+            setLoadingScreen();
             renderer.setScene(await SceneFactory.createBasicScene(canvas));
+            removeLoadingScreen();
         } if (element.id == "changeScene2") {
+            setLoadingScreen();
             renderer.setScene(await SceneFactory.createDuckScene(canvas));
+            removeLoadingScreen();
         } if (element.id == "changeScene3") {
+            setLoadingScreen();
             renderer.setScene(await SceneFactory.createSuzanneScene(canvas));
+            removeLoadingScreen();
         } if (element.id == "changeScene4") {
+            setLoadingScreen();
             renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
+            removeLoadingScreen();
         } if (element.id == "changeScene5") {
+            setLoadingScreen();
             renderer.setScene(await SceneFactory.createSponzaScene(canvas));
+            removeLoadingScreen();
         }
     }
+}
+
+function setLoadingScreen(): void {
+    canvas.style.display = "none";
+    loader.style.display = "block";
+}
+
+function removeLoadingScreen(): void {
+    canvas.style.display = "block";
+    loader.style.display = "none";
 }
 
 function onButtonUp(event: MouseEvent): void {

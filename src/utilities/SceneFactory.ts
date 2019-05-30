@@ -11,8 +11,6 @@ const parseHDR = require('parse-hdr');
 export class SceneFactory  {
 
     public static async createSponzaScene(canvas: HTMLCanvasElement) {
-        console.log("Please wait! Loading sponza scene...");
-
         let lights: Light[] = [
             new Light(vec3.fromValues(0.0, 1.75, 25.25), 0.25, 5.0),
             new Light(vec3.fromValues(45.25, 12.75, 0.25), 1.5, 5.0),
@@ -26,8 +24,6 @@ export class SceneFactory  {
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
     
-        console.log("Scene loaded.");
-
         return scene;
     }
 
