@@ -8,6 +8,15 @@
                 margin: 10;
             }
 
+            .noSelect {
+                -webkit-touch-callout: none; /* iOS Safari */
+                -webkit-user-select: none; /* Safari */
+                -khtml-user-select: none; /* Konqueror HTML */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* Internet Explorer/Edge */
+                user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
+            }
+
             .playbackButton {
                 height: 30px;
                 width: 75px;
@@ -86,18 +95,18 @@
         | Does your browser exploit GPU power? Settings for <a href="assets/images/nvidia-settings.png">NVIDIA</a><br/>
 
         <br/>
-        <button class="playbackButton" id="render" disabled="true">Render</button>
-        <button class="playbackButton" id="stop">Stop</button>
+        <button class="playbackButton noSelect" id="render" disabled="true">Render</button>
+        <button class="playbackButton noSelect" id="stop">Stop</button>
         <br/>
         <br/>
-        <button class="sceneButton" id="changeScene1">Basic Geometry</button>
-        <button class="sceneButton" id="changeScene2">Duck</button>
-        <button class="sceneButton" id="changeScene3">Suzanne</button>
-        <button class="sceneButton" id="changeScene4">Avocado</button>
-        <button class="sceneButton" id="changeScene5">Sponza</button>
+        <button class="sceneButton noSelect" id="changeScene1">Basic Geometry</button>
+        <button class="sceneButton noSelect" id="changeScene2">Duck</button>
+        <button class="sceneButton noSelect" id="changeScene3">Suzanne</button>
+        <button class="sceneButton noSelect" id="changeScene4">Avocado</button>
+        <button class="sceneButton noSelect" id="changeScene5">Sponza</button>
 
         <hr/>
-        <table>
+        <table class="noSelect">
             <tr>
                 <td colspan="3" align="center"><h4>Camera Movement</h4></td>
                 <td>&nbsp;</td>
