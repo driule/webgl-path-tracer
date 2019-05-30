@@ -6,63 +6,63 @@ import { Material } from "./geometry/Material";
 
 export class Scene {
 
-    private _camera: Camera;
+    private camera: Camera;
 
-    private _triangles: Triangle[];
-    private _materials: Material[];
-    private _lights: Light[];
+    private triangles: Triangle[];
+    private materials: Material[];
+    private lights: Light[];
     
-    private _bvh: BVH;
+    private bvh: BVH;
 
     public skydome: any;
 
     public constructor(camera: Camera) {
-        this._camera = camera;
+        this.camera = camera;
 
-        this._triangles = [];
-        this._materials = [];
-        this._lights = [];
+        this.triangles = [];
+        this.materials = [];
+        this.lights = [];
     }
 
-    public get camera(): Camera {
-        return this._camera;
+    public getCamera(): Camera {
+        return this.camera;
     }
 
-    public get triangles(): Triangle[] {
-        return this._triangles;
+    public getTriangles(): Triangle[] {
+        return this.triangles;
     }
 
-    public get materials(): Material[] {
-        return this._materials;
+    public getMaterials(): Material[] {
+        return this.materials;
     }
 
-    public get lights(): Light[] {
-        return this._lights;
+    public getLights(): Light[] {
+        return this.lights;
     }
 
-    public get bvh(): BVH {
-        return this._bvh;
+    public getBVH(): BVH {
+        return this.bvh;
     }
 
     public setLights(lights: Light[] = []): void {
-        this._lights = lights;
+        this.lights = lights;
     }
 
     public setTriangles(triangles: Triangle[] = []): void {
-        this._triangles = triangles;
-        this._bvh = new BVH(this._triangles);
+        this.triangles = triangles;
+        this.bvh = new BVH(this.triangles);
     }
 
     public addTriangles(triangles: Triangle[] = []): void {
-        this._triangles = this._triangles.concat(triangles);
-        this._bvh = new BVH(this._triangles);
+        this.triangles = this.triangles.concat(triangles);
+        this.bvh = new BVH(this.triangles);
     }
 
     public setMaterials(materials: Material[] = []): void {
-        this._materials = materials;
+        this.materials = materials;
     }
 
     public addMaterials(materials: Material[] = []): void {
-        this._materials = this._materials.concat(materials);
+        this.materials = this.materials.concat(materials);
     }
 }

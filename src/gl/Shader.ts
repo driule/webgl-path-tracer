@@ -1,15 +1,18 @@
 import { gl } from "./GLUtilities";
 import { Material } from "../geometry/Material";
+import { Triangle } from "../geometry/Triangle";
+import { Light } from "../geometry/Light";
+import { BoundingBox } from "../geometry/BoundingBox";
 
 export class Shader {
 
-    private _name: string;
-    private _program: WebGLProgram;
-    private _attributes: {[name: string]: number} = {};
-    private _uniforms: {[name: string]: WebGLUniformLocation} = {};
+    private name: string;
+    private program: WebGLProgram;
+    private attributes: {[name: string]: number} = {};
+    private uniforms: {[name: string]: WebGLUniformLocation} = {};
     
     public constructor(name: string, vertexSource: string, fragmentSource: string) {
-        this._name = name;
+        this.name = name;
 
         let vertexShader = this.loadShader(vertexSource, gl.VERTEX_SHADER);
         let fragmentShader = this.loadShader(fragmentSource, gl.FRAGMENT_SHADER);
@@ -19,56 +22,52 @@ export class Shader {
         this.detectUniforms();
     }
 
-    public get name(): string {
-        return this._name;
-    }
-
     public getAttributeLocation(name: string): number {
-        if (this._attributes[name] === undefined) {
-            throw new Error(`Unable to find attribute "${name}" in shader "${this._name}"`);
+        if (this.attributes[name] === undefined) {
+            throw new Error(`Unable to find attribute "${name}" in shader "${this.name}"`);
         }
 
-        return this._attributes[name];
+        return this.attributes[name];
     }
 
     public getUniformLocation(name: string): WebGLUniformLocation {
-        if (this._uniforms[name] === undefined) {
-            throw new Error(`Unable to find uniform "${name}" in shader "${this._name}"`);
+        if (this.uniforms[name] === undefined) {
+            throw new Error(`Unable to find uniform "${name}" in shader "${this.name}"`);
         }
 
-        return this._uniforms[name];
+        return this.uniforms[name];
     }
 
-    // TODO: this is very badly harcoded way to set uniforms
+    // ToDo: generalize way of sending data to the shader
     public setUniforms(uniforms: any): void {
         for (let name in uniforms) {
 
-            // specific case for triangle data texture
             if (name.toString() === "triangles") {
                 let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
-                // console.log('triangleList.length', triangleList.length, '>', uniforms.triangles.length * 6 * 3);
                 for (let i = 0; i < uniforms.totalTriangles; i++) {
-                    triangleList[i * 3 * 6 + 0] = uniforms.triangles[i].a[0];
-                    triangleList[i * 3 * 6 + 1] = uniforms.triangles[i].a[1];
-                    triangleList[i * 3 * 6 + 2] = uniforms.triangles[i].a[2];
+                    let triangle: Triangle = uniforms.triangles[i];
 
-                    triangleList[i * 3 * 6 + 3] = uniforms.triangles[i].b[0];
-                    triangleList[i * 3 * 6 + 4] = uniforms.triangles[i].b[1];
-                    triangleList[i * 3 * 6 + 5] = uniforms.triangles[i].b[2];
+                    triangleList[i * 3 * 6 + 0] = triangle.getA()[0];
+                    triangleList[i * 3 * 6 + 1] = triangle.getA()[1];
+                    triangleList[i * 3 * 6 + 2] = triangle.getA()[2];
 
-                    triangleList[i * 3 * 6 + 6] = uniforms.triangles[i].c[0];
-                    triangleList[i * 3 * 6 + 7] = uniforms.triangles[i].c[1];
-                    triangleList[i * 3 * 6 + 8] = uniforms.triangles[i].c[2];
+                    triangleList[i * 3 * 6 + 3] = triangle.getB()[0];
+                    triangleList[i * 3 * 6 + 4] = triangle.getB()[1];
+                    triangleList[i * 3 * 6 + 5] = triangle.getB()[2];
 
-                    triangleList[i * 3 * 6 + 9] = uniforms.triangles[i].uvA[0];
-                    triangleList[i * 3 * 6 + 10] = uniforms.triangles[i].uvA[1];
-                    triangleList[i * 3 * 6 + 11] = uniforms.triangles[i].uvB[0];
+                    triangleList[i * 3 * 6 + 6] = triangle.getC()[0];
+                    triangleList[i * 3 * 6 + 7] = triangle.getC()[1];
+                    triangleList[i * 3 * 6 + 8] = triangle.getC()[2];
+
+                    triangleList[i * 3 * 6 + 9] = triangle.getUvA()[0];
+                    triangleList[i * 3 * 6 + 10] = triangle.getUvA()[1];
+                    triangleList[i * 3 * 6 + 11] = triangle.getUvB()[0];
                     
-                    triangleList[i * 3 * 6 + 12] = uniforms.triangles[i].uvB[1];
-                    triangleList[i * 3 * 6 + 13] = uniforms.triangles[i].uvC[0];
-                    triangleList[i * 3 * 6 + 14] = uniforms.triangles[i].uvC[1];
+                    triangleList[i * 3 * 6 + 12] = triangle.getUvB()[1];
+                    triangleList[i * 3 * 6 + 13] = triangle.getUvC()[0];
+                    triangleList[i * 3 * 6 + 14] = triangle.getUvC()[1];
 
-                    triangleList[i * 3 * 6 + 15] = uniforms.triangles[i].material.getId();
+                    triangleList[i * 3 * 6 + 15] = triangle.getMaterial().getId();
                     triangleList[i * 3 * 6 + 16] = 1.0;
                     triangleList[i * 3 * 6 + 17] = 1.0;
                 }
@@ -83,22 +82,23 @@ export class Shader {
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleDataTextureSize, uniforms.triangleDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleList);
                 
-                let triangleDataLocation = gl.getUniformLocation(this._program, "triangleDataTexture");
+                let triangleDataLocation = gl.getUniformLocation(this.program, "triangleDataTexture");
                 gl.uniform1i(triangleDataLocation, 1);
 
                 continue;
             }
 
-            // specific case for light
             if (name.toString() === "lights") {
                 let lightList = new Float32Array(uniforms.lightDataTextureSize * uniforms.lightDataTextureSize * 3);
                 for (let i = 0; i < uniforms.totalLights; i++) {
-                    lightList[i * 3 * 2 + 0] = uniforms.lights[i].position[0];
-                    lightList[i * 3 * 2 + 1] = uniforms.lights[i].position[1];
-                    lightList[i * 3 * 2 + 2] = uniforms.lights[i].position[2];
+                    let light: Light = uniforms.lights[i];
 
-                    lightList[i * 3 * 2 + 3] = uniforms.lights[i].radius;
-                    lightList[i * 3 * 2 + 4] = uniforms.lights[i].intensity;
+                    lightList[i * 3 * 2 + 0] = light.getPosition()[0];
+                    lightList[i * 3 * 2 + 1] = light.getPosition()[1];
+                    lightList[i * 3 * 2 + 2] = light.getPosition()[2];
+
+                    lightList[i * 3 * 2 + 3] = light.getRadius();
+                    lightList[i * 3 * 2 + 4] = light.getIntensity();
                     lightList[i * 3 * 2 + 5] = 1.0;
                 }
 
@@ -112,37 +112,37 @@ export class Shader {
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.lightDataTextureSize, uniforms.lightDataTextureSize, 0, gl.RGB, gl.FLOAT, lightList);
                 
-                let lightDataLocation = gl.getUniformLocation(this._program, "lightDataTexture");
+                let lightDataLocation = gl.getUniformLocation(this.program, "lightDataTexture");
                 gl.uniform1i(lightDataLocation, 2);
 
                 continue;
             }
 
-            // specific case for BVH
             if (name.toString() == "bvhNodeList") {
                 let bvhNodeDataList = new Float32Array(uniforms.bvhDataTextureSize * uniforms.bvhDataTextureSize * 3);
-                // console.log('bvhNodeDataList.length', bvhNodeDataList.length, '>', uniforms.bvhNodeList.length * 4 * 3);
                 for (let i = 0; i < uniforms.totalBvhNodes; i++) {
-                    bvhNodeDataList[i * 3 * 4 + 0] = uniforms.bvhNodeList[i].min[0];
-                    bvhNodeDataList[i * 3 * 4 + 1] = uniforms.bvhNodeList[i].min[1];
-                    bvhNodeDataList[i * 3 * 4 + 2] = uniforms.bvhNodeList[i].min[2];
+                    let bvhNode: BoundingBox = uniforms.bvhNodeList[i];
 
-                    bvhNodeDataList[i * 3 * 4 + 3] = uniforms.bvhNodeList[i].max[0];
-                    bvhNodeDataList[i * 3 * 4 + 4] = uniforms.bvhNodeList[i].max[1];
-                    bvhNodeDataList[i * 3 * 4 + 5] = uniforms.bvhNodeList[i].max[2];
+                    bvhNodeDataList[i * 3 * 4 + 0] = bvhNode.min[0];
+                    bvhNodeDataList[i * 3 * 4 + 1] = bvhNode.min[1];
+                    bvhNodeDataList[i * 3 * 4 + 2] = bvhNode.min[2];
 
-                    bvhNodeDataList[i * 3 * 4 + 6] = uniforms.bvhNodeList[i].isLeaf;
-                    bvhNodeDataList[i * 3 * 4 + 7] = uniforms.bvhNodeList[i].first;
-                    bvhNodeDataList[i * 3 * 4 + 8] = uniforms.bvhNodeList[i].count;
+                    bvhNodeDataList[i * 3 * 4 + 3] = bvhNode.max[0];
+                    bvhNodeDataList[i * 3 * 4 + 4] = bvhNode.max[1];
+                    bvhNodeDataList[i * 3 * 4 + 5] = bvhNode.max[2];
 
-                    if (!uniforms.bvhNodeList[i].isLeaf) {
-                        bvhNodeDataList[i * 3 * 4 + 9] = uniforms.bvhNodeList[i].left.id;
-                        bvhNodeDataList[i * 3 * 4 + 10] = uniforms.bvhNodeList[i].right.id;
+                    bvhNodeDataList[i * 3 * 4 + 6] = bvhNode.isLeaf ? 1 : 0;
+                    bvhNodeDataList[i * 3 * 4 + 7] = bvhNode.first;
+                    bvhNodeDataList[i * 3 * 4 + 8] = bvhNode.count;
+
+                    if (!bvhNode.isLeaf) {
+                        bvhNodeDataList[i * 3 * 4 + 9] = bvhNode.left.getId();
+                        bvhNodeDataList[i * 3 * 4 + 10] = bvhNode.right.getId();
                     } else {
                         bvhNodeDataList[i * 3 * 4 + 9] = 1.0;
                         bvhNodeDataList[i * 3 * 4 + 10] = 1.0;
                     }
-                    bvhNodeDataList[i * 3 * 4 + 11] = uniforms.bvhNodeList[i].id;
+                    bvhNodeDataList[i * 3 * 4 + 11] = bvhNode.getId();
                 }
 
                 gl.activeTexture(gl.TEXTURE3);
@@ -155,16 +155,14 @@ export class Shader {
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.bvhDataTextureSize, uniforms.bvhDataTextureSize, 0, gl.RGB, gl.FLOAT, bvhNodeDataList);
                 
-                let bvhDataLocation = gl.getUniformLocation(this._program, "bvhDataTexture");
+                let bvhDataLocation = gl.getUniformLocation(this.program, "bvhDataTexture");
                 gl.uniform1i(bvhDataLocation, 3);
 
                 continue;
             }
 
-            // specific case for triangle indices
             if (name.toString() == "triangleIndices") {
                 let triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
-                // console.log('triangleIndices.length', triangleIndices.length, '>', uniforms.triangleIndices.length * 3);
                 for (let i = 0; i < uniforms.triangleIndices.length; i++) {
                     triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
                     triangleIndices[i * 3 + 1] = uniforms.triangleIndices[i];
@@ -181,18 +179,18 @@ export class Shader {
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleIndices);
                 
-                let triangleIndicesDataLocation = gl.getUniformLocation(this._program, "triangleIndicesDataTexture");
+                let triangleIndicesDataLocation = gl.getUniformLocation(this.program, "triangleIndicesDataTexture");
                 gl.uniform1i(triangleIndicesDataLocation, 4);
 
                 continue;
             }
 
-            // specific case for materials
             if (name.toString() === "materials") {
                 let texturePointer = 0;
                 let materialList = new Float32Array(uniforms.materialsTextureSize * uniforms.materialsTextureSize * 3);
                 for (let i = 0; i < uniforms.materials.length; i++) {
                     let material: Material = uniforms.materials[i];
+
                     materialList[i * 3 * 2 + 0] = material.getColor()[0];
                     materialList[i * 3 * 2 + 1] = material.getColor()[1];
                     materialList[i * 3 * 2 + 2] = material.getColor()[2];
@@ -220,14 +218,13 @@ export class Shader {
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.materialsTextureSize, uniforms.materialsTextureSize, 0, gl.RGB, gl.FLOAT, materialList);
 
-                let materialsTextureLocation = gl.getUniformLocation(this._program, "materialsTexture");
+                let materialsTextureLocation = gl.getUniformLocation(this.program, "materialsTexture");
                 gl.uniform1i(materialsTextureLocation, 5);
 
                 continue;
             }
 
             if (name.toString() === "skydome") {
-                // console.log('uniforms.skydomeTextureSize: ', uniforms.skydomeTextureSize);
                 let rgbList = new Float32Array(uniforms.skydomeTextureSize * uniforms.skydomeTextureSize * 3);
                 for (let i = 0; i < uniforms.skydomeWidth * uniforms.skydomeHeight; i++) {
                     rgbList[i * 3 + 0] = uniforms.skydome.data[i * 4 + 0];
@@ -245,13 +242,13 @@ export class Shader {
 
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.skydomeTextureSize, uniforms.skydomeTextureSize, 0, gl.RGB, gl.FLOAT, rgbList);
 
-                let skydomeTextureLocation = gl.getUniformLocation(this._program, "skydomeTexture");
+                let skydomeTextureLocation = gl.getUniformLocation(this.program, "skydomeTexture");
                 gl.uniform1i(skydomeTextureLocation, 6);
 
                 continue;
             }
 
-            let location = gl.getUniformLocation(this._program, name);
+            let location = gl.getUniformLocation(this.program, name);
             if (location == null) continue;
 
             var vector3Uniforms = [
@@ -316,17 +313,17 @@ export class Shader {
         gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
         gl.generateMipmap(gl.TEXTURE_2D);
 
-        let textureImageLocation = gl.getUniformLocation(this._program, "textureImage" + (id + 1));
-        // let textureImageLocation = gl.getUniformLocation(this._program, "textureImages[" + id + "]");
+        let textureImageLocation = gl.getUniformLocation(this.program, "textureImage" + (id + 1));
+        // let textureImageLocation = gl.getUniformLocation(this.program, "textureImages[" + id + "]");
         gl.uniform1i(textureImageLocation, 7 + id);
     }
 
     public use(): void {
-        gl.useProgram(this._program);
+        gl.useProgram(this.program);
     }
 
     public delete(): void {
-        gl.deleteProgram(this._program);
+        gl.deleteProgram(this.program);
     }
 
     private loadShader(source: string, shaderType: number): WebGLShader {
@@ -337,46 +334,46 @@ export class Shader {
 
         let shaderInfoLog = gl.getShaderInfoLog(shader);
         if (shaderInfoLog !== "") {
-            throw new Error(`Error compiling shader "${this._name}": "${shaderInfoLog}"`);
+            throw new Error(`Error compiling shader "${this.name}": "${shaderInfoLog}"`);
         }
 
         return shader;
     }
 
     private createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader): void {
-        this._program = gl.createProgram();
+        this.program = gl.createProgram();
 
-        gl.attachShader(this._program, vertexShader);
-        gl.attachShader(this._program, fragmentShader);
-        gl.linkProgram(this._program);
+        gl.attachShader(this.program, vertexShader);
+        gl.attachShader(this.program, fragmentShader);
+        gl.linkProgram(this.program);
 
-        let programInfoLog = gl.getProgramInfoLog(this._program);
+        let programInfoLog = gl.getProgramInfoLog(this.program);
         if (programInfoLog !== "") {
-            throw new Error(`Error linking shader "${this._name}": ${programInfoLog}"`);
+            throw new Error(`Error linking shader "${this.name}": ${programInfoLog}"`);
         }
     }
 
     private detectAttributes(): void {
-        let attributeCount = gl.getProgramParameter(this._program, gl.ACTIVE_ATTRIBUTES);
+        let attributeCount = gl.getProgramParameter(this.program, gl.ACTIVE_ATTRIBUTES);
         for (let i = 0; i < attributeCount; i++) {
-            let attribute: WebGLActiveInfo = gl.getActiveAttrib(this._program, i);
+            let attribute: WebGLActiveInfo = gl.getActiveAttrib(this.program, i);
             if (!attribute) {
                 break;
             }
 
-            this._attributes[attribute.name] = gl.getAttribLocation(this._program, attribute.name);
+            this.attributes[attribute.name] = gl.getAttribLocation(this.program, attribute.name);
         }
     }
 
     private detectUniforms(): void {
-        let uniformCount = gl.getProgramParameter(this._program, gl.ACTIVE_UNIFORMS);
+        let uniformCount = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
         for (let i = 0; i < uniformCount; i++) {
-            let uniform: WebGLActiveInfo = gl.getActiveUniform(this._program, i);
+            let uniform: WebGLActiveInfo = gl.getActiveUniform(this.program, i);
             if (!uniform) {
                 break;
             }
 
-            this._uniforms[uniform.name] = gl.getUniformLocation(this._program, uniform.name);
+            this.uniforms[uniform.name] = gl.getUniformLocation(this.program, uniform.name);
         }
     }
 }

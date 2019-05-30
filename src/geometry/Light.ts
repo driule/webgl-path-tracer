@@ -2,25 +2,25 @@ import { vec3 } from "gl-matrix";
 
 export class Light {
 
-    private _position: vec3;
-    private _radius: number;
-    private _intensity: number;
+    private position: vec3;
+    private radius: number;
+    private intensity: number;
 
     public constructor(position: vec3, radius: number, intensity: number) {
-        this._position = position;
-        this._radius = radius;
-        this._intensity = intensity;
+        this.position = position;
+        this.radius = radius;
+        this.intensity = intensity;
     }
 
-    public get position(): vec3 {
-        return this._position;
+    public getPosition(): vec3 {
+        return this.position;
     }
 
-    public get radius(): number {
-        return this._radius;
+    public getRadius(): number {
+        return this.radius;
     }
 
-    public get intensity(): number {
-        return this._intensity;
+    public getIntensity(): number {
+        return this.intensity;
     }
 }

@@ -145,11 +145,12 @@ export class GeometryLoader  {
                         let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
                         let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
                         let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
+                        
+                        let uvA: vec2 = textureCoordinates[meshIndices[i * 3 + 0]];
+                        let uvB: vec2 = textureCoordinates[meshIndices[i * 3 + 1]];
+                        let uvC: vec2 = textureCoordinates[meshIndices[i * 3 + 2]];
 
-                        let triangle: Triangle = new Triangle(a, b, c, material);
-                        triangle.uvA = textureCoordinates[meshIndices[i * 3 + 0]];
-                        triangle.uvB = textureCoordinates[meshIndices[i * 3 + 1]];
-                        triangle.uvC = textureCoordinates[meshIndices[i * 3 + 2]];
+                        let triangle: Triangle = new Triangle(a, b, c, material, uvA, uvB, uvC);
 
                         triangles.push(triangle);
                     }

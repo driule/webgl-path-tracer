@@ -5,108 +5,108 @@ import { gl } from "./gl/GLUtilities";
 
 export class Renderer {
 
-    private _canvas: HTMLCanvasElement;
-    private _pathTracer: PathTracer;
-    private _scene: Scene;
-    private _gauge: Gauge;
+    private canvas: HTMLCanvasElement;
+    private pathTracer: PathTracer;
+    private scene: Scene;
+    private gauge: Gauge;
 
-    private _isRendering: boolean;
+    private isRendering: boolean;
 
     public constructor(canvas: HTMLCanvasElement, gauge: Gauge) {
-        this._canvas = canvas;
-        this._pathTracer = new PathTracer(this._canvas);
-        this._gauge = gauge;
+        this.canvas = canvas;
+        this.pathTracer = new PathTracer(this.canvas);
+        this.gauge = gauge;
     }
 
     public start(): void {
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this._isRendering = true;
+        this.isRendering = true;
 
         let startTime = new Date().getTime();
         this.tick(new Date().getTime() - startTime);
     }
 
     public tick(timeSinceStart: number): void {
-        this._pathTracer.render(timeSinceStart / 1000.0);
+        this.pathTracer.render(timeSinceStart / 1000.0);
 
-        this._gauge.measureFPS();
+        this.gauge.measureFPS();
 
-        if (this._isRendering) {
+        if (this.isRendering) {
             requestAnimationFrame(this.tick.bind(this));
         }
     }
 
     public setScene(scene: Scene): void {
-        this._scene = scene;
-        this._pathTracer.setScene(this._scene);
-        this._gauge.primitiveCount = this._scene.triangles.length;
+        this.scene = scene;
+        this.pathTracer.setScene(this.scene);
+        this.gauge.primitiveCount = this.scene.getTriangles().length;
     }
 
     public pause(): void {
-        this._isRendering = false;
+        this.isRendering = false;
     }
 
     public resume(): void {
-        this._isRendering = true;
+        this.isRendering = true;
     }
 
     private restart(): void {
-        this._scene.camera.calculateViewProjection();
-        this._pathTracer.restart();
+        this.scene.getCamera().calculateViewProjection();
+        this.pathTracer.restart();
     }
 
     //
     // camera controls
     //
     public moveUp(): void {
-        this._scene.camera.moveUp();
+        this.scene.getCamera().moveUp();
         this.restart();
     }
 
     public moveDown(): void {
-        this._scene.camera.moveDown();
+        this.scene.getCamera().moveDown();
         this.restart();
     }
 
     public moveRight(): void {
-        this._scene.camera.moveRight();
+        this.scene.getCamera().moveRight();
         this.restart();
     }
 
     public moveLeft(): void {
-        this._scene.camera.moveLeft();
+        this.scene.getCamera().moveLeft();
         this.restart();
     }
 
     public zoomIn(): void {
-        this._scene.camera.zoomIn();
+        this.scene.getCamera().zoomIn();
         this.restart();
     }
 
     public zoomOut(): void {
-        this._scene.camera.zoomOut();
+        this.scene.getCamera().zoomOut();
         this.restart();
     }
     
     public rotateUp(): void {
-        this._scene.camera.rotateUp();
+        this.scene.getCamera().rotateUp();
         this.restart();
     }
 
     public rotateDown(): void {
-        this._scene.camera.rotateDown();
+        this.scene.getCamera().rotateDown();
         this.restart();
     }
 
     public rotateRight(): void {
-        this._scene.camera.rotateRight();
+        this.scene.getCamera().rotateRight();
         this.restart();
     }
 
     public rotateLeft(): void {
-        this._scene.camera.rotateLeft();
+        this.scene.getCamera().rotateLeft();
         this.restart();
     }
 }

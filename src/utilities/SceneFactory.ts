@@ -45,7 +45,7 @@ export class SceneFactory  {
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
 
-        geometry = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", scene.materials.length, 100, vec3.fromValues(6.0, 0.0, 0.0));
+        geometry = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", scene.getMaterials().length, 100, vec3.fromValues(6.0, 0.0, 0.0));
         scene.addTriangles(geometry[0]);
         scene.addMaterials(geometry[1]);
 

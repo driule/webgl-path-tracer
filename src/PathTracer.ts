@@ -5,149 +5,146 @@ import { Shader } from "./gl/Shader";
 
 export class PathTracer {
 
-    private _canvas: HTMLCanvasElement;
-    private _scene: Scene;
+    private canvas: HTMLCanvasElement;
+    private scene: Scene;
 
-    private _vertexBuffer: GLBuffer;
-    private _framebuffer: WebGLBuffer;
+    private vertexBuffer: GLBuffer;
+    private frameBuffer: WebGLBuffer;
 
-    private _textures: WebGLTexture[];
+    private textures: WebGLTexture[];
 
-    private _renderShader: Shader;
-    private _tracerShader: Shader;
+    private renderShader: Shader;
+    private tracerShader: Shader;
 
-    private _sampleCount: number;
+    private sampleCount: number;
 
     public constructor(canvas: HTMLCanvasElement) {
-        this._canvas = canvas;
+        this.canvas = canvas;
 
         // create framebuffer
-        this._framebuffer = gl.createFramebuffer();
+        this.frameBuffer = gl.createFramebuffer();
     
         // create textures
         var type = gl.getExtension("OES_texture_float") ? gl.FLOAT : gl.UNSIGNED_BYTE;
-        this._textures = [];
+        this.textures = [];
         for (var i = 0; i < 2; i++) {
-            this._textures.push(gl.createTexture());
-            gl.bindTexture(gl.TEXTURE_2D, this._textures[i]);
+            this.textures.push(gl.createTexture());
+            gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, this._canvas.width, this._canvas.height, 0, gl.RGB, type, null);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, this.canvas.width, this.canvas.height, 0, gl.RGB, type, null);
         }
         gl.bindTexture(gl.TEXTURE_2D, null);
     
         // create shaders
-        this._tracerShader = new Shader("tracer", require("./shaders/tracer.vertex.glsl"), require("./shaders/tracer.fragment.glsl"));
-        this._renderShader = new Shader("render", require("./shaders/render.vertex.glsl"), require("./shaders/render.fragment.glsl"));
+        this.tracerShader = new Shader("tracer", require("./shaders/tracer.vertex.glsl"), require("./shaders/tracer.fragment.glsl"));
+        this.renderShader = new Shader("render", require("./shaders/render.vertex.glsl"), require("./shaders/render.fragment.glsl"));
 
         let renderVertexAttribute = new AttributeInformation();
-        renderVertexAttribute.location = this._renderShader.getAttributeLocation("vertex");
+        renderVertexAttribute.location = this.renderShader.getAttributeLocation("vertex");
         renderVertexAttribute.offset = 0;
         renderVertexAttribute.size = 2;
 
-        this._vertexBuffer = new GLBuffer(2, gl.FLOAT, gl.ARRAY_BUFFER, gl.TRIANGLE_STRIP);
-        this._vertexBuffer.pushBackData([
+        this.vertexBuffer = new GLBuffer(2, gl.FLOAT, gl.ARRAY_BUFFER, gl.TRIANGLE_STRIP);
+        this.vertexBuffer.pushBackData([
             -1, -1,
             -1, +1,
             +1, -1,
             +1, +1
         ]);
-        this._vertexBuffer.addAttributeLocation(renderVertexAttribute);
+        this.vertexBuffer.addAttributeLocation(renderVertexAttribute);
     }
 
     public render(timeSinceStart: number): void {
         this.update(timeSinceStart);
-        this._renderShader.use();
+        this.renderShader.use();
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
         
-        this._vertexBuffer.draw();
+        this.vertexBuffer.draw();
     }
 
     public setScene(scene: Scene): void {
-        this._scene = scene;
+        this.scene = scene;
         this.setShaderGeometry();
         this.restart();
     }
     
     public restart(): void {
-        this._sampleCount = 0;
+        this.sampleCount = 0;
     }
     
     private update(timeSinceStart: number): void {
         let uniforms: any = {};
-        uniforms.eye = this._scene.camera.getPosition();
-        uniforms.ray00 = this._scene.camera.getRay(-1, -1);
-        uniforms.ray01 = this._scene.camera.getRay(-1, +1);
-        uniforms.ray10 = this._scene.camera.getRay(+1, -1);
-        uniforms.ray11 = this._scene.camera.getRay(+1, +1);
+        uniforms.eye = this.scene.getCamera().getPosition();
+        uniforms.ray00 = this.scene.getCamera().getRay(-1, -1);
+        uniforms.ray01 = this.scene.getCamera().getRay(-1, +1);
+        uniforms.ray10 = this.scene.getCamera().getRay(+1, -1);
+        uniforms.ray11 = this.scene.getCamera().getRay(+1, +1);
         uniforms.timeSinceStart = timeSinceStart;
-        uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
+        uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
         
-        this._tracerShader.use();
-        this._tracerShader.setUniforms(uniforms);
+        this.tracerShader.use();
+        this.tracerShader.setUniforms(uniforms);
 
         // render to texture
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this._textures[0]);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._framebuffer);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._textures[1], 0);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textures[1], 0);
 
-        this._vertexBuffer.upload();
-        this._vertexBuffer.draw();
+        this.vertexBuffer.upload();
+        this.vertexBuffer.draw();
         
         // ping pong textures
-        this._textures.reverse();
-        this._sampleCount++;
+        this.textures.reverse();
+        this.sampleCount++;
     }
     
     private setShaderGeometry(): void {
         let uniforms: any = {};
 
-        uniforms.resolution = [this._canvas.width, this._canvas.height];
-        uniforms.textureWeight = this._sampleCount / (this._sampleCount + 1);
+        uniforms.resolution = [this.canvas.width, this.canvas.height];
+        uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
 
         // materials
-        uniforms.materials = this._scene.materials;
+        uniforms.materials = this.scene.getMaterials();
         uniforms.materialsTextureSize = 512;//Math.ceil(Math.sqrt(uniforms.materials.length * 2));
 
         // triangle data
-        uniforms.triangles = this._scene.triangles;
+        uniforms.triangles = this.scene.getTriangles();
         uniforms.totalTriangles = uniforms.triangles.length;
         uniforms.triangleDataTextureSize = 2048;//Math.ceil(Math.sqrt(uniforms.triangles.length * 6)); // ToDo: check why '+1' needed
-        // console.log('uniforms.triangleDataTextureSize:', uniforms.triangleDataTextureSize);
 
         // BVH data
-        uniforms.bvhNodeList = this._scene.bvh.nodeStack;
+        uniforms.bvhNodeList = this.scene.getBVH().getNodeList();
         uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
 
         // {min}, {max}, {isLeaf, first, count}, {leftID, rightID, ID} - 4 rgb units
-        uniforms.bvhDataTextureSize = 2048;//Math.ceil(Math.sqrt(this._scene.bvh.nodeStack.length * 4));
-        // console.log('uniforms.bvhDataTextureSize:', uniforms.bvhDataTextureSize);
+        uniforms.bvhDataTextureSize = 2048;//Math.ceil(Math.sqrt(this.scene.bvh.nodeStack.length * 4));
 
-        uniforms.triangleIndices = this._scene.bvh.triangleIndices;
+        uniforms.triangleIndices = this.scene.getBVH().getTriangleIndices();
         uniforms.triangleIndicesDataTextureSize = 2048;//Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
-        // console.log('uniforms.triangleIndicesDataTextureSize:', uniforms.triangleIndicesDataTextureSize);
 
         // light data
-        uniforms.lights = this._scene.lights;
-        uniforms.totalLights = this._scene.lights.length;
-        uniforms.lightDataTextureSize = 512;//Math.ceil(Math.sqrt(this._scene.lights.length * 2));
+        uniforms.lights = this.scene.getLights();
+        uniforms.totalLights = uniforms.lights.length;
+        uniforms.lightDataTextureSize = 512;//Math.ceil(Math.sqrt(this.scene.lights.length * 2));
 
         // skydome
         uniforms.isSkydomeLoaded = false;
-        if (this._scene.skydome != undefined) {
+        if (this.scene.skydome != undefined) {
             uniforms.isSkydomeLoaded = true;
-            uniforms.skydome = this._scene.skydome;
-            uniforms.skydomeTextureSize = Math.ceil(Math.sqrt(this._scene.skydome.shape[0] * this._scene.skydome.shape[1] * 3));
-            uniforms.skydomeWidth = this._scene.skydome.shape[0];
-            uniforms.skydomeHeight = this._scene.skydome.shape[1];
+            uniforms.skydome = this.scene.skydome;
+            uniforms.skydomeTextureSize = Math.ceil(Math.sqrt(this.scene.skydome.shape[0] * this.scene.skydome.shape[1] * 3));
+            uniforms.skydomeWidth = this.scene.skydome.shape[0];
+            uniforms.skydomeHeight = this.scene.skydome.shape[1];
         }
         
-        this._tracerShader.use();
-        this._tracerShader.setUniforms(uniforms);
+        this.tracerShader.use();
+        this.tracerShader.setUniforms(uniforms);
     }
 }

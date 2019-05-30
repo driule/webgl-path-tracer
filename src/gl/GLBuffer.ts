@@ -8,18 +8,18 @@ export class AttributeInformation {
 
 export class GLBuffer {
 
-    private _hasAttributeLocation: boolean = false;
-    private _elementSize: number; // the size of each element in the buffer
-    private _stride: number; // the data type of the buffer
+    private hasAttributeLocation: boolean = false;
+    private elementSize: number; // the size of each element in the buffer
+    private stride: number; // the data type of the buffer
     private _buffer: WebGLBuffer; 
 
-    private _bufferType: number; // the buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER
-    private _dataType: number;
-    private _dataTypeSize: number;
-    private _mode: number; // the drawing mode of this buffer. (i.e. gl.TRIANGLES or gl.LINES)
+    private bufferType: number; // the buffer target type. Can be either gl.ARRAY_BUFFER or gl.ELEMENT_ARRAY_BUFFER
+    private dataType: number;
+    private dataTypeSize: number;
+    private mode: number; // the drawing mode of this buffer. (i.e. gl.TRIANGLES or gl.LINES)
 
-    private _data: number[] = [];
-    private _attributes: AttributeInformation[] = [];
+    private data: number[] = [];
+    private attributes: AttributeInformation[] = [];
 
     /**
      * Creates a new GL buffer.
@@ -33,30 +33,30 @@ export class GLBuffer {
         bufferType: number = gl.ARRAY_BUFFER,
         mode: number = gl.TRIANGLES
     ) {
-        this._elementSize = elementSize;
-        this._dataType = dataType;
-        this._bufferType = bufferType;
-        this._mode = mode;
+        this.elementSize = elementSize;
+        this.dataType = dataType;
+        this.bufferType = bufferType;
+        this.mode = mode;
 
-        switch (this._dataType) {
+        switch (this.dataType) {
             case gl.FLOAT:
             case gl.INT:
             case gl.UNSIGNED_INT:
-                this._dataTypeSize = 4;
+                this.dataTypeSize = 4;
                 break;
             case gl.SHORT:
             case gl.UNSIGNED_SHORT:
-                this._dataTypeSize = 2;
+                this.dataTypeSize = 2;
                 break;
             case gl.BYTE:
             case gl.UNSIGNED_BYTE:
-                this._dataTypeSize = 1;
+                this.dataTypeSize = 1;
                 break;
             default:
                 throw new Error(`Unrecognized data type '${dataType.toString()}'`);
         }
 
-        this._stride = this._elementSize * this._dataTypeSize;
+        this.stride = this.elementSize * this.dataTypeSize;
         this._buffer = gl.createBuffer();
     }
 
@@ -65,17 +65,17 @@ export class GLBuffer {
     }
 
     public bind(isNormalized: boolean = false): void {
-        gl.bindBuffer(this._bufferType, this._buffer);
+        gl.bindBuffer(this.bufferType, this._buffer);
 
-        if (this._hasAttributeLocation) {
-            for (let attribute of this._attributes) {
+        if (this.hasAttributeLocation) {
+            for (let attribute of this.attributes) {
                 gl.vertexAttribPointer(
                     attribute.location,
                     attribute.size,
-                    this._dataType,
+                    this.dataType,
                     isNormalized,
-                    this._stride,
-                    attribute.offset * this._dataTypeSize
+                    this.stride,
+                    attribute.offset * this.dataTypeSize
                 );
                 gl.enableVertexAttribArray(attribute.location);
             }
@@ -83,21 +83,21 @@ export class GLBuffer {
     }
 
     public unbind(): void {
-        gl.bindBuffer(this._bufferType, undefined);
+        gl.bindBuffer(this.bufferType, undefined);
 
-        for (let attribute of this._attributes) {
+        for (let attribute of this.attributes) {
             gl.disableVertexAttribArray(attribute.location);
         }
     }
 
     public addAttributeLocation(attributeInformation: AttributeInformation): void {
-        this._hasAttributeLocation = true;
-        this._attributes.push(attributeInformation);
+        this.hasAttributeLocation = true;
+        this.attributes.push(attributeInformation);
     }
 
     public pushBackData(data: number[]): void {
         for (let element of data) {
-            this._data.push(element);
+            this.data.push(element);
         }
     }
 
@@ -105,44 +105,44 @@ export class GLBuffer {
      * Upload buffer data to the GPU
      */
     public upload(): void {
-        gl.bindBuffer(this._bufferType, this._buffer);
+        gl.bindBuffer(this.bufferType, this._buffer);
 
         let bufferData: ArrayBuffer;
 
-        switch(this._dataType) {
+        switch(this.dataType) {
             case gl.FLOAT:
-                bufferData = new Float32Array(this._data);
+                bufferData = new Float32Array(this.data);
                 break;
             case gl.INT:
-                bufferData = new Int32Array(this._data);
+                bufferData = new Int32Array(this.data);
                 break;
             case gl.UNSIGNED_INT:
-                bufferData = new Uint32Array(this._data);
+                bufferData = new Uint32Array(this.data);
                 break;
             case gl.SHORT:
-                bufferData = new Int16Array(this._data);
+                bufferData = new Int16Array(this.data);
                 break;
             case gl.UNSIGNED_SHORT:
-                bufferData = new Uint16Array(this._data);
+                bufferData = new Uint16Array(this.data);
                 break;
             case gl.BYTE:
-                bufferData = new Int8Array(this._data);
+                bufferData = new Int8Array(this.data);
                 break;
             case gl.UNSIGNED_BYTE:
-                bufferData = new Uint8Array(this._data);
+                bufferData = new Uint8Array(this.data);
                 break;
         }
 
-        gl.bufferData(this._bufferType, bufferData, gl.STATIC_DRAW);
+        gl.bufferData(this.bufferType, bufferData, gl.STATIC_DRAW);
     }
 
     public draw(): void {
         this.bind();
         
-        if (this._bufferType == gl.ARRAY_BUFFER) {
-            gl.drawArrays(this._mode, 0, this._data.length / this._elementSize);
-        } else if (this._bufferType == gl.ELEMENT_ARRAY_BUFFER) {
-            gl.drawElements(this._mode, this._data.length, this._dataType, 0);
+        if (this.bufferType == gl.ARRAY_BUFFER) {
+            gl.drawArrays(this.mode, 0, this.data.length / this.elementSize);
+        } else if (this.bufferType == gl.ELEMENT_ARRAY_BUFFER) {
+            gl.drawElements(this.mode, this.data.length, this.dataType, 0);
         }
     }
 }

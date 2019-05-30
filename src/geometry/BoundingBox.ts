@@ -11,19 +11,19 @@ export class BoundingBox {
     public first: number;
     public count: number;
     
-    private _id: number;
-    private _center: vec3;
+    private id: number;
+    private center: vec3;
 
     public constructor(id: number) {
-        this._id = id;
+        this.id = id;
     }
 
-    public get id(): number {
-        return this._id;
+    public getId(): number {
+        return this.id;
     }
 
-    public get center(): any {
-        return this._center;
+    public getCenter(): any {
+        return this.center;
     }
 
     public calculateSurfaceArea(): number {
@@ -34,6 +34,6 @@ export class BoundingBox {
     }
 
     public calculateCenter(): void {
-        this._center = vec3.add(vec3.create(), this.min, vec3.scale(vec3.create(), vec3.subtract(vec3.create(), this.max, this.min), 0.5));
+        this.center = vec3.add(vec3.create(), this.min, vec3.scale(vec3.create(), vec3.subtract(vec3.create(), this.max, this.min), 0.5));
     }
 }

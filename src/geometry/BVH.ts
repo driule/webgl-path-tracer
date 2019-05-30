@@ -5,38 +5,38 @@ import { vec3 } from "gl-matrix";
 
 export class BVH {
 
-    private _root: BoundingBox;
+    private root: BoundingBox;
 
-    private _triangles: Triangle[];
-    private _triangleIndices: number[];
+    private triangles: Triangle[];
+    private triangleIndices: number[];
 
-    private _nodeStack: BoundingBox[];
+    private nodeList: BoundingBox[];
 
-    public get root(): BoundingBox {
-        return this._root;
+    public getRoot(): BoundingBox {
+        return this.root;
     }
 
-    public get triangleIndices(): number[] {
-        return this._triangleIndices;
+    public getTriangleIndices(): number[] {
+        return this.triangleIndices;
     }
 
-    public get nodeStack(): BoundingBox[] {
-        return this._nodeStack;
+    public getNodeList(): BoundingBox[] {
+        return this.nodeList;
     }
 
     public constructor(triangles: Triangle[]) {
-        this._nodeStack = [];
-        this._triangles = triangles;
+        this.nodeList = [];
+        this.triangles = triangles;
 
-        this._triangleIndices = new Array(this._triangles.length);
-        for (let i = 0; i < this._triangles.length; i++) {
-            this._triangleIndices[i] = i;
+        this.triangleIndices = new Array(this.triangles.length);
+        for (let i = 0; i < this.triangles.length; i++) {
+            this.triangleIndices[i] = i;
         }
     
-        this._root = new BoundingBox(0);
-        this._root.first = 0;
-        this._root.count = this._triangles.length;
-        this._nodeStack.push(this._root);
+        this.root = new BoundingBox(0);
+        this.root.first = 0;
+        this.root.count = this.triangles.length;
+        this.nodeList.push(this.root);
     
         this.calculateBounds(this.root);
         this.subdivide(this.root, 0);
@@ -47,14 +47,14 @@ export class BVH {
         let minX = Infinity, minY = Infinity, minZ = Infinity;
     
         for (let i = node.first; i < node.first + node.count; i++) {
-            let index = this._triangleIndices[i];
-            minX = Math.min(this._triangles[index].boundingBox.min[0], minX);
-            minY = Math.min(this._triangles[index].boundingBox.min[1], minY);
-            minZ = Math.min(this._triangles[index].boundingBox.min[2], minZ);
+            let index = this.triangleIndices[i];
+            minX = Math.min(this.triangles[index].getBoundingBox().min[0], minX);
+            minY = Math.min(this.triangles[index].getBoundingBox().min[1], minY);
+            minZ = Math.min(this.triangles[index].getBoundingBox().min[2], minZ);
     
-            maxX = Math.max(this._triangles[index].boundingBox.max[0], maxX);
-            maxY = Math.max(this._triangles[index].boundingBox.max[1], maxY);
-            maxZ = Math.max(this._triangles[index].boundingBox.max[2], maxZ);
+            maxX = Math.max(this.triangles[index].getBoundingBox().max[0], maxX);
+            maxY = Math.max(this.triangles[index].getBoundingBox().max[1], maxY);
+            maxZ = Math.max(this.triangles[index].getBoundingBox().max[2], maxZ);
         }
     
         node.min = vec3.fromValues(minX, minY, minZ);
@@ -75,11 +75,11 @@ export class BVH {
         
         node.isLeaf = false;
 
-        node.left = new BoundingBox(this._nodeStack.length);
-        this._nodeStack.push(node.left);
+        node.left = new BoundingBox(this.nodeList.length);
+        this.nodeList.push(node.left);
     
-        node.right = new BoundingBox(this._nodeStack.length);
-        this._nodeStack.push(node.right);
+        node.right = new BoundingBox(this.nodeList.length);
+        this.nodeList.push(node.right);
     
         this.partition(node);
     
@@ -96,7 +96,7 @@ export class BVH {
     
         let optimalObjectIndices: number[] = new Array(node.count);
         for (let i = 0; i < node.count; i++) {
-            optimalObjectIndices[i] = this._triangleIndices[node.first + i];
+            optimalObjectIndices[i] = this.triangleIndices[node.first + i];
         }
     
         let binCount = 10;
@@ -116,11 +116,11 @@ export class BVH {
     
             // divide objects to bins
             for (let i = node.first; i < node.first + node.count; i++) {
-                let index = this._triangleIndices[i], binIndex: number;
+                let index = this.triangleIndices[i], binIndex: number;
     
-                if (axis == 0)		binIndex = Math.floor((this._triangles[index].boundingBox.center[0] - node.min[0]) / binWidth[0]);
-                else if (axis == 1)	binIndex = Math.floor((this._triangles[index].boundingBox.center[1] - node.min[1]) / binWidth[1]);
-                else if (axis == 2)	binIndex = Math.floor((this._triangles[index].boundingBox.center[2] - node.min[2]) / binWidth[2]);
+                if (axis == 0)		binIndex = Math.floor((this.triangles[index].getBoundingBox().getCenter()[0] - node.min[0]) / binWidth[0]);
+                else if (axis == 1)	binIndex = Math.floor((this.triangles[index].getBoundingBox().getCenter()[1] - node.min[1]) / binWidth[1]);
+                else if (axis == 2)	binIndex = Math.floor((this.triangles[index].getBoundingBox().getCenter()[2] - node.min[2]) / binWidth[2]);
     
                 binIndex = Math.min(binCount - 1, binIndex);
                 bins[binIndex].push(index);
@@ -130,7 +130,7 @@ export class BVH {
             let count = 0;
             for (let i = 0; i < binCount; i++) {
                 for (let j = 0; j < bins[i].length; j++) {
-                    this._triangleIndices[node.first + count] = bins[i][j];
+                    this.triangleIndices[node.first + count] = bins[i][j];
                     count++;
                 }
             }
@@ -165,7 +165,7 @@ export class BVH {
                     optimalRightCount = rightCount;
     
                     for (let j = 0; j < node.count; j++) {
-                        optimalObjectIndices[j] = this._triangleIndices[node.first + j];
+                        optimalObjectIndices[j] = this.triangleIndices[node.first + j];
                     }
                 }
             }
@@ -173,7 +173,7 @@ export class BVH {
     
         // set optimal split values
         for (let i = 0; i < node.count; i++) {
-            this._triangleIndices[node.first + i] = optimalObjectIndices[i];
+            this.triangleIndices[node.first + i] = optimalObjectIndices[i];
         }
     
         node.left.first = node.first;
