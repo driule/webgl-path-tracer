@@ -11,7 +11,7 @@ export class PathTracer {
     private vertexBuffer: GLBuffer;
     private frameBuffer: WebGLBuffer;
 
-    private textures: WebGLTexture[];
+    private outputTextures: WebGLTexture[];
 
     private renderShader: Shader;
     private tracerShader: Shader;
@@ -21,15 +21,12 @@ export class PathTracer {
     public constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
 
-        // create framebuffer
-        this.frameBuffer = gl.createFramebuffer();
-    
-        // create textures
+        // create output textures
         var type = gl.getExtension("OES_texture_float") ? gl.FLOAT : gl.UNSIGNED_BYTE;
-        this.textures = [];
+        this.outputTextures = [];
         for (var i = 0; i < 2; i++) {
-            this.textures.push(gl.createTexture());
-            gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
+            this.outputTextures.push(gl.createTexture());
+            gl.bindTexture(gl.TEXTURE_2D, this.outputTextures[i]);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -42,6 +39,9 @@ export class PathTracer {
         this.tracerShader = new Shader("tracer", require("./shaders/tracer.vertex.glsl"), require("./shaders/tracer.fragment.glsl"));
         this.renderShader = new Shader("render", require("./shaders/render.vertex.glsl"), require("./shaders/render.fragment.glsl"));
 
+        // create buffers
+        this.frameBuffer = gl.createFramebuffer();
+        
         let renderVertexAttribute = new AttributeInformation();
         renderVertexAttribute.location = this.renderShader.getAttributeLocation("vertex");
         renderVertexAttribute.offset = 0;
@@ -62,19 +62,9 @@ export class PathTracer {
         this.renderShader.use();
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
+        gl.bindTexture(gl.TEXTURE_2D, this.outputTextures[0]);
         
         this.vertexBuffer.draw();
-    }
-
-    public setScene(scene: Scene): void {
-        this.scene = scene;
-        this.setShaderGeometry();
-        this.restart();
-    }
-    
-    public restart(): void {
-        this.sampleCount = 0;
     }
     
     private update(timeSinceStart: number): void {
@@ -87,21 +77,31 @@ export class PathTracer {
         uniforms.timeSinceStart = timeSinceStart;
         uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
         
+        // render to texture
         this.tracerShader.use();
         this.tracerShader.setUniforms(uniforms);
 
-        // render to texture
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
+        gl.bindTexture(gl.TEXTURE_2D, this.outputTextures[0]);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textures[1], 0);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.outputTextures[1], 0);
 
         this.vertexBuffer.upload();
         this.vertexBuffer.draw();
         
-        // ping pong textures
-        this.textures.reverse();
+        // ping pong output textures
+        this.outputTextures.reverse();
         this.sampleCount++;
+    }
+    
+    public restart(): void {
+        this.sampleCount = 0;
+    }
+
+    public setScene(scene: Scene): void {
+        this.scene = scene;
+        this.setShaderGeometry();
+        this.restart();
     }
     
     private setShaderGeometry(): void {
@@ -117,7 +117,7 @@ export class PathTracer {
         // triangle data
         uniforms.triangles = this.scene.getTriangles();
         uniforms.totalTriangles = uniforms.triangles.length;
-        uniforms.triangleDataTextureSize = 2048;//Math.ceil(Math.sqrt(uniforms.triangles.length * 6)); // ToDo: check why '+1' needed
+        uniforms.triangleDataTextureSize = 2048;//Math.ceil(Math.sqrt(uniforms.triangles.length * 6));
 
         // BVH data
         uniforms.bvhNodeList = this.scene.getBVH().getNodeList();
