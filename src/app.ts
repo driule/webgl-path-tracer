@@ -18,7 +18,6 @@ window.onload = async function() {
     setLoadingScreen();
     renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
     removeLoadingScreen();
-    renderer.start();
 
     // primitive count and FPS measurement
     let fpsLabel = document.getElementById("fps");
@@ -136,17 +135,14 @@ async function onButtonDown(event: MouseEvent) {
             renderButton.disabled = true;
             stopButton.disabled = false;
 
-            renderer.resume();
-            let start = Date.now();
-            renderer.tick(Date.now() - start);
-    
+            renderer.start();
         } if (element.id == "stop") {
             let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
             let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById("render");
             stopButton.disabled = true;
             renderButton.disabled = false;
 
-            renderer.pause();
+            renderer.stop();
         } if (element.id == "changeScene1") {
             setLoadingScreen();
             renderer.setScene(await SceneFactory.createBasicScene(canvas));
@@ -172,11 +168,13 @@ async function onButtonDown(event: MouseEvent) {
 }
 
 function setLoadingScreen(): void {
+    renderer.stop();
     canvas.style.display = "none";
     loader.style.display = "block";
 }
 
 function removeLoadingScreen(): void {
+    renderer.start();
     canvas.style.display = "block";
     loader.style.display = "none";
 }

@@ -6,16 +6,17 @@ import { gl } from "./gl/GLUtilities";
 export class Renderer {
 
     private canvas: HTMLCanvasElement;
+    private gauge: Gauge;
+    
     private pathTracer: PathTracer;
     private scene: Scene;
-    private gauge: Gauge;
 
     private isRendering: boolean;
 
     public constructor(canvas: HTMLCanvasElement, gauge: Gauge) {
         this.canvas = canvas;
-        this.pathTracer = new PathTracer(this.canvas);
         this.gauge = gauge;
+        this.pathTracer = new PathTracer(this.canvas);
     }
 
     public start(): void {
@@ -28,14 +29,8 @@ export class Renderer {
         this.tick(new Date().getTime() - startTime);
     }
 
-    public tick(timeSinceStart: number): void {
-        this.pathTracer.render(timeSinceStart / 1000.0);
-
-        this.gauge.measureFPS();
-
-        if (this.isRendering) {
-            requestAnimationFrame(this.tick.bind(this));
-        }
+    public stop(): void {
+        this.isRendering = false;
     }
 
     public setScene(scene: Scene): void {
@@ -44,12 +39,14 @@ export class Renderer {
         this.gauge.primitiveCount = this.scene.getTriangles().length;
     }
 
-    public pause(): void {
-        this.isRendering = false;
-    }
+    private tick(timeSinceStart: number): void {
+        this.pathTracer.render(timeSinceStart / 1000.0);
 
-    public resume(): void {
-        this.isRendering = true;
+        this.gauge.measureFPS();
+
+        if (this.isRendering) {
+            requestAnimationFrame(this.tick.bind(this));
+        }
     }
 
     private restart(): void {
