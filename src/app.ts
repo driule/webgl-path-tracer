@@ -274,10 +274,10 @@ function addEventListeners(): void {
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("touchstart", onButtonDown, false);
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("touchend", onButtonUp, false);
 
-    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("mousedown", onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("mouseup", onButtonUp, false);
-    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchstart", onButtonDown, false);
-    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchend", onButtonUp, false);
+    // (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("mousedown", onButtonDown, false);
+    // (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("mouseup", onButtonUp, false);
+    // (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchstart", onButtonDown, false);
+    // (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchend", onButtonUp, false);
 
     preventDefaultControls();
 }
