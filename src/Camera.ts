@@ -43,7 +43,7 @@ export class Camera {
         this.calculateViewProjection();
     }
 
-    public getPosition(): any {
+    public getPosition(): vec3 {
         return this.position;
     }
 
@@ -64,7 +64,7 @@ export class Camera {
         // console.log('Camera configuration:', this.position, this.angleX, this.angleY);
     }
     
-    public getRay(x: number, y: number): any {
+    public getRay(x: number, y: number): vec3 {
         // jitter view-projection matrix for anti-aliasing
         let jitterVector = [(Math.random() * 2 - 1) / this.canvas.width, (Math.random() * 2 - 1) / this.canvas.height, 0];
         let viewProjectionMatrix = mat4.translate(mat4.create(), this.viewProjectionMatrix, jitterVector);

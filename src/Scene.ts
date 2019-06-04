@@ -14,6 +14,7 @@ export class Scene {
     
     private bvh: BVH;
 
+    // object { shape[2], data }
     public skydome: any;
 
     public constructor(camera: Camera) {

@@ -22,7 +22,7 @@ export class BoundingBox {
         return this.id;
     }
 
-    public getCenter(): any {
+    public getCenter(): vec3 {
         return this.center;
     }
 

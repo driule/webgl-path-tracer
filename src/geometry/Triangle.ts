@@ -80,4 +80,16 @@ export class Triangle {
     public getBoundingBox(): BoundingBox {
         return this.boundingBox;
     }
+
+    public setUvA(uvA: vec2): void {
+        this.uvA = uvA;
+    }
+
+    public setUvB(uvB: vec2): void {
+        this.uvB = uvB;
+    }
+
+    public setUvC(uvC: vec2): void {
+        this.uvC = uvC;
+    }
 }

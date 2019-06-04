@@ -108,20 +108,22 @@ export class GeometryLoader  {
                 //
 
                 // load texture coordinates
-                let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
-                let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
-                let texCoordData = await asset.accessorData(texCoordAccesorId);
-                
-                let texCoordArray = this.loadTypedArray(
-                    texCoordData.buffer,
-                    asset.gltf.accessors[texCoordAccesorId],
-                    asset.gltf.bufferViews[texCoordAccesor.bufferView]
-                );
-                
                 let textureCoordinates: vec2[] = [];
-                for (let i = 0; i < texCoordAccesor.count; i++) {
-                    let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
-                    textureCoordinates.push(texCoord);
+                let texCoordAccesorId = asset.gltf.meshes[m].primitives[p].attributes.TEXCOORD_0;
+                if (texCoordAccesorId != undefined) {
+                    let texCoordAccesor = asset.gltf.accessors[texCoordAccesorId];
+                    let texCoordData = await asset.accessorData(texCoordAccesorId);
+                    
+                    let texCoordArray = this.loadTypedArray(
+                        texCoordData.buffer,
+                        asset.gltf.accessors[texCoordAccesorId],
+                        asset.gltf.bufferViews[texCoordAccesor.bufferView]
+                    );
+                    
+                    for (let i = 0; i < texCoordAccesor.count; i++) {
+                        let texCoord: vec2 = vec2.fromValues(texCoordArray[i * 2 + 0], texCoordArray[i * 2 + 1]);
+                        textureCoordinates.push(texCoord);
+                    }
                 }
                 //
                 
@@ -145,12 +147,13 @@ export class GeometryLoader  {
                         let a: vec3 = meshVertices[meshIndices[i * 3 + 0]];
                         let b: vec3 = meshVertices[meshIndices[i * 3 + 1]];
                         let c: vec3 = meshVertices[meshIndices[i * 3 + 2]];
-                        
-                        let uvA: vec2 = textureCoordinates[meshIndices[i * 3 + 0]];
-                        let uvB: vec2 = textureCoordinates[meshIndices[i * 3 + 1]];
-                        let uvC: vec2 = textureCoordinates[meshIndices[i * 3 + 2]];
+                        let triangle: Triangle = new Triangle(a, b, c, material);
 
-                        let triangle: Triangle = new Triangle(a, b, c, material, uvA, uvB, uvC);
+                        if (texCoordAccesorId != undefined) {
+                            triangle.setUvA(textureCoordinates[meshIndices[i * 3 + 0]]);
+                            triangle.setUvB(textureCoordinates[meshIndices[i * 3 + 1]]);
+                            triangle.setUvC(textureCoordinates[meshIndices[i * 3 + 2]]);
+                        }
 
                         triangles.push(triangle);
                     }
@@ -165,7 +168,7 @@ export class GeometryLoader  {
         return [triangles, materials];
     }
 
-    private static loadTypedArray(buffer: ArrayBuffer, accessor: Accessor, bufferView: BufferView): any {
+    private static loadTypedArray(buffer: ArrayBuffer, accessor: Accessor, bufferView: BufferView): [] {
         let typedArray: any = [];
 
         let accessorOffset = 0, bufferViewOffset = 0;

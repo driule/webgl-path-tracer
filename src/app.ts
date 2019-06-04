@@ -163,6 +163,10 @@ async function onButtonDown(event: MouseEvent) {
             setLoadingScreen();
             renderer.setScene(await SceneFactory.createSponzaScene(canvas));
             removeLoadingScreen();
+        } if (element.id == "changeScene6") {
+            setLoadingScreen();
+            renderer.setScene(await SceneFactory.createIslandScene(canvas));
+            removeLoadingScreen();
         }
     }
 }
@@ -269,6 +273,11 @@ function addEventListeners(): void {
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("mouseup", onButtonUp, false);
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("touchstart", onButtonDown, false);
     (<HTMLButtonElement>document.getElementById("changeScene5")).addEventListener("touchend", onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("mousedown", onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("mouseup", onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchstart", onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchend", onButtonUp, false);
 
     preventDefaultControls();
 }
