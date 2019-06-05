@@ -33,6 +33,17 @@ export class Renderer {
         this.isRendering = false;
     }
 
+    public resize(canvas: HTMLCanvasElement): void {
+        this.stop();
+
+        this.canvas = canvas;
+        this.pathTracer = new PathTracer(this.canvas);
+
+        gl.canvas.width = this.canvas.width;
+        gl.canvas.height = this.canvas.height;
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    }
+
     public setScene(scene: Scene): void {
         this.scene = scene;
         this.pathTracer.setScene(this.scene);
@@ -40,11 +51,9 @@ export class Renderer {
     }
 
     private tick(timeSinceStart: number): void {
-        this.pathTracer.render(timeSinceStart / 1000.0);
-
-        this.gauge.measureFPS();
-
         if (this.isRendering) {
+            this.pathTracer.render(timeSinceStart / 1000.0);
+            this.gauge.measureFPS();
             requestAnimationFrame(this.tick.bind(this));
         }
     }

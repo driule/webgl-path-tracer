@@ -3,8 +3,8 @@ export var gl: WebGL2RenderingContext;
 export class GLUtilities {
 
     public static initialize(canvasId: string): HTMLCanvasElement {
-
         let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+        
         if (canvas === undefined) {
             throw new Error("Cannot find canvas element by id: " + canvasId);
         }

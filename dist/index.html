@@ -64,12 +64,6 @@
 
             #renderer {
                 position: relative;
-
-                /* HD */
-                /* width: 1280px;
-                height: 720px; */
-
-                /* small */
                 width: 640px;
                 height: 480px;
             }
@@ -82,13 +76,7 @@
     <body>
         <div id="renderer">
             <div id="loader"></div>
-
-            <!-- HD canvas -->
-            <!-- <canvas id="pathTracer" width="1280" height="720"></canvas> -->
-
-            <!-- small canvas -->
             <canvas id="pathTracer" width="640" height="480"></canvas>
-
         </div>
 
         <br/>
@@ -98,6 +86,12 @@
         <br/>
         <button class="playbackButton noSelect" id="render" disabled="true">Render</button>
         <button class="playbackButton noSelect" id="stop">Stop</button>
+        <select id="canvasSizeSelect">
+            <option>320:240</option>
+            <option selected>640:480</option>
+            <option>1280:720</option>
+            <option>1920:1080</option>
+        </select>
         <br/>
         <br/>
         <button class="sceneButton noSelect" id="changeScene1">Basic Geometry</button>

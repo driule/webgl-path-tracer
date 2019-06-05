@@ -93,6 +93,22 @@ document.onkeydown = function(event) {
     if (event.keyCode == 107) {
         renderer.zoomIn();
     }
+
+    // space
+    if (event.keyCode == 32) {
+        let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById("stop");
+        let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById("render");
+
+        if (renderButton.disabled) {
+            stopButton.disabled = true;
+            renderButton.disabled = false;
+            renderer.stop();
+        } else {
+            stopButton.disabled = false;
+            renderButton.disabled = true;
+            renderer.start();
+        }
+    }
 };
 
 async function onButtonDown(event: MouseEvent) {
@@ -100,34 +116,34 @@ async function onButtonDown(event: MouseEvent) {
 
     if (gauge.mouseDownId == null) {
         if (element.id == "moveUp") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveUp(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveUp(); }, 50);
         }
         if (element.id == "moveDown") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveDown(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveDown(); }, 50);
         }
         if (element.id == "moveLeft") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveLeft(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveLeft(); }, 50);
         }
         if (element.id == "moveRight") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveRight(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.moveRight(); }, 50);
         }
         if (element.id == "zoomIn") {
-            gauge.mouseDownId = setInterval(function() { renderer.zoomIn(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.zoomIn(); }, 50);
         }
         if (element.id == "zoomOut") {
-            gauge.mouseDownId = setInterval(function() { renderer.zoomOut(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.zoomOut(); }, 50);
         }
         if (element.id == "rotateUp") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateUp(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateUp(); }, 50);
         }
         if (element.id == "rotateDown") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateDown(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateDown(); }, 50);
         }
         if (element.id == "rotateLeft") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 50);
         }
         if (element.id == "rotateRight") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 100);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 50);
         }
         if (element.id == "render") {
             let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
@@ -188,7 +204,27 @@ function onButtonUp(event: MouseEvent): void {
     gauge.mouseDownId = null;
 }
 
+async function resizeCanvas() {
+    let rendererElement = document.getElementById("renderer") as HTMLDivElement;
+    let selectBox = document.getElementById("canvasSizeSelect") as HTMLSelectElement;
+    let dimensions = selectBox.options[selectBox.selectedIndex].value.split(":", 2);
+
+    canvas.width = +dimensions[0];
+    canvas.height = +dimensions[1];
+
+    rendererElement.style.width = dimensions[0] + "px";
+    rendererElement.style.height = dimensions[1] + "px";
+
+    renderer.resize(canvas);
+
+    setLoadingScreen();
+    renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
+    removeLoadingScreen();
+}
+
 function addEventListeners(): void {
+    (<HTMLSelectElement>document.getElementById("canvasSizeSelect")).addEventListener("change", resizeCanvas, false);
+
     (<HTMLButtonElement>document.getElementById("moveUp")).addEventListener("mousedown", onButtonDown, false);
     (<HTMLButtonElement>document.getElementById("moveUp")).addEventListener("mouseup", onButtonUp, false);
     (<HTMLButtonElement>document.getElementById("moveUp")).addEventListener("touchstart", onButtonDown, false);
