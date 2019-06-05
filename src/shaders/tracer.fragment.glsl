@@ -6,7 +6,6 @@
 #define EPSILON 0.0001
 #define INFINITY 10000.0
 #define STACK_SIZE 256
-#define MAX_TEXTURES 7
 
 #define PI 3.14159
 #define INVERSE_PI 1.0 / PI

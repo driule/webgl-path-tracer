@@ -1,7 +1,7 @@
 import { gl } from "./gl/GLUtilities";
 import { Scene } from "./Scene";
 import { GLBuffer, AttributeInformation } from "./gl/GLBuffer";
-import { Shader } from "./gl/Shader";
+import { Shader, ShaderDataType } from "./gl/Shader";
 
 export class PathTracer {
 
@@ -69,13 +69,13 @@ export class PathTracer {
     
     private update(timeSinceStart: number): void {
         let uniforms: any = {};
-        uniforms.eye = this.scene.getCamera().getPosition();
-        uniforms.ray00 = this.scene.getCamera().getRay(-1, -1);
-        uniforms.ray01 = this.scene.getCamera().getRay(-1, +1);
-        uniforms.ray10 = this.scene.getCamera().getRay(+1, -1);
-        uniforms.ray11 = this.scene.getCamera().getRay(+1, +1);
-        uniforms.timeSinceStart = timeSinceStart;
-        uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
+        uniforms.eye = [this.scene.getCamera().getPosition(), ShaderDataType.vec3];
+        uniforms.ray00 = [this.scene.getCamera().getRay(-1, -1), ShaderDataType.vec3];
+        uniforms.ray01 = [this.scene.getCamera().getRay(-1, +1), ShaderDataType.vec3];
+        uniforms.ray10 = [this.scene.getCamera().getRay(+1, -1), ShaderDataType.vec3];
+        uniforms.ray11 = [this.scene.getCamera().getRay(+1, +1), ShaderDataType.vec3];
+        uniforms.timeSinceStart = [timeSinceStart, ShaderDataType.float];
+        uniforms.textureWeight = [this.sampleCount / (this.sampleCount + 1), ShaderDataType.float];
         
         // render to texture
         this.tracerShader.use();
@@ -100,47 +100,27 @@ export class PathTracer {
 
     public setScene(scene: Scene): void {
         this.scene = scene;
-        this.setShaderGeometry();
+        this.setSceneData();
         this.restart();
     }
     
-    private setShaderGeometry(): void {
+    private setSceneData(): void {
         let uniforms: any = {};
+        uniforms.resolution = [[this.canvas.width, this.canvas.height], ShaderDataType.vec2];
+        uniforms.isSkydomeLoaded = [false, ShaderDataType.int];
 
-        uniforms.resolution = [this.canvas.width, this.canvas.height];
-        uniforms.textureWeight = this.sampleCount / (this.sampleCount + 1);
-
-        // materials
-        uniforms.materials = this.scene.getMaterials();
-        uniforms.materialsTextureSize = 512;//Math.ceil(Math.sqrt(uniforms.materials.length * 2));
-
-        // triangle data
-        uniforms.triangles = this.scene.getTriangles();
-        uniforms.triangleIndices = this.scene.getBVH().getTriangleIndices();
-        uniforms.triangleDataTextureSize = 4096;//Math.ceil(Math.sqrt(uniforms.triangles.length * 6));
-
-        // BVH data
-        uniforms.bvhNodeList = this.scene.getBVH().getNodeList();
-
-        // {min}, {max}, {isLeaf, first, count}, {leftID, rightID, ID} - 4 rgb units
-        uniforms.bvhDataTextureSize = 2048;//Math.ceil(Math.sqrt(this.scene.bvh.nodeStack.length * 4));
-
-        // light data
-        uniforms.lights = this.scene.getLights();
-        uniforms.totalLights = uniforms.lights.length;
-        uniforms.lightDataTextureSize = 512;//Math.ceil(Math.sqrt(this.scene.lights.length * 2));
-
-        // skydome
-        uniforms.isSkydomeLoaded = false;
-        if (this.scene.skydome != undefined) {
-            uniforms.isSkydomeLoaded = true;
-            uniforms.skydome = this.scene.skydome;
-            uniforms.skydomeTextureSize = Math.ceil(Math.sqrt(this.scene.skydome.shape[0] * this.scene.skydome.shape[1] * 3));
-            uniforms.skydomeWidth = this.scene.skydome.shape[0];
-            uniforms.skydomeHeight = this.scene.skydome.shape[1];
-        }
-        
         this.tracerShader.use();
+
+        this.tracerShader.setTriangleData(this.scene.getTriangles(), this.scene.getBVH().getTriangleIndices());
+        this.tracerShader.setBvhData(this.scene.getBVH().getNodeList());
+        this.tracerShader.setMaterials(this.scene.getMaterials());
+        this.tracerShader.setLights(this.scene.getLights());
+
+        if (this.scene.skydome != undefined) {
+            uniforms.isSkydomeLoaded = [true, ShaderDataType.int];
+            this.tracerShader.setSkydome(this.scene.skydome);
+        }
+
         this.tracerShader.setUniforms(uniforms);
     }
 }
