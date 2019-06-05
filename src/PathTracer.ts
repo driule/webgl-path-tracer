@@ -116,18 +116,14 @@ export class PathTracer {
 
         // triangle data
         uniforms.triangles = this.scene.getTriangles();
-        uniforms.totalTriangles = uniforms.triangles.length;
+        uniforms.triangleIndices = this.scene.getBVH().getTriangleIndices();
         uniforms.triangleDataTextureSize = 4096;//Math.ceil(Math.sqrt(uniforms.triangles.length * 6));
 
         // BVH data
         uniforms.bvhNodeList = this.scene.getBVH().getNodeList();
-        uniforms.totalBvhNodes = uniforms.bvhNodeList.length;
 
         // {min}, {max}, {isLeaf, first, count}, {leftID, rightID, ID} - 4 rgb units
         uniforms.bvhDataTextureSize = 2048;//Math.ceil(Math.sqrt(this.scene.bvh.nodeStack.length * 4));
-
-        uniforms.triangleIndices = this.scene.getBVH().getTriangleIndices();
-        uniforms.triangleIndicesDataTextureSize = 2048;//Math.ceil(Math.sqrt(uniforms.triangleIndices.length));
 
         // light data
         uniforms.lights = this.scene.getLights();

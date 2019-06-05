@@ -44,7 +44,7 @@ export class Shader {
 
             if (name.toString() === "triangles") {
                 let triangleList = new Float32Array(uniforms.triangleDataTextureSize * uniforms.triangleDataTextureSize * 3);
-                for (let i = 0; i < uniforms.totalTriangles; i++) {
+                for (let i = 0; i < uniforms.triangles.length; i++) {
                     let triangle: Triangle = uniforms.triangles[i];
 
                     triangleList[i * 3 * 6 + 0] = triangle.getA()[0];
@@ -68,7 +68,7 @@ export class Shader {
                     triangleList[i * 3 * 6 + 14] = triangle.getUvC()[1];
 
                     triangleList[i * 3 * 6 + 15] = triangle.getMaterial().getId();
-                    triangleList[i * 3 * 6 + 16] = 1.0;
+                    triangleList[i * 3 * 6 + 16] = uniforms.triangleIndices[i];
                     triangleList[i * 3 * 6 + 17] = 1.0;
                 }
 
@@ -120,7 +120,7 @@ export class Shader {
 
             if (name.toString() == "bvhNodeList") {
                 let bvhNodeDataList = new Float32Array(uniforms.bvhDataTextureSize * uniforms.bvhDataTextureSize * 3);
-                for (let i = 0; i < uniforms.totalBvhNodes; i++) {
+                for (let i = 0; i < uniforms.bvhNodeList.length; i++) {
                     let bvhNode: BoundingBox = uniforms.bvhNodeList[i];
 
                     bvhNodeDataList[i * 3 * 4 + 0] = bvhNode.min[0];
@@ -161,30 +161,6 @@ export class Shader {
                 continue;
             }
 
-            if (name.toString() == "triangleIndices") {
-                let triangleIndices = new Float32Array(uniforms.triangleIndicesDataTextureSize * uniforms.triangleIndicesDataTextureSize * 3);
-                for (let i = 0; i < uniforms.triangleIndices.length; i++) {
-                    triangleIndices[i * 3 + 0] = uniforms.triangleIndices[i];
-                    triangleIndices[i * 3 + 1] = uniforms.triangleIndices[i];
-                    triangleIndices[i * 3 + 2] = uniforms.triangleIndices[i];
-                }
-
-                gl.activeTexture(gl.TEXTURE4);
-                gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.triangleIndicesDataTextureSize, uniforms.triangleIndicesDataTextureSize, 0, gl.RGB, gl.FLOAT, triangleIndices);
-                
-                let triangleIndicesDataLocation = gl.getUniformLocation(this.program, "triangleIndicesDataTexture");
-                gl.uniform1i(triangleIndicesDataLocation, 4);
-
-                continue;
-            }
-
             if (name.toString() === "materials") {
                 let texturePointer = 0;
                 let materialList = new Float32Array(uniforms.materialsTextureSize * uniforms.materialsTextureSize * 3);
@@ -208,7 +184,7 @@ export class Shader {
                     }
                 }
 
-                gl.activeTexture(gl.TEXTURE5);
+                gl.activeTexture(gl.TEXTURE4);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -219,7 +195,7 @@ export class Shader {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, uniforms.materialsTextureSize, uniforms.materialsTextureSize, 0, gl.RGB, gl.FLOAT, materialList);
 
                 let materialsTextureLocation = gl.getUniformLocation(this.program, "materialsTexture");
-                gl.uniform1i(materialsTextureLocation, 5);
+                gl.uniform1i(materialsTextureLocation, 4);
 
                 continue;
             }
@@ -232,7 +208,7 @@ export class Shader {
                     rgbList[i * 3 + 2] = uniforms.skydome.data[i * 4 + 2];
                 }
 
-                gl.activeTexture(gl.TEXTURE6);
+                gl.activeTexture(gl.TEXTURE5);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -243,7 +219,7 @@ export class Shader {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, uniforms.skydomeTextureSize, uniforms.skydomeTextureSize, 0, gl.RGB, gl.FLOAT, rgbList);
 
                 let skydomeTextureLocation = gl.getUniformLocation(this.program, "skydomeTexture");
-                gl.uniform1i(skydomeTextureLocation, 6);
+                gl.uniform1i(skydomeTextureLocation, 5);
 
                 continue;
             }
@@ -263,8 +239,6 @@ export class Shader {
                 "resolution"
             ];
             var intUniforms = [
-                "totalTriangles",
-                "totalBvhNodes",
                 "totalLights",
                 "isSkydomeLoaded",
                 "skydomeWidth",
@@ -275,7 +249,6 @@ export class Shader {
                 "textureWeight",
                 "triangleDataTextureSize",
                 "bvhDataTextureSize",
-                "triangleIndicesDataTextureSize",
                 "lightDataTextureSize",
                 "skydomeTextureSize",
                 "materialsTextureSize"
@@ -295,8 +268,8 @@ export class Shader {
     }
 
     private setMaterialTexture(id: number, material: Material): void {
-        // console.log('setting texture for [material, id]: ', material.getAlbedoTexture().src, id, "textureImage" + (id + 1));
-        gl.activeTexture(gl.TEXTURE7 + id);
+        console.log('setting texture for [material, id]: ', material.getAlbedoTexture().src, id, "textureImage" + (id + 1));
+        gl.activeTexture(gl.TEXTURE6 + id);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
         let image: HTMLImageElement = material.getAlbedoTexture();
@@ -315,7 +288,7 @@ export class Shader {
         gl.generateMipmap(gl.TEXTURE_2D);
 
         let textureImageLocation = gl.getUniformLocation(this.program, "textureImage" + (id + 1));
-        gl.uniform1i(textureImageLocation, 7 + id);
+        gl.uniform1i(textureImageLocation, 6 + id);
     }
 
     public use(): void {

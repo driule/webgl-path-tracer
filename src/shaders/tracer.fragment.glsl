@@ -64,17 +64,12 @@ uniform float timeSinceStart;
 uniform sampler2D textureSampler;
 
 // geometry
-uniform int totalTriangles; // not used
 uniform float triangleDataTextureSize;
 uniform sampler2D triangleDataTexture;
 
 // bvh
-uniform int totalBvhNodes; // not used
 uniform float bvhDataTextureSize;
 uniform sampler2D bvhDataTexture;
-
-uniform float triangleIndicesDataTextureSize;
-uniform sampler2D triangleIndicesDataTexture;
 
 // texturing
 uniform sampler2D materialsTexture;
@@ -90,6 +85,7 @@ uniform sampler2D textureImage6;
 uniform sampler2D textureImage7;
 uniform sampler2D textureImage8;
 uniform sampler2D textureImage9;
+uniform sampler2D textureImage10;
 
 // skydome
 uniform bool isSkydomeLoaded;
@@ -115,21 +111,6 @@ vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
 	return texelFetch(sampler, uv, 0).rgb;
 }
 
-Material fetchMaterial(int id) {
-    vec3 color = getValueFromTexture(materialsTexture, float(id * 2 + 0), materialsTextureSize);
-    vec3 data = getValueFromTexture(materialsTexture, float(id * 2 + 1), materialsTextureSize);
-
-    Material material;
-    material.color = color;
-    material.isAlbedoTextureDefined = bool(int(data[0]));
-
-    if (material.isAlbedoTextureDefined) {
-        material.albedoTextureId = int(data[1]);
-    }
-
-    return material;
-}
-
 Triangle fetchTriangle(int id) {
     vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 6 + 0), triangleDataTextureSize);
     vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 6 + 1), triangleDataTextureSize);
@@ -150,6 +131,12 @@ Triangle fetchTriangle(int id) {
     triangle.material = int(material[0]);
 
     return triangle;
+}
+
+int fetchTriangleIndex(int id) {
+    vec3 triangleIndex = getValueFromTexture(triangleDataTexture, float(id * 6 + 5), triangleDataTextureSize);
+
+    return int(triangleIndex[1]);
 }
 
 Light fetchLight(int id) {
@@ -181,10 +168,16 @@ BoundingBox fetchBoundingBox(int id) {
     return boundingBox;
 }
 
-int fetchTriangleIndex(int id) {
-    vec3 triangleIndex = getValueFromTexture(triangleIndicesDataTexture, float(id), triangleIndicesDataTextureSize);
+Material fetchMaterial(int id) {
+    vec3 color = getValueFromTexture(materialsTexture, float(id * 2 + 0), materialsTextureSize);
+    vec3 data = getValueFromTexture(materialsTexture, float(id * 2 + 1), materialsTextureSize);
 
-    return int(triangleIndex[0]);
+    Material material;
+    material.color = color;
+    material.isAlbedoTextureDefined = bool(int(data[0]));
+    material.albedoTextureId = int(data[1]);
+
+    return material;
 }
 
 float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
@@ -430,6 +423,8 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
         color = texture(textureImage8, uv).rgb;
     } else if (material.albedoTextureId == 8) {
         color = texture(textureImage9, uv).rgb;
+    } else if (material.albedoTextureId == 9) {
+        color = texture(textureImage10, uv).rgb;
     }
 
     return color;
