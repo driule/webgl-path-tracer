@@ -67,7 +67,7 @@ export class Shader {
     }
 
     public setTriangleData(triangles: Triangle[], triangleIndices: number[]) {
-        const textureSize = 2048;
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
         let triangleList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < triangles.length; i++) {
             let triangle: Triangle = triangles[i];
@@ -114,7 +114,7 @@ export class Shader {
     }
 
     public setLights(lights: Light[]) {
-        const textureSize = 2048;
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 512.0);
         let lightList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < lights.length; i++) {
             let light: Light = lights[i];
@@ -148,7 +148,7 @@ export class Shader {
     }
 
     public setBvhData(bvhNodeList: BoundingBox[]) {
-        const textureSize = 2048;
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
         let bvhNodeDataList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < bvhNodeList.length; i++) {
             let bvhNode: BoundingBox = bvhNodeList[i];
@@ -192,7 +192,7 @@ export class Shader {
     }
 
     public setSkydome(skydome: any) {
-        const textureSize = Math.ceil(Math.sqrt(skydome.shape[0] * skydome.shape[1] * 3));
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, Math.ceil(Math.sqrt(skydome.shape[0] * skydome.shape[1] * 3)));
         let rgbList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < skydome.shape[0] * skydome.shape[1]; i++) {
             rgbList[i * 3 + 0] = skydome.data[i * 4 + 0];
@@ -221,7 +221,7 @@ export class Shader {
     }
 
     public setMaterials(materials: Material[]) {
-        const textureSize = 2048;
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
         let texturePointer = 0;
         let materialList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < materials.length; i++) {
