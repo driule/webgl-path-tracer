@@ -1,6 +1,6 @@
 #version 300 es
 
-@import ./precisions;
+@import ./common/precisions;
 
 in vec3 vertex;
 out vec2 texCoord;

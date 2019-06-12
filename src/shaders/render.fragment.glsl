@@ -1,6 +1,6 @@
 #version 300 es
 
-@import ./precisions;
+@import ./common/precisions;
 
 in vec2 texCoord;
 uniform sampler2D textureSampler;

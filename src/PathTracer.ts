@@ -14,7 +14,7 @@ export class PathTracer {
     private outputTextures: WebGLTexture[];
 
     private renderShader: Shader;
-    private tracerShader: Shader;
+    private pathTracerShader: Shader;
 
     private sampleCount: number;
 
@@ -36,8 +36,16 @@ export class PathTracer {
         gl.bindTexture(gl.TEXTURE_2D, null);
     
         // create shaders
-        this.tracerShader = new Shader("tracer", require("./shaders/tracer.vertex.glsl"), require("./shaders/tracer.fragment.glsl"));
-        this.renderShader = new Shader("render", require("./shaders/render.vertex.glsl"), require("./shaders/render.fragment.glsl"));
+        this.pathTracerShader = new Shader(
+            "tracer",
+            require("./shaders/path-tracer.vertex.glsl"),
+            require("./shaders/path-tracer.fragment.glsl")
+        );
+        this.renderShader = new Shader(
+            "render",
+            require("./shaders/render.vertex.glsl"),
+            require("./shaders/render.fragment.glsl")
+        );
 
         // create buffers
         this.frameBuffer = gl.createFramebuffer();
@@ -78,8 +86,8 @@ export class PathTracer {
         uniforms.textureWeight = [this.sampleCount / (this.sampleCount + 1), ShaderDataType.float];
         
         // render to texture
-        this.tracerShader.use();
-        this.tracerShader.setUniforms(uniforms);
+        this.pathTracerShader.use();
+        this.pathTracerShader.setUniforms(uniforms);
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.outputTextures[0]);
@@ -109,18 +117,18 @@ export class PathTracer {
         uniforms.resolution = [[this.canvas.width, this.canvas.height], ShaderDataType.vec2];
         uniforms.isSkydomeLoaded = [false, ShaderDataType.int];
 
-        this.tracerShader.use();
+        this.pathTracerShader.use();
 
-        this.tracerShader.setTriangleData(this.scene.getTriangles(), this.scene.getBVH().getTriangleIndices());
-        this.tracerShader.setBvhData(this.scene.getBVH().getNodeList());
-        this.tracerShader.setMaterials(this.scene.getMaterials());
-        this.tracerShader.setLights(this.scene.getLights());
+        this.pathTracerShader.setTriangleData(this.scene.getTriangles(), this.scene.getBVH().getTriangleIndices());
+        this.pathTracerShader.setBvhData(this.scene.getBVH().getNodeList());
+        this.pathTracerShader.setMaterials(this.scene.getMaterials());
+        this.pathTracerShader.setLights(this.scene.getLights());
 
         if (this.scene.skydome != undefined) {
             uniforms.isSkydomeLoaded = [true, ShaderDataType.int];
-            this.tracerShader.setSkydome(this.scene.skydome);
+            this.pathTracerShader.setSkydome(this.scene.skydome);
         }
 
-        this.tracerShader.setUniforms(uniforms);
+        this.pathTracerShader.setUniforms(uniforms);
     }
 }

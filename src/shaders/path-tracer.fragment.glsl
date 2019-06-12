@@ -1,56 +1,22 @@
 #version 300 es
 
-@import ./precisions;
+@import ./common/precisions;
 
-#define BOUNCES 3
+@import ./common/entities/material;
+@import ./common/entities/sphere;
+@import ./common/entities/triangle;
+@import ./common/entities/light;
+@import ./common/entities/bounding-box;
+@import ./common/entities/intersection;
+
 #define EPSILON 0.0001
 #define INFINITY 10000.0
-#define STACK_SIZE 256
 
 #define PI 3.14159
 #define INVERSE_PI 1.0 / PI
 
-struct Material
-{
-    vec3 color;
-
-    bool isAlbedoTextureDefined;
-    int albedoTextureId;
-};
-
-struct Sphere
-{
-    vec3 center;
-    float radius;
-};
-
-struct Triangle
-{
-    vec3 a, b, c;
-    vec2 uvA, uvB, uvC;
-    int material;
-};
-
-struct Light
-{
-    vec3 position;
-    float radius;
-    float intensity;
-};
-
-struct BoundingBox
-{
-    vec3 min, max;
-    bool isLeaf;
-    int first, count;
-    int left, right, id;
-};
-
-struct Intersection
-{
-    Triangle triangle;
-    float t;
-};
+#define BOUNCES 3
+#define STACK_SIZE 256
 
 in vec3 initialRay;
 out vec4 pixelColor;
@@ -69,6 +35,9 @@ uniform sampler2D triangleDataTexture;
 // bvh
 uniform float bvhDataTextureSize;
 uniform sampler2D bvhDataTexture;
+
+int stackPointer;
+int stack[STACK_SIZE];
 
 // texturing
 uniform sampler2D materialsTexture;
@@ -97,9 +66,6 @@ uniform int skydomeHeight;
 uniform int totalLights;
 uniform float lightDataTextureSize;
 uniform sampler2D lightDataTexture;
-
-int stackPointer;
-int stack[STACK_SIZE];
 
 vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
 	ivec2 uv = ivec2(
