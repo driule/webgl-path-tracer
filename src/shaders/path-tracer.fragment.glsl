@@ -146,7 +146,7 @@ Material fetchMaterial(int id) {
     material.color = color;
     material.isAlbedoTextureDefined = bool(int(data[0]));
     material.albedoTextureId = int(data[1]);
-    material.offset = int(data[2]);
+    material.albedoDataOffset = int(data[2]);
 
     material.albedoTextureWidth = int(albedoTextureSize[0]);
     material.albedoTextureHeight = int(albedoTextureSize[1]);
@@ -375,42 +375,18 @@ vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
 }
 
 vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
+    vec3 color = vec3(0.15);
+
     vec3 barycentricCoord = calculateBarycentricCoordinates(triangle, hit);
     vec2 uv = barycentricCoord[0] * triangle.uvA + barycentricCoord[1] * triangle.uvB + barycentricCoord[2] * triangle.uvC;
-    
-    vec3 color = vec3(0.15);
-    // if (material.albedoTextureId == 0) {
-    //     color = texture(textureImage1, uv).rgb;
-    // } else if (material.albedoTextureId == 1) {
-    //     color = texture(textureImage2, uv).rgb;
-    // } else if (material.albedoTextureId == 2) {
-    //     color = texture(textureImage3, uv).rgb;
-    // } else if (material.albedoTextureId == 3) {
-    //     color = texture(textureImage4, uv).rgb;
-    // } else if (material.albedoTextureId == 4) {
-    //     color = texture(textureImage5, uv).rgb;
-    // } else if (material.albedoTextureId == 5) {
-    //     color = texture(textureImage6, uv).rgb;
-    // } else if (material.albedoTextureId == 6) {
-    //     color = texture(textureImage7, uv).rgb;
-    // } else if (material.albedoTextureId == 7) {
-    //     color = texture(textureImage8, uv).rgb;
-    // } else if (material.albedoTextureId == 8) {
-    //     color = texture(textureImage9, uv).rgb;
-    // } else if (material.albedoTextureId == 9) {
-    //     color = texture(textureImage10, uv).rgb;
-    // }
 
-    float u = uv[0];
-    float v = uv[1];
-    int pixelId = int(u * float(material.albedoTextureWidth)) + (int(v * float(material.albedoTextureHeight)) * material.albedoTextureWidth);
-
+    int pixelId = int(uv[0] * float(material.albedoTextureWidth)) + (int(uv[1] * float(material.albedoTextureHeight)) * material.albedoTextureWidth);
     if (material.albedoTextureId == 0) {
-        color = getValueFromTexture(albedoTexture1, float(pixelId + material.offset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture1, float(pixelId + material.albedoDataOffset), albedoTextureSize);
     } else if (material.albedoTextureId == 1) {
-        color = getValueFromTexture(albedoTexture2, float(pixelId + material.offset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture2, float(pixelId + material.albedoDataOffset), albedoTextureSize);
     } else if (material.albedoTextureId == 2) {
-        color = getValueFromTexture(albedoTexture3, float(pixelId + material.offset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture3, float(pixelId + material.albedoDataOffset), albedoTextureSize);
     }
 
     return color;

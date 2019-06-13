@@ -35,6 +35,26 @@ export class GeometryLoader  {
         });
     }
 
+    public static loadImageData(image: HTMLImageElement): Float32Array {
+        let rgbList = new Float32Array(image.width * image.height * 3);
+
+        let albedoTextureCanvas = document.createElement('canvas') as HTMLCanvasElement;
+        albedoTextureCanvas.width = image.width;
+        albedoTextureCanvas.height = image.height;
+        
+        let canvasContext2D = albedoTextureCanvas.getContext('2d');
+        canvasContext2D.drawImage(image, 0, 0);
+        let imageData = canvasContext2D.getImageData(0, 0, albedoTextureCanvas.width, albedoTextureCanvas.height).data;
+
+        for (let i = 0; i < rgbList.length / 3; i++) {
+            rgbList[i * 3 + 0] = imageData[i * 4 + 0] / 255.0;
+            rgbList[i * 3 + 1] = imageData[i * 4 + 1] / 255.0;
+            rgbList[i * 3 + 2] = imageData[i * 4 + 2] / 255.0;
+        }
+
+        return rgbList;
+    }
+
     // include GLTF file example:
     // const duckModel = require("./assets/models/duck/Duck.gltf");
 
@@ -68,24 +88,8 @@ export class GeometryLoader  {
 
                 let albedoTextureImage = await this.loadImage(imageUri);
 
-                let albedoTextureCanvas = document.createElement('canvas') as HTMLCanvasElement;
-                albedoTextureCanvas.width = albedoTextureImage.width;
-                albedoTextureCanvas.height = albedoTextureImage.height;
-                if (albedoTextureCanvas === undefined) {
-                    throw new Error("Cannot find canvas element by id: " + albedoTextureCanvas);
-                }
-                let context = albedoTextureCanvas.getContext('2d');
-                context.drawImage(albedoTextureImage, 0, 0);
-                
-                // let rgbList = new Float32Array(2048 * 2048 * 3);
-                let rgbList = new Float32Array(albedoTextureCanvas.width * albedoTextureCanvas.height * 3);
-                let imageData = context.getImageData(0, 0, albedoTextureCanvas.width, albedoTextureCanvas.height).data;
-                for (let i = 0; i < rgbList.length / 3; i++) {
-                    rgbList[i * 3 + 0] = imageData[i * 4 + 0] / 255.0;
-                    rgbList[i * 3 + 1] = imageData[i * 4 + 1] / 255.0;
-                    rgbList[i * 3 + 2] = imageData[i * 4 + 2] / 255.0;
-                }
-                material.setAlbedoTexture(albedoTextureImage, rgbList);
+                material.setAlbedoImageElement(albedoTextureImage);
+                material.setAlbedoImageData(this.loadImageData(albedoTextureImage));
             }
 
             let baseColor = asset.gltf.materials[i].pbrMetallicRoughness.baseColorFactor;

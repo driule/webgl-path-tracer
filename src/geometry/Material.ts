@@ -4,9 +4,12 @@ export class Material {
 
     private id: number;
 
+    // base color
     private color: vec3;
-    private albedoTexture: HTMLImageElement;
-    private rgbList: Float32Array;
+
+    // albedo
+    private albedoImageElement: HTMLImageElement;
+    private albedoImageData: Float32Array;
 
     public constructor(id: number, color: vec3 = vec3.fromValues(0.25, 0.25, 0.25)) {
         this.id = id;
@@ -25,12 +28,19 @@ export class Material {
         this.color = color;
     }
 
-public getAlbedoTexture(): [HTMLImageElement, Float32Array] {
-        return [this.albedoTexture, this.rgbList];
+    public getAlbedoImageElement(): HTMLImageElement {
+        return this.albedoImageElement;
     }
 
-    public setAlbedoTexture(albedoTexture: HTMLImageElement, rgbList: Float32Array): void {
-        this.albedoTexture = albedoTexture;
-        this.rgbList = rgbList;
+    public getAlbedoImageData(): Float32Array {
+        return this.albedoImageData
+    }
+
+    public setAlbedoImageElement(albedoImageElement: HTMLImageElement): void {
+        this.albedoImageElement = albedoImageElement;
+    }
+
+    public setAlbedoImageData(albedoImageData: Float32Array): void {
+        this.albedoImageData = albedoImageData;
     }
 }
