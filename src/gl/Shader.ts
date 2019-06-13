@@ -222,25 +222,39 @@ export class Shader {
 
     public setMaterials(materials: Material[]) {
         const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+
         let texturePointer = 0;
+        let offset = 0;
+        let textureList: [HTMLImageElement, Float32Array][] = [];
+
         let materialList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < materials.length; i++) {
             let material: Material = materials[i];
 
-            materialList[i * 3 * 2 + 0] = material.getColor()[0];
-            materialList[i * 3 * 2 + 1] = material.getColor()[1];
-            materialList[i * 3 * 2 + 2] = material.getColor()[2];
+            materialList[i * 3 * 3 + 0] = material.getColor()[0];
+            materialList[i * 3 * 3 + 1] = material.getColor()[1];
+            materialList[i * 3 * 3 + 2] = material.getColor()[2];
 
             if (material.getAlbedoTexture() != undefined) {
-                materialList[i * 3 * 2 + 3] = 1.0;
-                materialList[i * 3 * 2 + 4] = texturePointer;
-                materialList[i * 3 * 2 + 5] = texturePointer;
-                this.setMaterialTexture(texturePointer, material);
+                materialList[i * 3 * 3 + 3] = 1.0; // texture defined flag set to TRUE
+                materialList[i * 3 * 3 + 4] = texturePointer;
+                materialList[i * 3 * 3 + 5] = offset / 3;
+
                 texturePointer++;
+                offset += material.getAlbedoTexture()[1].length;
+                textureList.push(material.getAlbedoTexture());
+
+                materialList[i * 3 * 3 + 6] = material.getAlbedoTexture()[0].width;
+                materialList[i * 3 * 3 + 7] = material.getAlbedoTexture()[0].height;
+                materialList[i * 3 * 3 + 8] = 0.0;
             } else {
-                materialList[i * 3 * 2 + 3] = 0.0;
-                materialList[i * 3 * 2 + 4] = 0.0;
-                materialList[i * 3 * 2 + 5] = 0.0;
+                materialList[i * 3 * 3 + 3] = 0.0;
+                materialList[i * 3 * 3 + 4] = 0.0;
+                materialList[i * 3 * 3 + 5] = 0.0;
+
+                materialList[i * 3 * 3 + 6] = 0.0;
+                materialList[i * 3 * 3 + 7] = 0.0;
+                materialList[i * 3 * 3 + 8] = 0.0;
             }
         }
 
@@ -258,6 +272,42 @@ export class Shader {
         gl.uniform1i(materialsTextureLocation, 5);
 
         this.setUniforms({materialsTextureSize: [textureSize, ShaderDataType.float]});
+
+        this.setMaterialTextures(textureList);
+    }
+
+    public setMaterialTextures(textureList: [HTMLImageElement, Float32Array][]) {
+        console.log('textureList', textureList);
+        // const textureSize = 1024 * 6;
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 1024 * 6);
+        console.log('gl.MAX_TEXTURE_SIZE', gl.MAX_TEXTURE_SIZE);
+
+        let rgbList = new Float32Array(textureSize * textureSize * 3);
+        let offset = 0;
+        for (let i = 0; i < textureList.length; i++) {
+            // let textureImageElement: HTMLImageElement = textureList[i][0];
+            let textureRgbList: Float32Array = textureList[i][1];
+
+            for (let j = 0; j < textureRgbList.length; j++) {
+                rgbList[offset] = textureRgbList[j];
+                offset++;
+            }
+        }
+
+        gl.activeTexture(gl.TEXTURE6);
+        gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
+
+        let materialsTextureLocation = gl.getUniformLocation(this.program, "albedoTexture");
+        gl.uniform1i(materialsTextureLocation, 6);
+
+        this.setUniforms({albedoTextureSize: [textureSize, ShaderDataType.float]});
     }
 
     private setMaterialTexture(id: number, material: Material): void {
@@ -265,7 +315,8 @@ export class Shader {
         gl.activeTexture(gl.TEXTURE6 + id);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
-        let image: HTMLImageElement = material.getAlbedoTexture();
+        let image: HTMLImageElement = material.getAlbedoTexture()[0];
+        let rgbList: Float32Array = material.getAlbedoTexture()[1];
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
         // ToDo: remove old settings

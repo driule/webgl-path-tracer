@@ -43,17 +43,19 @@ int stack[STACK_SIZE];
 uniform sampler2D materialsTexture;
 uniform float materialsTextureSize;
 
-// ToDo: encode all image textures inside one texture
-uniform sampler2D textureImage1;
-uniform sampler2D textureImage2;
-uniform sampler2D textureImage3;
-uniform sampler2D textureImage4;
-uniform sampler2D textureImage5;
-uniform sampler2D textureImage6;
-uniform sampler2D textureImage7;
-uniform sampler2D textureImage8;
-uniform sampler2D textureImage9;
-uniform sampler2D textureImage10;
+// // ToDo: encode all image textures inside one texture
+// uniform sampler2D textureImage1;
+// uniform sampler2D textureImage2;
+// uniform sampler2D textureImage3;
+// uniform sampler2D textureImage4;
+// uniform sampler2D textureImage5;
+// uniform sampler2D textureImage6;
+// uniform sampler2D textureImage7;
+// uniform sampler2D textureImage8;
+// uniform sampler2D textureImage9;
+// uniform sampler2D textureImage10;
+uniform sampler2D albedoTexture;
+uniform float albedoTextureSize;
 
 // skydome
 uniform bool isSkydomeLoaded;
@@ -134,13 +136,18 @@ BoundingBox fetchBoundingBox(int id) {
 }
 
 Material fetchMaterial(int id) {
-    vec3 color = getValueFromTexture(materialsTexture, float(id * 2 + 0), materialsTextureSize);
-    vec3 data = getValueFromTexture(materialsTexture, float(id * 2 + 1), materialsTextureSize);
+    vec3 color = getValueFromTexture(materialsTexture, float(id * 3 + 0), materialsTextureSize);
+    vec3 data = getValueFromTexture(materialsTexture, float(id * 3 + 1), materialsTextureSize);
+    vec3 albedoTextureSize = getValueFromTexture(materialsTexture, float(id * 3 + 2), materialsTextureSize);
 
     Material material;
     material.color = color;
     material.isAlbedoTextureDefined = bool(int(data[0]));
     material.albedoTextureId = int(data[1]);
+    material.offset = int(data[2]);
+
+    material.albedoTextureWidth = int(albedoTextureSize[0]);
+    material.albedoTextureHeight = int(albedoTextureSize[1]);
 
     return material;
 }
@@ -368,29 +375,35 @@ vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
 vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
     vec3 barycentricCoord = calculateBarycentricCoordinates(triangle, hit);
     vec2 uv = barycentricCoord[0] * triangle.uvA + barycentricCoord[1] * triangle.uvB + barycentricCoord[2] * triangle.uvC;
-
+    
     vec3 color = vec3(0.15);
-    if (material.albedoTextureId == 0) {
-        color = texture(textureImage1, uv).rgb;
-    } else if (material.albedoTextureId == 1) {
-        color = texture(textureImage2, uv).rgb;
-    } else if (material.albedoTextureId == 2) {
-        color = texture(textureImage3, uv).rgb;
-    } else if (material.albedoTextureId == 3) {
-        color = texture(textureImage4, uv).rgb;
-    } else if (material.albedoTextureId == 4) {
-        color = texture(textureImage5, uv).rgb;
-    } else if (material.albedoTextureId == 5) {
-        color = texture(textureImage6, uv).rgb;
-    } else if (material.albedoTextureId == 6) {
-        color = texture(textureImage7, uv).rgb;
-    } else if (material.albedoTextureId == 7) {
-        color = texture(textureImage8, uv).rgb;
-    } else if (material.albedoTextureId == 8) {
-        color = texture(textureImage9, uv).rgb;
-    } else if (material.albedoTextureId == 9) {
-        color = texture(textureImage10, uv).rgb;
-    }
+    // if (material.albedoTextureId == 0) {
+    //     color = texture(textureImage1, uv).rgb;
+    // } else if (material.albedoTextureId == 1) {
+    //     color = texture(textureImage2, uv).rgb;
+    // } else if (material.albedoTextureId == 2) {
+    //     color = texture(textureImage3, uv).rgb;
+    // } else if (material.albedoTextureId == 3) {
+    //     color = texture(textureImage4, uv).rgb;
+    // } else if (material.albedoTextureId == 4) {
+    //     color = texture(textureImage5, uv).rgb;
+    // } else if (material.albedoTextureId == 5) {
+    //     color = texture(textureImage6, uv).rgb;
+    // } else if (material.albedoTextureId == 6) {
+    //     color = texture(textureImage7, uv).rgb;
+    // } else if (material.albedoTextureId == 7) {
+    //     color = texture(textureImage8, uv).rgb;
+    // } else if (material.albedoTextureId == 8) {
+    //     color = texture(textureImage9, uv).rgb;
+    // } else if (material.albedoTextureId == 9) {
+    //     color = texture(textureImage10, uv).rgb;
+    // }
+
+    float u = uv[0];
+    float v = uv[1];
+    int pixelId = int(u * float(material.albedoTextureWidth)) + (int(v * float(material.albedoTextureHeight)) * material.albedoTextureWidth);
+
+    color = getValueFromTexture(albedoTexture, float(pixelId + material.offset), albedoTextureSize);
 
     return color;
 }

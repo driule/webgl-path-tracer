@@ -4,4 +4,7 @@ struct Material
 
     bool isAlbedoTextureDefined;
     int albedoTextureId;
+    int offset;
+    int albedoTextureWidth;
+    int albedoTextureHeight;
 };
