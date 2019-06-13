@@ -221,13 +221,17 @@ export class Shader {
     }
 
     public setMaterials(materials: Material[]) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 16384.0);
+
+        console.log('gl.MAX_TEXTURE_SIZE:', gl.MAX_TEXTURE_SIZE);
+        console.log('actual albedoTextureSize:', albedoTextureSize);
 
         let texturePointer = 0;
         let offset = 0;
-        let textureList: [HTMLImageElement, Float32Array][] = [];
+        let textureList: Float32Array[] = [];
 
-        let materialList = new Float32Array(textureSize * textureSize * 3);
+        let materialList = new Float32Array(materialsTextureSize * materialsTextureSize * 3);
         for (let i = 0; i < materials.length; i++) {
             let material: Material = materials[i];
 
@@ -240,13 +244,23 @@ export class Shader {
                 materialList[i * 3 * 3 + 4] = texturePointer;
                 materialList[i * 3 * 3 + 5] = offset / 3;
 
-                texturePointer++;
-                offset += material.getAlbedoTexture()[1].length;
-                textureList.push(material.getAlbedoTexture());
-
                 materialList[i * 3 * 3 + 6] = material.getAlbedoTexture()[0].width;
                 materialList[i * 3 * 3 + 7] = material.getAlbedoTexture()[0].height;
                 materialList[i * 3 * 3 + 8] = 0.0;
+
+                textureList.push(material.getAlbedoTexture()[1]);
+                offset += material.getAlbedoTexture()[1].length;
+
+                if (offset >= albedoTextureSize * albedoTextureSize * 3) {
+                    this.setMaterialTextures(texturePointer, textureList, albedoTextureSize);
+                    textureList = [];
+                    texturePointer++;
+                    offset = 0;
+
+                    if (texturePointer > 3) {
+                        console.log("Maximum 3 material albedo textures dedicated in the shader!");
+                    }
+                }
             } else {
                 materialList[i * 3 * 3 + 3] = 0.0;
                 materialList[i * 3 * 3 + 4] = 0.0;
@@ -258,6 +272,8 @@ export class Shader {
             }
         }
 
+        this.setMaterialTextures(texturePointer, textureList, albedoTextureSize);
+
         gl.activeTexture(gl.TEXTURE5);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
@@ -266,28 +282,22 @@ export class Shader {
         gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, materialList);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, materialsTextureSize, materialsTextureSize, 0, gl.RGB, gl.FLOAT, materialList);
 
         let materialsTextureLocation = gl.getUniformLocation(this.program, "materialsTexture");
         gl.uniform1i(materialsTextureLocation, 5);
 
-        this.setUniforms({materialsTextureSize: [textureSize, ShaderDataType.float]});
-
-        if (textureList.length > 0) {
-            this.setMaterialTextures(textureList);
-        }
+        this.setUniforms({
+            materialsTextureSize: [materialsTextureSize, ShaderDataType.float],
+            albedoTextureSize: [albedoTextureSize, ShaderDataType.float]
+        });
     }
 
-    public setMaterialTextures(textureList: [HTMLImageElement, Float32Array][]) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 16384.0);
-        console.log('gl.MAX_TEXTURE_SIZE:', gl.MAX_TEXTURE_SIZE);
-        console.log('actual textureSize:', textureSize);
-
+    public setMaterialTextures(id: number, textureList: Float32Array[], textureSize: number) {
         let rgbList = new Float32Array(textureSize * textureSize * 3);
         let offset = 0;
         for (let i = 0; i < textureList.length; i++) {
-            // let textureImageElement: HTMLImageElement = textureList[i][0];
-            let textureRgbList: Float32Array = textureList[i][1];
+            let textureRgbList: Float32Array = textureList[i];
 
             for (let j = 0; j < textureRgbList.length; j++) {
                 rgbList[offset] = textureRgbList[j];
@@ -295,7 +305,7 @@ export class Shader {
             }
         }
 
-        gl.activeTexture(gl.TEXTURE6);
+        gl.activeTexture(gl.TEXTURE6 + id);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -305,10 +315,8 @@ export class Shader {
 
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
 
-        let materialsTextureLocation = gl.getUniformLocation(this.program, "albedoTexture");
-        gl.uniform1i(materialsTextureLocation, 6);
-
-        this.setUniforms({albedoTextureSize: [textureSize, ShaderDataType.float]});
+        let materialsTextureLocation = gl.getUniformLocation(this.program, "albedoTexture" + (id + 1));
+        gl.uniform1i(materialsTextureLocation, 6 + id);
     }
 
     private setMaterialTexture(id: number, material: Material): void {

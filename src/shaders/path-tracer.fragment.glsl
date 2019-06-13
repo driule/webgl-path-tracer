@@ -54,7 +54,9 @@ uniform float materialsTextureSize;
 // uniform sampler2D textureImage8;
 // uniform sampler2D textureImage9;
 // uniform sampler2D textureImage10;
-uniform sampler2D albedoTexture;
+uniform sampler2D albedoTexture1;
+uniform sampler2D albedoTexture2;
+uniform sampler2D albedoTexture3;
 uniform float albedoTextureSize;
 
 // skydome
@@ -403,7 +405,13 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
     float v = uv[1];
     int pixelId = int(u * float(material.albedoTextureWidth)) + (int(v * float(material.albedoTextureHeight)) * material.albedoTextureWidth);
 
-    color = getValueFromTexture(albedoTexture, float(pixelId + material.offset), albedoTextureSize);
+    if (material.albedoTextureId == 0) {
+        color = getValueFromTexture(albedoTexture1, float(pixelId + material.offset), albedoTextureSize);
+    } else if (material.albedoTextureId == 1) {
+        color = getValueFromTexture(albedoTexture2, float(pixelId + material.offset), albedoTextureSize);
+    } else if (material.albedoTextureId == 2) {
+        color = getValueFromTexture(albedoTexture3, float(pixelId + material.offset), albedoTextureSize);
+    }
 
     return color;
 }
