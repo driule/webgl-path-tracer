@@ -235,7 +235,7 @@ export class Shader {
             materialList[i * 3 * 3 + 1] = material.getColor()[1];
             materialList[i * 3 * 3 + 2] = material.getColor()[2];
 
-            if (material.getAlbedoTexture() != undefined) {
+            if (material.getAlbedoTexture()[0] != undefined) {
                 materialList[i * 3 * 3 + 3] = 1.0; // texture defined flag set to TRUE
                 materialList[i * 3 * 3 + 4] = texturePointer;
                 materialList[i * 3 * 3 + 5] = offset / 3;
@@ -273,14 +273,15 @@ export class Shader {
 
         this.setUniforms({materialsTextureSize: [textureSize, ShaderDataType.float]});
 
-        this.setMaterialTextures(textureList);
+        if (textureList.length > 0) {
+            this.setMaterialTextures(textureList);
+        }
     }
 
     public setMaterialTextures(textureList: [HTMLImageElement, Float32Array][]) {
-        console.log('textureList', textureList);
-        // const textureSize = 1024 * 6;
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 1024 * 6);
-        console.log('gl.MAX_TEXTURE_SIZE', gl.MAX_TEXTURE_SIZE);
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 16384.0);
+        console.log('gl.MAX_TEXTURE_SIZE:', gl.MAX_TEXTURE_SIZE);
+        console.log('actual textureSize:', textureSize);
 
         let rgbList = new Float32Array(textureSize * textureSize * 3);
         let offset = 0;
