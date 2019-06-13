@@ -251,7 +251,8 @@ export class Shader {
                 albedoImageDataList.push(material.getAlbedoImageData());
                 albedoDataOffset += material.getAlbedoImageData().length;
 
-                if (albedoDataOffset >= albedoTextureSize * albedoTextureSize * 3) {
+                // set albedo texture if fulfilled or the last material processed
+                if (albedoDataOffset > albedoTextureSize * albedoTextureSize * 3 || (i + 1) >= materials.length) {
                     this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
                     albedoImageDataList = [];
                     albedoTexturePointer++;
@@ -271,8 +272,6 @@ export class Shader {
                 materialList[i * 3 * 3 + 8] = 0.0;
             }
         }
-
-        this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
 
         gl.activeTexture(gl.TEXTURE5);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
