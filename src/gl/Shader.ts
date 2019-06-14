@@ -222,13 +222,13 @@ export class Shader {
 
     public setMaterials(materials: Material[]) {
         const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 16384.0);
+        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
 
         console.log('gl.MAX_TEXTURE_SIZE:', gl.MAX_TEXTURE_SIZE);
         console.log('actual albedoTextureSize:', albedoTextureSize);
 
         let albedoTexturePointer = 0;
-        let albedoDataOffset = 0;
+        let albedoPixelOffset = 0;
         let albedoImageDataList: Float32Array[] = [];
 
         let materialList = new Float32Array(materialsTextureSize * materialsTextureSize * 3);
@@ -242,25 +242,27 @@ export class Shader {
             if (material.getAlbedoImageElement() != undefined) {
                 materialList[i * 3 * 3 + 3] = 1.0; // texture defined flag set to TRUE
                 materialList[i * 3 * 3 + 4] = albedoTexturePointer;
-                materialList[i * 3 * 3 + 5] = albedoDataOffset / 3;
+                materialList[i * 3 * 3 + 5] = albedoPixelOffset;
 
                 materialList[i * 3 * 3 + 6] = material.getAlbedoImageElement().width;
                 materialList[i * 3 * 3 + 7] = material.getAlbedoImageElement().height;
                 materialList[i * 3 * 3 + 8] = 0.0;
 
                 albedoImageDataList.push(material.getAlbedoImageData());
-                albedoDataOffset += material.getAlbedoImageData().length;
+                albedoPixelOffset += material.getAlbedoImageData().length / 3;
 
-                // set albedo texture if fulfilled or the last material processed
-                if (albedoDataOffset > albedoTextureSize * albedoTextureSize * 3 || (i + 1) >= materials.length) {
+                // last material processed
+                if ((i + 1) >= materials.length) {
+                    this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
+                    break;
+                }
+
+                // current texture fullfilled, flush data
+                if (albedoPixelOffset * 3 + materials[i + 1].getAlbedoImageData().length > albedoTextureSize * albedoTextureSize * 3) {
                     this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
                     albedoImageDataList = [];
+                    albedoPixelOffset = 0;
                     albedoTexturePointer++;
-                    albedoDataOffset = 0;
-
-                    if (albedoTexturePointer > 3) {
-                        console.log("Maximum 3 textures dedicated in the shader for albedo color!");
-                    }
                 }
             } else {
                 materialList[i * 3 * 3 + 3] = 0.0;
@@ -293,6 +295,10 @@ export class Shader {
     }
 
     public setMaterialAlbedoTexture(id: number, imageDataList: Float32Array[], textureSize: number) {
+        if (id >= 7) {
+            console.log("Maximum 7 textures dedicated in the shader for albedo color!");
+        }
+
         let rgbList = new Float32Array(textureSize * textureSize * 3);
         let offset = 0;
         for (let i = 0; i < imageDataList.length; i++) {

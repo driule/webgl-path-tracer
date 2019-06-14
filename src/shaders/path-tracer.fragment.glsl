@@ -57,6 +57,10 @@ uniform float materialsTextureSize;
 uniform sampler2D albedoTexture1;
 uniform sampler2D albedoTexture2;
 uniform sampler2D albedoTexture3;
+uniform sampler2D albedoTexture4;
+uniform sampler2D albedoTexture5;
+uniform sampler2D albedoTexture6;
+uniform sampler2D albedoTexture7;
 uniform float albedoTextureSize;
 
 // skydome
@@ -146,7 +150,7 @@ Material fetchMaterial(int id) {
     material.color = color;
     material.isAlbedoTextureDefined = bool(int(data[0]));
     material.albedoTextureId = int(data[1]);
-    material.albedoDataOffset = int(data[2]);
+    material.albedoPixelOffset = int(data[2]);
 
     material.albedoTextureWidth = int(albedoTextureSize[0]);
     material.albedoTextureHeight = int(albedoTextureSize[1]);
@@ -382,11 +386,19 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
 
     int pixelId = int(uv[0] * float(material.albedoTextureWidth)) + (int(uv[1] * float(material.albedoTextureHeight)) * material.albedoTextureWidth);
     if (material.albedoTextureId == 0) {
-        color = getValueFromTexture(albedoTexture1, float(pixelId + material.albedoDataOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture1, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
     } else if (material.albedoTextureId == 1) {
-        color = getValueFromTexture(albedoTexture2, float(pixelId + material.albedoDataOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture2, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
     } else if (material.albedoTextureId == 2) {
-        color = getValueFromTexture(albedoTexture3, float(pixelId + material.albedoDataOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture3, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+    } else if (material.albedoTextureId == 3) {
+        color = getValueFromTexture(albedoTexture4, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+    } else if (material.albedoTextureId == 4) {
+        color = getValueFromTexture(albedoTexture5, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+    } else if (material.albedoTextureId == 5) {
+        color = getValueFromTexture(albedoTexture6, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+    } else if (material.albedoTextureId == 6) {
+        color = getValueFromTexture(albedoTexture7, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
     }
 
     return color;
