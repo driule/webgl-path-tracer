@@ -73,9 +73,8 @@ export class SceneFactory  {
     
     public static async createSuzanneScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
-            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 1.0),
-            new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 1.0),
-            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.5)
+            new Light(vec3.fromValues(-20.25, 20.75, 0.25), 0.15, 1.5),
+            new Light(vec3.fromValues(4.5, 3.85, 1.75), 0.25, 5.0),
         ];
         let camera = new Camera(canvas, vec3.fromValues(1.75, 0.9, 3.85), -0.15, 3.5, 0.1);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/suzanne/", "Suzanne.gltf", 0);
