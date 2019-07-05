@@ -146,17 +146,13 @@ async function onButtonDown(event: MouseEvent) {
             gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 50);
         }
         if (element.id == "render") {
-            let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
-            let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById("stop");
-            renderButton.disabled = true;
-            stopButton.disabled = false;
+            (<HTMLButtonElement>document.getElementById('render')).disabled = true;
+            (<HTMLButtonElement>document.getElementById("stop")).disabled = false;
 
             renderer.start();
         } if (element.id == "stop") {
-            let stopButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById(element.id);
-            let renderButton: HTMLButtonElement = <HTMLButtonElement>document.getElementById("render");
-            stopButton.disabled = true;
-            renderButton.disabled = false;
+            (<HTMLButtonElement>document.getElementById('render')).disabled = false;
+            (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
 
             renderer.stop();
         } if (element.id == "changeScene1") {
@@ -191,12 +187,18 @@ function setLoadingScreen(): void {
     renderer.stop();
     canvas.style.display = "none";
     loader.style.display = "block";
+
+    (<HTMLButtonElement>document.getElementById('render')).disabled = true;
+    (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
 }
 
 function removeLoadingScreen(): void {
     renderer.start();
     canvas.style.display = "block";
     loader.style.display = "none";
+
+    (<HTMLButtonElement>document.getElementById('render')).disabled = true;
+    (<HTMLButtonElement>document.getElementById("stop")).disabled = false;
 }
 
 function onButtonUp(event: MouseEvent): void {

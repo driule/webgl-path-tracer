@@ -26,54 +26,47 @@ uniform vec2 resolution;
 uniform vec3 eye;
 uniform float textureWeight;
 uniform float timeSinceStart;
-uniform sampler2D textureSampler;
+uniform sampler2D outputTexture; // #0
 
 // geometry
 uniform float triangleDataTextureSize;
-uniform sampler2D triangleDataTexture;
+uniform sampler2D triangleDataTexture; // #1
+
+// lights
+uniform int totalLights;
+uniform float lightDataTextureSize;
+uniform sampler2D lightDataTexture; // #2
 
 // bvh
 uniform float bvhDataTextureSize;
-uniform sampler2D bvhDataTexture;
+uniform sampler2D bvhDataTexture; // #3
 
 int stackPointer;
 int stack[STACK_SIZE];
 
 // texturing
-uniform sampler2D materialsTexture;
+uniform sampler2D materialsTexture; // #4
 uniform float materialsTextureSize;
 
-// // ToDo: encode all image textures inside one texture
-// uniform sampler2D textureImage1;
-// uniform sampler2D textureImage2;
-// uniform sampler2D textureImage3;
-// uniform sampler2D textureImage4;
-// uniform sampler2D textureImage5;
-// uniform sampler2D textureImage6;
-// uniform sampler2D textureImage7;
-// uniform sampler2D textureImage8;
-// uniform sampler2D textureImage9;
-// uniform sampler2D textureImage10;
-uniform sampler2D albedoTexture1;
-uniform sampler2D albedoTexture2;
-uniform sampler2D albedoTexture3;
-uniform sampler2D albedoTexture4;
-uniform sampler2D albedoTexture5;
-uniform sampler2D albedoTexture6;
-uniform sampler2D albedoTexture7;
+// textures for albedo images
+uniform sampler2D albedoTexture1; // #5
+uniform sampler2D albedoTexture2; // #6
+uniform sampler2D albedoTexture3; // #7
+uniform sampler2D albedoTexture4; // #8
+uniform sampler2D albedoTexture5; // #9
+uniform sampler2D albedoTexture6; // #10
+uniform sampler2D albedoTexture7; // #11
 uniform float albedoTextureSize;
 
 // skydome
 uniform bool isSkydomeLoaded;
 uniform float skydomeTextureSize;
-uniform sampler2D skydomeTexture;
 uniform int skydomeWidth;
 uniform int skydomeHeight;
-
-// lights
-uniform int totalLights;
-uniform float lightDataTextureSize;
-uniform sampler2D lightDataTexture;
+uniform sampler2D skydomeTexture1; // #12
+uniform sampler2D skydomeTexture2; // #13
+uniform sampler2D skydomeTexture3; // #14
+uniform sampler2D skydomeTexture4; // #15
 
 vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
 	ivec2 uv = ivec2(
@@ -360,12 +353,26 @@ Light getRandomLight() {
 }
 
 vec3 sampleSkydome(vec3 ray) {
+    vec3 color = vec3(0.25);
     float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
     float v = acos(ray.y) * INVERSE_PI;
 
     int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
 
-    return getValueFromTexture(skydomeTexture, float(pixelId), skydomeTextureSize);
+    float textureId = floor(float(pixelId) / (skydomeTextureSize * skydomeTextureSize));
+    float offset = mod(float(pixelId), skydomeTextureSize * skydomeTextureSize);
+
+    if (abs(textureId - 0.0) < EPSILON) {
+        color = getValueFromTexture(skydomeTexture1, offset, skydomeTextureSize);
+    } else if (abs(textureId - 1.0) < EPSILON) {
+        color = getValueFromTexture(skydomeTexture2, offset, skydomeTextureSize);
+    } else if (abs(textureId - 2.0) < EPSILON) {
+        color = getValueFromTexture(skydomeTexture3, offset, skydomeTextureSize);
+    } else if (abs(textureId - 3.0) < EPSILON) {
+        color = getValueFromTexture(skydomeTexture4, offset, skydomeTextureSize);
+    }
+
+    return color;
 }
 
 vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
@@ -485,9 +492,9 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 }
 
 void main() {
-    vec3 texture = texture(textureSampler, gl_FragCoord.xy / resolution).rgb;
-    pixelColor = vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+    vec3 color = texture(outputTexture, gl_FragCoord.xy / resolution).rgb;
+    pixelColor = vec4(mix(calculateColor(eye, initialRay), color, textureWeight), 1.0);
 
     // DEBUG mode
-    // vec4(mix(calculateColor(eye, initialRay), texture, textureWeight), 1.0);
+    // vec4(mix(calculateColor(eye, initialRay), color, textureWeight), 1.0);
 }

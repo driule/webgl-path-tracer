@@ -191,41 +191,11 @@ export class Shader {
         this.setUniforms({bvhDataTextureSize: [textureSize, ShaderDataType.float]});
     }
 
-    public setSkydome(skydome: any) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, Math.ceil(Math.sqrt(skydome.shape[0] * skydome.shape[1] * 3)));
-        let rgbList = new Float32Array(textureSize * textureSize * 3);
-        for (let i = 0; i < skydome.shape[0] * skydome.shape[1]; i++) {
-            rgbList[i * 3 + 0] = skydome.data[i * 4 + 0];
-            rgbList[i * 3 + 1] = skydome.data[i * 4 + 1];
-            rgbList[i * 3 + 2] = skydome.data[i * 4 + 2];
-        }
-
-        gl.activeTexture(gl.TEXTURE4);
-        gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB16F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
-
-        let skydomeTextureLocation = gl.getUniformLocation(this.program, "skydomeTexture");
-        gl.uniform1i(skydomeTextureLocation, 4);
-
-        this.setUniforms({
-            skydomeTextureSize: [textureSize,ShaderDataType.float],
-            skydomeWidth: [skydome.shape[0], ShaderDataType.int],
-            skydomeHeight: [skydome.shape[1], ShaderDataType.int]
-        });
-    }
-
     public setMaterials(materials: Material[]) {
         const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
         const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-
-        console.log('gl.MAX_TEXTURE_SIZE:', gl.MAX_TEXTURE_SIZE);
-        console.log('actual albedoTextureSize:', albedoTextureSize);
+        
+        console.log('actual albedo texture size:', albedoTextureSize);
 
         let albedoTexturePointer = 0;
         let albedoPixelOffset = 0;
@@ -279,7 +249,7 @@ export class Shader {
             }
         }
 
-        gl.activeTexture(gl.TEXTURE5);
+        gl.activeTexture(gl.TEXTURE4);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -290,7 +260,7 @@ export class Shader {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, materialsTextureSize, materialsTextureSize, 0, gl.RGB, gl.FLOAT, materialList);
 
         let materialsTextureLocation = gl.getUniformLocation(this.program, "materialsTexture");
-        gl.uniform1i(materialsTextureLocation, 5);
+        gl.uniform1i(materialsTextureLocation, 4);
 
         this.setUniforms({
             materialsTextureSize: [materialsTextureSize, ShaderDataType.float],
@@ -302,6 +272,8 @@ export class Shader {
         if (id >= 7) {
             console.log("Maximum 7 textures dedicated in the shader for albedo color!");
         }
+
+        console.log('setting albedo texture', id);
 
         let rgbList = new Float32Array(textureSize * textureSize * 3);
         let offset = 0;
@@ -326,6 +298,63 @@ export class Shader {
 
         let materialsTextureLocation = gl.getUniformLocation(this.program, "albedoTexture" + (id + 1));
         gl.uniform1i(materialsTextureLocation, 6 + id);
+    }
+
+    public setSkydome(skydome: any) {
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4048.0);
+        console.log('actual skydome texture size:', textureSize);
+
+        let rgbList = new Float32Array(textureSize * textureSize * 3);
+        let counter = 0;
+        let textureId = 0;
+        let flushed = true;
+        for (let i = 0; i < skydome.shape[0] * skydome.shape[1]; i++) {
+            rgbList[counter * 3 + 0] = skydome.data[i * 4 + 0];
+            rgbList[counter * 3 + 1] = skydome.data[i * 4 + 1];
+            rgbList[counter * 3 + 2] = skydome.data[i * 4 + 2];
+            counter++;
+
+            if (counter * 3 >= rgbList.length) {
+                this.setSkydomeTexture(textureId, rgbList, textureSize);
+                rgbList = new Float32Array(textureSize * textureSize * 3);
+                counter = 0;
+                textureId++;
+                flushed = true;
+                continue;
+            }
+            flushed = false;
+        }
+
+        if (!flushed) {
+            this.setSkydomeTexture(textureId, rgbList, textureSize);
+        }
+
+        this.setUniforms({
+            skydomeTextureSize: [textureSize,ShaderDataType.float],
+            skydomeWidth: [skydome.shape[0], ShaderDataType.int],
+            skydomeHeight: [skydome.shape[1], ShaderDataType.int]
+        });
+    }
+
+    public setSkydomeTexture(id: number, rgbList: Float32Array, textureSize: number) {
+        if (id >= 4) {
+            console.log("Maximum 4 textures dedicated in the shader for skydome!");
+        }
+
+        console.log('setting skydome texture', id);
+
+        gl.activeTexture(gl.TEXTURE12 + id);
+        gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
+
+        let materialsTextureLocation = gl.getUniformLocation(this.program, "skydomeTexture" + (id + 1));
+        gl.uniform1i(materialsTextureLocation, 12 + id);
     }
 
     public use(): void {
