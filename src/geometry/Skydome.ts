@@ -1,6 +1,6 @@
 export class Skydome {
 
-    private data: number[];
+    private data: number[]; // flat rgba list {r, g, b, a, r, g, b, a, ... }
 
     private width: number;
     private height: number;
