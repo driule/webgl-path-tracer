@@ -48,7 +48,7 @@ export class GeometryLoader  {
         });
     }
 
-    public static loadImageData(image: HTMLImageElement): Float32Array {
+    public static async loadImageData(image: HTMLImageElement): Promise<Float32Array> {
         let rgbList = new Float32Array(image.width * image.height * 3);
 
         let albedoTextureCanvas = document.createElement('canvas') as HTMLCanvasElement;
@@ -56,7 +56,7 @@ export class GeometryLoader  {
         albedoTextureCanvas.height = image.height;
         
         let canvasContext2D = albedoTextureCanvas.getContext('2d');
-        canvasContext2D.drawImage(image, 0, 0);
+        await canvasContext2D.drawImage(image, 0, 0);
         let imageData = canvasContext2D.getImageData(0, 0, albedoTextureCanvas.width, albedoTextureCanvas.height).data;
 
         for (let i = 0; i < rgbList.length / 3; i++) {
@@ -102,7 +102,7 @@ export class GeometryLoader  {
                 let albedoTextureImage = await this.loadImage(imageUri);
 
                 material.setAlbedoImageElement(albedoTextureImage);
-                material.setAlbedoImageData(this.loadImageData(albedoTextureImage));
+                material.setAlbedoImageData(await this.loadImageData(albedoTextureImage));
             }
 
             let baseColor = asset.gltf.materials[i].pbrMetallicRoughness.baseColorFactor;

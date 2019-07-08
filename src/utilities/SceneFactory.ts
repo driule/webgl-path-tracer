@@ -6,27 +6,43 @@ import { Scene } from "../Scene";
 import { Triangle } from "../geometry/Triangle";
 import { Material } from "../geometry/Material";
 
-const parseHDR = require('parse-hdr');
-
 export class SceneFactory  {
-
-    public static async createIslandScene(canvas: HTMLCanvasElement) {
-        let lights: Light[] = [
-            new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 1.0),
-            new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 1.0),
-            new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.5),
-            new Light(vec3.fromValues(3.2, -84.5, 9.0), 0.15, 5.0)
-        ];
-        let camera = new Camera(canvas, vec3.fromValues(3.2, -84.5, 7.0), 1.55, -3.15, 1.0);
-        let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/ftm/", "scene.gltf", 0, 5);
     
+    public static async createPicaRoomScene(canvas: HTMLCanvasElement) {
+        let lights: Light[] = [
+            new Light(vec3.fromValues(7.5, 27.5, 0.25), 0.5, 2.5),
+        ];
+        let camera = new Camera(canvas, vec3.fromValues(-1.05, 27.05, 42.5), -0.35,-3.15, 0.5);
+        let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/pica-room/", "scene.gltf", 0);
+
         let scene = new Scene(camera);
         scene.setLights(lights);
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
 
+        // scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi.hdr"));
+        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi2.hdr"));
+
         return scene;
     }
+
+    // public static async createIslandScene(canvas: HTMLCanvasElement) {
+    //     let lights: Light[] = [
+    //         new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 1.0),
+    //         new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 1.0),
+    //         new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.5),
+    //         new Light(vec3.fromValues(3.2, -84.5, 9.0), 0.15, 5.0)
+    //     ];
+    //     let camera = new Camera(canvas, vec3.fromValues(3.2, -84.5, 7.0), 1.55, -3.15, 1.0);
+    //     let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/ftm/", "scene.gltf", 0, 5);
+    
+    //     let scene = new Scene(camera);
+    //     scene.setLights(lights);
+    //     scene.setTriangles(geometry[0]);
+    //     scene.setMaterials(geometry[1]);
+
+    //     return scene;
+    // }
 
     public static async createSponzaScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
@@ -84,8 +100,7 @@ export class SceneFactory  {
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
 
-        // scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/space.hdr"));
-        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi2.hdr"));
+        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/space.hdr"));
     
         return scene;
     }

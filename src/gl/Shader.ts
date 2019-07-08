@@ -194,7 +194,7 @@ export class Shader {
 
     public setMaterials(materials: Material[]) {
         const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        const albedoTextureSize = 4096.0;//Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
         
         console.log('actual albedo texture size:', albedoTextureSize);
 
@@ -231,13 +231,16 @@ export class Shader {
                     break;
                 }
 
+                // ToDo: fix, check for current texture; because multiple next ones can be undefined
                 // current texture fullfilled, flush data
-                if (albedoPixelOffset * 3 + materials[i + 1].getAlbedoImageData().length > albedoTextureSize * albedoTextureSize * 3) {
-                    // console.log('flush', albedoTexturePointer);
-                    this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
-                    albedoImageDataList = [];
-                    albedoPixelOffset = 0;
-                    albedoTexturePointer++;
+                if (materials[i + 1].getAlbedoImageElement() != undefined) {
+                    if (albedoPixelOffset * 3 + materials[i + 1].getAlbedoImageData().length > albedoTextureSize * albedoTextureSize * 3) {
+                        // console.log('flush', albedoTexturePointer);
+                        this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
+                        albedoImageDataList = [];
+                        albedoPixelOffset = 0;
+                        albedoTexturePointer++;
+                    }
                 }
             } else {
                 materialList[i * 3 * 3 + 3] = 0.0;
@@ -287,7 +290,7 @@ export class Shader {
             }
         }
 
-        gl.activeTexture(gl.TEXTURE6 + id);
+        gl.activeTexture(gl.TEXTURE5 + id);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -298,7 +301,7 @@ export class Shader {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
 
         let materialsTextureLocation = gl.getUniformLocation(this.program, "albedoTexture" + (id + 1));
-        gl.uniform1i(materialsTextureLocation, 6 + id);
+        gl.uniform1i(materialsTextureLocation, 5 + id);
     }
 
     public setSkydome(skydome: Skydome) {
