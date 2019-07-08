@@ -126,9 +126,9 @@ export class PathTracer {
         this.pathTracerShader.setMaterials(this.scene.getMaterials());
         this.pathTracerShader.setLights(this.scene.getLights());
 
-        if (this.scene.skydome != undefined) {
+        if (this.scene.getSkydome() != undefined) {
             uniforms.isSkydomeLoaded = [true, ShaderDataType.int];
-            this.pathTracerShader.setSkydome(this.scene.skydome);
+            this.pathTracerShader.setSkydome(this.scene.getSkydome());
         }
 
         this.pathTracerShader.setUniforms(uniforms);

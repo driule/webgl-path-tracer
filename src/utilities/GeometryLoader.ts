@@ -3,6 +3,9 @@ import { vec3, vec2 } from "gl-matrix";
 import { Triangle } from "../geometry/Triangle";
 import { Accessor, BufferView } from "gltf-loader-ts/lib/gltf";
 import { Material } from "../geometry/Material";
+import { Skydome } from "../geometry/Skydome";
+
+const parseHDR = require('parse-hdr');
     
 const accessorTypeToNumComponentsMap: any = {
     "SCALAR": 1,
@@ -23,6 +26,16 @@ export class GeometryLoader  {
             image.onerror = reject;
             image.src = src;
         });
+    }
+
+    public static async parseHDR(src: string): Promise<Skydome> {
+        let hdr = parseHDR(await this.loadSkydome(src));
+
+        return new Skydome(
+            hdr.data,
+            hdr.shape[0],
+            hdr.shape[1],
+        );
     }
 
     public static async loadSkydome(src: string): Promise<ArrayBuffer> {

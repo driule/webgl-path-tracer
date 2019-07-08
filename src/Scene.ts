@@ -3,6 +3,7 @@ import { Light } from "./geometry/Light";
 import { Triangle } from "./geometry/Triangle";
 import { BVH } from "./geometry/BVH";
 import { Material } from "./geometry/Material";
+import { Skydome } from "./geometry/Skydome";
 
 export class Scene {
 
@@ -11,11 +12,9 @@ export class Scene {
     private triangles: Triangle[];
     private materials: Material[];
     private lights: Light[];
+    private skydome: Skydome;
     
     private bvh: BVH;
-
-    // object { shape[2], data }
-    public skydome: any;
 
     public constructor(camera: Camera) {
         this.camera = camera;
@@ -39,6 +38,10 @@ export class Scene {
 
     public getLights(): Light[] {
         return this.lights;
+    }
+
+    public getSkydome(): Skydome {
+        return this.skydome;
     }
 
     public getBVH(): BVH {
@@ -65,5 +68,9 @@ export class Scene {
 
     public addMaterials(materials: Material[] = []): void {
         this.materials = this.materials.concat(materials);
+    }
+
+    public setSkydome(skydome: Skydome): void {
+        this.skydome = skydome;
     }
 }

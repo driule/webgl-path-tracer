@@ -3,6 +3,7 @@ import { Material } from "../geometry/Material";
 import { Triangle } from "../geometry/Triangle";
 import { Light } from "../geometry/Light";
 import { BoundingBox } from "../geometry/BoundingBox";
+import { Skydome } from "../geometry/Skydome";
 
 export enum ShaderDataType {
     int,
@@ -300,7 +301,7 @@ export class Shader {
         gl.uniform1i(materialsTextureLocation, 6 + id);
     }
 
-    public setSkydome(skydome: any) {
+    public setSkydome(skydome: Skydome) {
         const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4048.0);
         console.log('actual skydome texture size:', textureSize);
 
@@ -308,10 +309,10 @@ export class Shader {
         let counter = 0;
         let textureId = 0;
         let flushed = true;
-        for (let i = 0; i < skydome.shape[0] * skydome.shape[1]; i++) {
-            rgbList[counter * 3 + 0] = skydome.data[i * 4 + 0];
-            rgbList[counter * 3 + 1] = skydome.data[i * 4 + 1];
-            rgbList[counter * 3 + 2] = skydome.data[i * 4 + 2];
+        for (let i = 0; i < skydome.getWidth() * skydome.getHeight(); i++) {
+            rgbList[counter * 3 + 0] = skydome.getData()[i * 4 + 0];
+            rgbList[counter * 3 + 1] = skydome.getData()[i * 4 + 1];
+            rgbList[counter * 3 + 2] = skydome.getData()[i * 4 + 2];
             counter++;
 
             if (counter * 3 >= rgbList.length) {
@@ -331,8 +332,8 @@ export class Shader {
 
         this.setUniforms({
             skydomeTextureSize: [textureSize,ShaderDataType.float],
-            skydomeWidth: [skydome.shape[0], ShaderDataType.int],
-            skydomeHeight: [skydome.shape[1], ShaderDataType.int]
+            skydomeWidth: [skydome.getWidth(), ShaderDataType.int],
+            skydomeHeight: [skydome.getHeight(), ShaderDataType.int]
         });
     }
 

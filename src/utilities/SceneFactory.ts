@@ -43,7 +43,7 @@ export class SceneFactory  {
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
 
-        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/sky1.hdr"));
+        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/sky1.hdr"));
     
         return scene;
     }
@@ -66,7 +66,7 @@ export class SceneFactory  {
         scene.addTriangles(geometry[0]);
         scene.addMaterials(geometry[1]);
 
-        // scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/sky1.hdr"));
+        //scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/sky1.hdr"));
     
         return scene;
     }
@@ -84,8 +84,8 @@ export class SceneFactory  {
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
 
-        // scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/space.hdr"));
-        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/equi2.hdr"));
+        // scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/space.hdr"));
+        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi2.hdr"));
     
         return scene;
     }
@@ -104,7 +104,7 @@ export class SceneFactory  {
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
 
-        scene.skydome = parseHDR(await GeometryLoader.loadSkydome("assets/skydome/LH/sky2.hdr"));
+        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/LH/sky2.hdr"));
     
         return scene;
     }
