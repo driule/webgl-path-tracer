@@ -20,8 +20,8 @@ export class SceneFactory  {
         scene.setTriangles(geometry[0]);
         scene.setMaterials(geometry[1]);
 
-        // scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi.hdr"));
-        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi2.hdr"));
+        scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi.hdr"));
+        // scene.setSkydome(await GeometryLoader.parseHDR("assets/skydome/equi2.hdr"));
 
         return scene;
     }

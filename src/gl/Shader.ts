@@ -203,6 +203,7 @@ export class Shader {
         let albedoImageDataList: Float32Array[] = [];
 
         let materialList = new Float32Array(materialsTextureSize * materialsTextureSize * 3);
+        console.log('total materials:', materials.length);
         for (let i = 0; i < materials.length; i++) {
             let material: Material = materials[i];
 
@@ -222,26 +223,8 @@ export class Shader {
                 // console.log('current image size', material.getAlbedoImageElement().width, material.getAlbedoImageElement().height);
 
                 albedoImageDataList.push(material.getAlbedoImageData());
+                console.log('actual image:', material.getAlbedoImageElement());
                 albedoPixelOffset += material.getAlbedoImageData().length / 3;
-
-                // last material processed
-                if ((i + 1) >= materials.length) {
-                    // console.log('last flush', albedoTexturePointer);
-                    this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
-                    break;
-                }
-
-                // ToDo: fix, check for current texture; because multiple next ones can be undefined
-                // current texture fullfilled, flush data
-                if (materials[i + 1].getAlbedoImageElement() != undefined) {
-                    if (albedoPixelOffset * 3 + materials[i + 1].getAlbedoImageData().length > albedoTextureSize * albedoTextureSize * 3) {
-                        // console.log('flush', albedoTexturePointer);
-                        this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
-                        albedoImageDataList = [];
-                        albedoPixelOffset = 0;
-                        albedoTexturePointer++;
-                    }
-                }
             } else {
                 materialList[i * 3 * 3 + 3] = 0.0;
                 materialList[i * 3 * 3 + 4] = 0.0;
@@ -251,7 +234,30 @@ export class Shader {
                 materialList[i * 3 * 3 + 7] = 0.0;
                 materialList[i * 3 * 3 + 8] = 0.0;
             }
+
+            // flush textures
+                // last material processed
+                if ((i + 1) >= materials.length) {
+                    console.log('last flush', albedoTexturePointer);
+                    this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
+                    break;
+                }
+
+                // ToDo: fix, check for current texture; because multiple next ones can be undefined
+                // current texture fullfilled, flush data
+                if (materials[i + 1].getAlbedoImageElement() != undefined) {
+                    if (albedoPixelOffset * 3 + materials[i + 1].getAlbedoImageData().length > albedoTextureSize * albedoTextureSize * 3) {
+                        console.log('regular flush', albedoTexturePointer);
+                        this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
+                        albedoImageDataList = [];
+                        albedoPixelOffset = 0;
+                        albedoTexturePointer++;
+                    }
+                }
+            //
         }
+
+        // console.log('materials:', materialList);
 
         gl.activeTexture(gl.TEXTURE4);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
