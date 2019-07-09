@@ -194,7 +194,7 @@ export class Shader {
 
     public setMaterials(materials: Material[]) {
         const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const albedoTextureSize = 4096.0;//Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
+        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
         
         console.log('actual albedo texture size:', albedoTextureSize);
 
@@ -212,18 +212,23 @@ export class Shader {
             materialList[i * 3 * 3 + 2] = material.getColor()[2];
 
             if (material.getAlbedoImageElement() != undefined) {
+
+                if (albedoPixelOffset + material.getAlbedoImageData().length / 3 > albedoTextureSize * albedoTextureSize) {
+                    this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
+                    albedoImageDataList = [];
+                    albedoPixelOffset = 0;
+                    albedoTexturePointer++;
+                }
+
                 materialList[i * 3 * 3 + 3] = 1.0; // texture defined flag set to TRUE
                 materialList[i * 3 * 3 + 4] = albedoTexturePointer;
                 materialList[i * 3 * 3 + 5] = albedoPixelOffset;
-                // console.log('albedoPixelOffset: ', albedoPixelOffset * 3);
 
                 materialList[i * 3 * 3 + 6] = material.getAlbedoImageElement().width;
                 materialList[i * 3 * 3 + 7] = material.getAlbedoImageElement().height;
                 materialList[i * 3 * 3 + 8] = 0.0;
-                // console.log('current image size', material.getAlbedoImageElement().width, material.getAlbedoImageElement().height);
 
                 albedoImageDataList.push(material.getAlbedoImageData());
-                console.log('actual image:', material.getAlbedoImageElement());
                 albedoPixelOffset += material.getAlbedoImageData().length / 3;
             } else {
                 materialList[i * 3 * 3 + 3] = 0.0;
@@ -234,30 +239,9 @@ export class Shader {
                 materialList[i * 3 * 3 + 7] = 0.0;
                 materialList[i * 3 * 3 + 8] = 0.0;
             }
-
-            // flush textures
-                // last material processed
-                if ((i + 1) >= materials.length) {
-                    console.log('last flush', albedoTexturePointer);
-                    this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
-                    break;
-                }
-
-                // ToDo: fix, check for current texture; because multiple next ones can be undefined
-                // current texture fullfilled, flush data
-                if (materials[i + 1].getAlbedoImageElement() != undefined) {
-                    if (albedoPixelOffset * 3 + materials[i + 1].getAlbedoImageData().length > albedoTextureSize * albedoTextureSize * 3) {
-                        console.log('regular flush', albedoTexturePointer);
-                        this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
-                        albedoImageDataList = [];
-                        albedoPixelOffset = 0;
-                        albedoTexturePointer++;
-                    }
-                }
-            //
         }
 
-        // console.log('materials:', materialList);
+        this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
 
         gl.activeTexture(gl.TEXTURE4);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -301,8 +285,8 @@ export class Shader {
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
 

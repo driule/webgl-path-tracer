@@ -141,6 +141,11 @@ Material fetchMaterial(int id) {
 
     Material material;
     material.color = color;
+    // if (abs(data[0] - 1.0) < EPSILON) {
+    //     material.isAlbedoTextureDefined = true;
+    // } else {
+    //     material.isAlbedoTextureDefined = false;
+    // }
     material.isAlbedoTextureDefined = bool(int(data[0]));
     material.albedoTextureId = int(data[1]);
     material.albedoPixelOffset = int(data[2]);
