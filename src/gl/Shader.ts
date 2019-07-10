@@ -321,7 +321,7 @@ export class Shader {
     // }
 
     public setSkydome(skydome: Skydome) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4048.0);
+        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
         console.log('actual skydome texture size:', textureSize);
 
         let rgbList = new Float32Array(textureSize * textureSize * 3);
