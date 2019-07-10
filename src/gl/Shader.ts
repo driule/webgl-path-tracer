@@ -194,7 +194,7 @@ export class Shader {
 
     public setMaterials(materials: Material[]) {
         const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
+        const albedoTextureSize = 2048.0;//Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
         
         console.log('actual albedo texture size:', albedoTextureSize);
 
@@ -213,12 +213,12 @@ export class Shader {
 
             if (material.getAlbedoImageElement() != undefined) {
 
-                // if (albedoPixelOffset + material.getAlbedoImageData().length / 3 > albedoTextureSize * albedoTextureSize) {
-                //     this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
-                //     albedoImageDataList = [];
-                //     albedoPixelOffset = 0;
-                //     albedoTexturePointer++;
-                // }
+                if (albedoPixelOffset + material.getAlbedoImageData().length / 3 > albedoTextureSize * albedoTextureSize) {
+                    this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
+                    albedoImageDataList = [];
+                    albedoPixelOffset = 0;
+                    albedoTexturePointer++;
+                }
 
                 materialList[i * 3 * 3 + 3] = 1.0; // texture defined flag set to TRUE
                 materialList[i * 3 * 3 + 4] = albedoTexturePointer;
@@ -228,12 +228,12 @@ export class Shader {
                 materialList[i * 3 * 3 + 7] = material.getAlbedoImageElement().height;
                 materialList[i * 3 * 3 + 8] = 0.0;
 
-                // albedoImageDataList.push(material.getAlbedoImageData());
-                // albedoPixelOffset += material.getAlbedoImageData().length / 3;
+                albedoImageDataList.push(material.getAlbedoImageData());
+                albedoPixelOffset += material.getAlbedoImageData().length / 3;
 
                 // one image per texture
-                this.setAlbedoImageToTexture(albedoTexturePointer, material);
-                albedoTexturePointer++;
+                // this.setAlbedoImageToTexture(albedoTexturePointer, material, albedoTextureSize);
+                // albedoTexturePointer++;
                 //
             } else {
                 materialList[i * 3 * 3 + 3] = 0.0;
@@ -246,7 +246,7 @@ export class Shader {
             }
         }
 
-        // this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
+        this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
 
         gl.activeTexture(gl.TEXTURE4);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -299,7 +299,7 @@ export class Shader {
         gl.uniform1i(materialsTextureLocation, 5 + id);
     }
 
-    private setAlbedoImageToTexture(id: number, material: Material): void {
+    private setAlbedoImageToTexture(id: number, material: Material, textureSize: number): void {
         if (id >= 7) {
             console.log("Maximum 7 textures dedicated in the shader for albedo color!");
         }
@@ -309,13 +309,24 @@ export class Shader {
         gl.activeTexture(gl.TEXTURE5 + id);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
 
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, material.getAlbedoImageElement());
+        let rgbList = new Float32Array(textureSize * textureSize * 3);
+        rgbList.fill(0.5);
+        for (let i = 0; i < material.getAlbedoImageData().length; i++) {
+            rgbList[i] =  material.getAlbedoImageData()[i];
+        }
+        // console.log(rgbList);
 
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.generateMipmap(gl.TEXTURE_2D);
+        // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, material.getAlbedoImageElement());
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        // gl.generateMipmap(gl.TEXTURE_2D);
 
         let textureImageLocation = gl.getUniformLocation(this.program, "albedoTexture" + (id + 1));
         gl.uniform1i(textureImageLocation, 5 + id);
