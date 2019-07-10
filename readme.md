@@ -3,7 +3,7 @@
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
 ### Progress
-- [+] Multiple GL textures exploited for skydome loading
+- [+] Multiple GL textures exploited for skydome and albedo textures loading
 - [+] Proper camera controls implemented
 - [+] GLTF file loading improved: multiple meshes with different textures support; few crucial bug fixes: do not calculate texture size at run-time
 - [+] Skydome sampling
@@ -19,8 +19,7 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 - [+] Pass triangles and lights to the scene via texture
 
 ### ToDo
-- [-] Pack scene data to use fewer texture units
-- [-] Generalize uniforms passing to the shader (avoid hardcoding by name); initialize dataTexture uniform type or smth.
+- [-] Port shading functionality from LightHouse
 
 ### How to run?
 - Install all dependencies listed in *package.json*: **npm install**
