@@ -48,7 +48,7 @@ export class SceneFactory  {
         let lights: Light[] = [
             new Light(vec3.fromValues(825, 550, 305), 2.5, 5.0),
             new Light(vec3.fromValues(825, 310, 372), 2.5, 5.0),
-            new Light(vec3.fromValues(0, 50, 0), 2.5, 5.0),
+            new Light(vec3.fromValues(0, 50, 0), 2.5, 20.0),
             new Light(vec3.fromValues(0, 550, 0), 2.5, 5.0)
         ];
         let camera = new Camera(canvas, vec3.fromValues(462.0, 350.0, 0), 0.01, -1.6, 10.0);

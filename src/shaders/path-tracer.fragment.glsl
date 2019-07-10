@@ -470,7 +470,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
             Material material = fetchMaterial(intersection.triangle.material);
             if (material.isAlbedoTextureDefined) {
-                surfaceColor = mapTexture(intersection.triangle, material, hit);
+                surfaceColor = mapTexture(intersection.triangle, material, hit) * material.color;
             } else {
                 surfaceColor = material.color;
             }

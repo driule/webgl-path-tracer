@@ -108,6 +108,8 @@ export class GeometryLoader  {
             let baseColor = asset.gltf.materials[i].pbrMetallicRoughness.baseColorFactor;
             if (baseColor != undefined) {
                 material.setColor(vec3.fromValues(baseColor[0], baseColor[1], baseColor[2]));
+            } else {
+                material.setColor(vec3.fromValues(1.0, 1.0, 1.0));
             }
 
             materials.push(material);
