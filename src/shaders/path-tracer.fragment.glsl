@@ -397,22 +397,19 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
     vec3 barycentricCoord = calculateBarycentricCoordinates(triangle, hit);
     vec2 uv = barycentricCoord[0] * triangle.uvA + barycentricCoord[1] * triangle.uvB + barycentricCoord[2] * triangle.uvC;
 
+    // filtering: nearest
     // uv[0] = clamp(uv[0], 0.0, 1.0);
     // uv[1] = clamp(uv[1], 0.0, 1.0);
+
+    // filtering: repeat
     uv[0] = mod(uv[0], 1.0);
     uv[1] = mod(uv[1], 1.0);
 
-    //
-    // multiple images in one texture
-    //
+    // multiple images per GL texture
+    int x = int(uv[0] * float(material.albedoTextureWidth));
+    int y = int(uv[1] * float(material.albedoTextureHeight));
+    int pixelId = x + y * material.albedoTextureWidth;
 
-    // if (uv[0] > 1.0 || uv[1] > 1.0 || uv[1] < 0.0 || uv[1] < 0.0) {
-    //     pixelColor = vec4(0.5, 0.0, 0.0, 0.0);
-    // }
-
-    int x = int(floor(uv[0] * float(material.albedoTextureWidth)));
-    int y = int(floor(uv[1] * float(material.albedoTextureHeight)));
-    int pixelId = min(x + y * material.albedoTextureWidth, material.albedoTextureWidth * material.albedoTextureHeight);
     if (material.albedoTextureId == 0) {
         color = getValueFromTexture(albedoTexture1, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
     } else if (material.albedoTextureId == 1) {
@@ -429,24 +426,21 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
         color = getValueFromTexture(albedoTexture7, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
     }
 
-    //
-    // one image per texture
-    //
-    // float pixelId = uv[0] * float(material.albedoTextureWidth) + (uv[1] * float(material.albedoTextureHeight) * float(material.albedoTextureWidth));
+    // ToDo: remove. Used for setting one image per GL texture
     // if (material.albedoTextureId == 0) {
-    //     color = getValueFromTexture(albedoTexture1, float(pixelId), albedoTextureSize);
+    //     color = texture(albedoTexture1, uv, 0.0).rgb;
     // } else if (material.albedoTextureId == 1) {
-    //     color = getValueFromTexture(albedoTexture2, float(pixelId), albedoTextureSize);
+    //     color = texture(albedoTexture2, uv, 0.0).rgb;
     // } else if (material.albedoTextureId == 2) {
-    //     color = getValueFromTexture(albedoTexture3, float(pixelId), albedoTextureSize);
+    //     color = texture(albedoTexture3, uv, 0.0).rgb;
     // } else if (material.albedoTextureId == 3) {
-    //     color = getValueFromTexture(albedoTexture4, float(pixelId), albedoTextureSize);
+    //     color = texture(albedoTexture4, uv, 0.0).rgb;
     // } else if (material.albedoTextureId == 4) {
-    //     color = getValueFromTexture(albedoTexture5, float(pixelId), albedoTextureSize);
+    //     color = texture(albedoTexture5, uv, 0.0).rgb;
     // } else if (material.albedoTextureId == 5) {
-    //     color = getValueFromTexture(albedoTexture6, float(pixelId), albedoTextureSize);
+    //     color = texture(albedoTexture6, uv, 0.0).rgb;
     // } else if (material.albedoTextureId == 6) {
-    //     color = getValueFromTexture(albedoTexture7, float(pixelId), albedoTextureSize);
+    //     color = texture(albedoTexture7, uv, 0.0).rgb;
     // }
 
     return color;
