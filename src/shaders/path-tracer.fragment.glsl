@@ -141,17 +141,12 @@ Material fetchMaterial(int id) {
 
     Material material;
     material.color = color;
-    // if (abs(data[0] - 1.0) < EPSILON) {
-    //     material.isAlbedoTextureDefined = true;
-    // } else {
-    //     material.isAlbedoTextureDefined = false;
-    // }
     material.isAlbedoTextureDefined = bool(int(data[0]));
     material.albedoTextureId = int(data[1]);
-    material.albedoPixelOffset = int(data[2]);
+    material.albedoPixelOffset = data[2];
 
-    material.albedoTextureWidth = int(albedoTextureSize[0]);
-    material.albedoTextureHeight = int(albedoTextureSize[1]);
+    material.albedoTextureWidth = albedoTextureSize[0];
+    material.albedoTextureHeight = albedoTextureSize[1];
 
     return material;
 }
@@ -381,11 +376,24 @@ vec3 sampleSkydome(vec3 ray) {
 }
 
 vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
-    float invDenom = 1.0 / ((triangle.b[1] - triangle.c[1]) * (triangle.a[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (triangle.a[1] - triangle.c[1]));
+    // float invDenom = 1.0 / ((triangle.b[1] - triangle.c[1]) * (triangle.a[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (triangle.a[1] - triangle.c[1]));
     
-    float u = ((triangle.b[1] - triangle.c[1]) * (hit[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (hit[1] - triangle.c[1])) * invDenom;
-    float v = ((triangle.c[1] - triangle.a[1]) * (hit[0] - triangle.c[0]) + (triangle.a[0] - triangle.c[0]) * (hit[1] - triangle.c[1])) * invDenom;
-    float w = 1.0 - u - v;
+    // float u = ((triangle.b[1] - triangle.c[1]) * (hit[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (hit[1] - triangle.c[1])) * invDenom;
+    // float v = ((triangle.c[1] - triangle.a[1]) * (hit[0] - triangle.c[0]) + (triangle.a[0] - triangle.c[0]) * (hit[1] - triangle.c[1])) * invDenom;
+    // float w = 1.0 - u - v;
+
+    vec3 v0 = triangle.b - triangle.a;
+    vec3 v1 = triangle.c - triangle.a;
+    vec3 v2 = hit - triangle.a;
+    float d00 = dot(v0, v0);
+    float d01 = dot(v0, v1);
+    float d11 = dot(v1, v1);
+    float d20 = dot(v2, v0);
+    float d21 = dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+    float v = (d11 * d20 - d01 * d21) / denom;
+    float w = (d00 * d21 - d01 * d20) / denom;
+    float u = 1.0f - v - w;
 
     return vec3(u, v, w);
 }
@@ -397,33 +405,40 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
     vec3 barycentricCoord = calculateBarycentricCoordinates(triangle, hit);
     vec2 uv = barycentricCoord[0] * triangle.uvA + barycentricCoord[1] * triangle.uvB + barycentricCoord[2] * triangle.uvC;
 
-    // filtering: nearest
-    // uv[0] = clamp(uv[0], 0.0, 1.0);
-    // uv[1] = clamp(uv[1], 0.0, 1.0);
-
     // filtering: repeat
-    uv[0] = mod(uv[0], 1.0);
-    uv[1] = mod(uv[1], 1.0);
+    float u = mod(uv[0], 1.0);
+    float v = mod(uv[1], 1.0);
+
+    // filtering: nearest
+    // u = clamp(u, 0.0, 1.0);
+    // v = clamp(v, 0.0, 1.0);
 
     // multiple images per GL texture
-    int x = int(uv[0] * float(material.albedoTextureWidth));
-    int y = int(uv[1] * float(material.albedoTextureHeight));
-    int pixelId = x + y * material.albedoTextureWidth;
+    float x = floor((u * material.albedoTextureWidth));
+    float y = floor((v * material.albedoTextureHeight));
+    float pixelId = x + y * material.albedoTextureWidth;
+
+    // if ((pixelId) < 1.0 || (pixelId) >= 1.0) {
+    if ((v) < 1.0 || (v) >= 1.0) {
+        pixelColor = vec4(0.0, 0.25, 0.0, 0.0);
+    } else {
+        pixelColor = vec4(0.25, 0.0, 0.0, 0.0);
+    }
 
     if (material.albedoTextureId == 0) {
-        color = getValueFromTexture(albedoTexture1, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture1, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 1) {
-        color = getValueFromTexture(albedoTexture2, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture2, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 2) {
-        color = getValueFromTexture(albedoTexture3, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture3, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 3) {
-        color = getValueFromTexture(albedoTexture4, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture4, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 4) {
-        color = getValueFromTexture(albedoTexture5, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture5, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 5) {
-        color = getValueFromTexture(albedoTexture6, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture6, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 6) {
-        color = getValueFromTexture(albedoTexture7, float(pixelId + material.albedoPixelOffset), albedoTextureSize);
+        color = getValueFromTexture(albedoTexture7, pixelId + material.albedoPixelOffset, albedoTextureSize);
     }
 
     // ToDo: remove. Used for setting one image per GL texture
