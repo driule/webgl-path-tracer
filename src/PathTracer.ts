@@ -113,7 +113,7 @@ export class PathTracer {
     }
     
     private setSceneData(): void {
-        console.log('gl.MAX_TEXTURE_SIZE:', gl.MAX_TEXTURE_SIZE);
+        console.log("gl.MAX_TEXTURE_SIZE", gl.MAX_TEXTURE_SIZE);
         
         let uniforms: any = {};
         uniforms.resolution = [[this.canvas.width, this.canvas.height], ShaderDataType.vec2];

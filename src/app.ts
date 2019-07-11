@@ -146,12 +146,12 @@ async function onButtonDown(event: MouseEvent) {
             gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 50);
         }
         if (element.id == "render") {
-            (<HTMLButtonElement>document.getElementById('render')).disabled = true;
+            (<HTMLButtonElement>document.getElementById("render")).disabled = true;
             (<HTMLButtonElement>document.getElementById("stop")).disabled = false;
 
             renderer.start();
         } if (element.id == "stop") {
-            (<HTMLButtonElement>document.getElementById('render')).disabled = false;
+            (<HTMLButtonElement>document.getElementById("render")).disabled = false;
             (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
 
             renderer.stop();
@@ -188,7 +188,7 @@ function setLoadingScreen(): void {
     canvas.style.display = "none";
     loader.style.display = "block";
 
-    (<HTMLButtonElement>document.getElementById('render')).disabled = true;
+    (<HTMLButtonElement>document.getElementById("render")).disabled = true;
     (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
 }
 
@@ -197,7 +197,7 @@ function removeLoadingScreen(): void {
     canvas.style.display = "block";
     loader.style.display = "none";
 
-    (<HTMLButtonElement>document.getElementById('render')).disabled = true;
+    (<HTMLButtonElement>document.getElementById("render")).disabled = true;
     (<HTMLButtonElement>document.getElementById("stop")).disabled = false;
 }
 

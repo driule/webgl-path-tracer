@@ -340,8 +340,6 @@ float getShadowIntensity(vec3 origin, vec3 ray) {
 
 Light getRandomLight() {
     for (int i = 0; i < totalLights; i++) {
-
-        // use loop index as a seed to get different number for each iteration
         float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
 
         if (randomValue < float(1.0 / float(totalLights))) {
@@ -376,24 +374,21 @@ vec3 sampleSkydome(vec3 ray) {
 }
 
 vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
-    // float invDenom = 1.0 / ((triangle.b[1] - triangle.c[1]) * (triangle.a[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (triangle.a[1] - triangle.c[1]));
-    
-    // float u = ((triangle.b[1] - triangle.c[1]) * (hit[0] - triangle.c[0]) + (triangle.c[0] - triangle.b[0]) * (hit[1] - triangle.c[1])) * invDenom;
-    // float v = ((triangle.c[1] - triangle.a[1]) * (hit[0] - triangle.c[0]) + (triangle.a[0] - triangle.c[0]) * (hit[1] - triangle.c[1])) * invDenom;
-    // float w = 1.0 - u - v;
-
     vec3 v0 = triangle.b - triangle.a;
     vec3 v1 = triangle.c - triangle.a;
     vec3 v2 = hit - triangle.a;
+
     float d00 = dot(v0, v0);
     float d01 = dot(v0, v1);
     float d11 = dot(v1, v1);
     float d20 = dot(v2, v0);
     float d21 = dot(v2, v1);
+
     float denom = d00 * d11 - d01 * d01;
+
     float v = (d11 * d20 - d01 * d21) / denom;
     float w = (d00 * d21 - d01 * d20) / denom;
-    float u = 1.0f - v - w;
+    float u = 1.0 - v - w;
 
     return vec3(u, v, w);
 }
@@ -410,20 +405,13 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
     float v = mod(uv[1], 1.0);
 
     // filtering: nearest
-    // u = clamp(u, 0.0, 1.0);
-    // v = clamp(v, 0.0, 1.0);
+    // float u = clamp(u, 0.0, 1.0);
+    // float v = clamp(v, 0.0, 1.0);
 
     // multiple images per GL texture
     float x = floor((u * material.albedoTextureWidth));
     float y = floor((v * material.albedoTextureHeight));
     float pixelId = x + y * material.albedoTextureWidth;
-
-    // if ((pixelId) < 1.0 || (pixelId) >= 1.0) {
-    if ((v) < 1.0 || (v) >= 1.0) {
-        pixelColor = vec4(0.0, 0.25, 0.0, 0.0);
-    } else {
-        pixelColor = vec4(0.25, 0.0, 0.0, 0.0);
-    }
 
     if (material.albedoTextureId == 0) {
         color = getValueFromTexture(albedoTexture1, pixelId + material.albedoPixelOffset, albedoTextureSize);
@@ -440,23 +428,6 @@ vec3 mapTexture(Triangle triangle, Material material, vec3 hit) {
     } else if (material.albedoTextureId == 6) {
         color = getValueFromTexture(albedoTexture7, pixelId + material.albedoPixelOffset, albedoTextureSize);
     }
-
-    // ToDo: remove. Used for setting one image per GL texture
-    // if (material.albedoTextureId == 0) {
-    //     color = texture(albedoTexture1, uv, 0.0).rgb;
-    // } else if (material.albedoTextureId == 1) {
-    //     color = texture(albedoTexture2, uv, 0.0).rgb;
-    // } else if (material.albedoTextureId == 2) {
-    //     color = texture(albedoTexture3, uv, 0.0).rgb;
-    // } else if (material.albedoTextureId == 3) {
-    //     color = texture(albedoTexture4, uv, 0.0).rgb;
-    // } else if (material.albedoTextureId == 4) {
-    //     color = texture(albedoTexture5, uv, 0.0).rgb;
-    // } else if (material.albedoTextureId == 5) {
-    //     color = texture(albedoTexture6, uv, 0.0).rgb;
-    // } else if (material.albedoTextureId == 6) {
-    //     color = texture(albedoTexture7, uv, 0.0).rgb;
-    // }
 
     return color;
 }
