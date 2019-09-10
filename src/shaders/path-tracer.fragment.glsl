@@ -360,13 +360,13 @@ vec3 sampleSkydome(vec3 ray) {
     float textureId = floor(float(pixelId) / (skydomeTextureSize * skydomeTextureSize));
     float offset = mod(float(pixelId), skydomeTextureSize * skydomeTextureSize);
 
-    if (abs(textureId - 0.0) < EPSILON) {
+    if (abs(textureId - 0.0) <= EPSILON) {
         color = getValueFromTexture(skydomeTexture1, offset, skydomeTextureSize);
-    } else if (abs(textureId - 1.0) < EPSILON) {
+    } else if (abs(textureId - 1.0) <= EPSILON) {
         color = getValueFromTexture(skydomeTexture2, offset, skydomeTextureSize);
-    } else if (abs(textureId - 2.0) < EPSILON) {
+    } else if (abs(textureId - 2.0) <= EPSILON) {
         color = getValueFromTexture(skydomeTexture3, offset, skydomeTextureSize);
-    } else if (abs(textureId - 3.0) < EPSILON) {
+    } else if (abs(textureId - 3.0) <= EPSILON) {
         color = getValueFromTexture(skydomeTexture4, offset, skydomeTextureSize);
     }
 
@@ -473,7 +473,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             }
         }
         
-        if (abs(t - INFINITY) < EPSILON) {
+        if (abs(t - INFINITY) <= EPSILON) {
             if (isSkydomeLoaded) {
                 accumulatedColor += colorMask * sampleSkydome(ray);
             }
