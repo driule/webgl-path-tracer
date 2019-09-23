@@ -193,6 +193,7 @@ function setLoadingScreen(): void {
     for (let i = 0; i < buttons.length; i++) {
         buttons[i].disabled = true;
     }
+    (<HTMLSelectElement>document.getElementById("canvasSizeSelect")).disabled = true;
 }
 
 function removeLoadingScreen(): void {
@@ -206,6 +207,7 @@ function removeLoadingScreen(): void {
     }
 
     (<HTMLButtonElement>document.getElementById("render")).disabled = true;
+    (<HTMLSelectElement>document.getElementById("canvasSizeSelect")).disabled = false;
 }
 
 function onButtonUp(event: MouseEvent): void {
@@ -227,7 +229,7 @@ async function resizeCanvas() {
     renderer.resize(canvas);
 
     setLoadingScreen();
-    renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
+    renderer.setScene(await SceneFactory.createBasicScene(canvas));
     removeLoadingScreen();
 }
 
