@@ -188,8 +188,11 @@ function setLoadingScreen(): void {
     canvas.style.display = "none";
     loader.style.display = "block";
 
-    (<HTMLButtonElement>document.getElementById("render")).disabled = true;
-    (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
+    
+    let buttons = document.getElementsByTagName("button");
+    for (let i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = true;
+    }
 }
 
 function removeLoadingScreen(): void {
@@ -197,8 +200,12 @@ function removeLoadingScreen(): void {
     canvas.style.display = "block";
     loader.style.display = "none";
 
+    let buttons = document.getElementsByTagName("button");
+    for (let i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = false;
+    }
+
     (<HTMLButtonElement>document.getElementById("render")).disabled = true;
-    (<HTMLButtonElement>document.getElementById("stop")).disabled = false;
 }
 
 function onButtonUp(event: MouseEvent): void {
