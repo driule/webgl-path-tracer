@@ -10,6 +10,7 @@ export class Material {
 
     // albedo texture: data as flat rgba list {r, g, b, a, r, g, b, a, ... }
     private albedoTexture: Texture;
+    private hasAlpha: boolean;
 
     // TODO:
     // [-] support alpha
@@ -34,11 +35,16 @@ export class Material {
         this.color = color;
     }
 
-    public setAlbedoTexture(albedoTexture: Texture): void {
+    public setAlbedoTexture(albedoTexture: Texture, hasAlpha: boolean = false): void {
         this.albedoTexture = albedoTexture;
+        this.hasAlpha = hasAlpha;
     }
 
     public getalbedoTexture(): Texture {
         return this.albedoTexture;
+    }
+
+    public hasAlphaChannel(): boolean {
+        return this.hasAlpha;
     }
 }

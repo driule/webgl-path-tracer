@@ -227,7 +227,7 @@ export class Shader {
 
                 materialList[i * 3 * 3 + 6] = material.getalbedoTexture().getWidth();
                 materialList[i * 3 * 3 + 7] = material.getalbedoTexture().getHeight();
-                materialList[i * 3 * 3 + 8] = 0.0;
+                materialList[i * 3 * 3 + 8] = material.hasAlphaChannel() ? 1.0 : 0.0;
 
                 albedoImageDataList.push(material.getalbedoTexture().getData());
                 albedoPixelOffset += material.getalbedoTexture().getData().length / 4;

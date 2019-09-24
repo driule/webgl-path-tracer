@@ -48,7 +48,7 @@ export class GeometryLoader  {
         });
     }
 
-    public static async loadImageData(image: HTMLImageElement): Promise<Float32Array> {
+    public static async loadImageData(image: HTMLImageElement): Promise<[Float32Array, boolean]> {
         let rgbList = new Float32Array(image.width * image.height * 4);
 
         let albedoTextureCanvas = document.createElement('canvas') as HTMLCanvasElement;
@@ -59,14 +59,19 @@ export class GeometryLoader  {
         await canvasContext2D.drawImage(image, 0, 0);
         let imageData = canvasContext2D.getImageData(0, 0, albedoTextureCanvas.width, albedoTextureCanvas.height).data;
 
+        let hasAlpha: boolean = false;
         for (let i = 0; i < rgbList.length / 4; i++) {
             rgbList[i * 4 + 0] = imageData[i * 4 + 0] / 255.0;
             rgbList[i * 4 + 1] = imageData[i * 4 + 1] / 255.0;
             rgbList[i * 4 + 2] = imageData[i * 4 + 2] / 255.0;
             rgbList[i * 4 + 3] = imageData[i * 4 + 3] / 255.0;
+
+            if (rgbList[i * 4 + 3] < 1.0) {
+                hasAlpha = true;
+            }
         }
 
-        return rgbList;
+        return [rgbList, hasAlpha];
     }
 
     // include GLTF file example:
@@ -101,11 +106,13 @@ export class GeometryLoader  {
                 let imageUri = path + asset.gltf.images[texture.source].uri;
 
                 let albedoTextureImage = await this.loadImage(imageUri);
+                let imageData: [Float32Array, boolean] = await this.loadImageData(albedoTextureImage);
                 material.setAlbedoTexture(new Texture(
-                        await this.loadImageData(albedoTextureImage),
+                        imageData[0],
                         albedoTextureImage.width,
-                        albedoTextureImage.height,
-                    )
+                        albedoTextureImage.height
+                    ),
+                    imageData[1] // alpha channel existence
                 );
             }
 
