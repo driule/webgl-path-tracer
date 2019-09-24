@@ -3,7 +3,7 @@ import { vec3, vec2 } from "gl-matrix";
 import { Triangle } from "../geometry/Triangle";
 import { Accessor, BufferView } from "gltf-loader-ts/lib/gltf";
 import { Material } from "../geometry/Material";
-import { Skydome } from "../geometry/Skydome";
+import { Texture } from "../geometry/Texture";
 
 const parseHDR = require('parse-hdr');
     
@@ -28,10 +28,10 @@ export class GeometryLoader  {
         });
     }
 
-    public static async parseHDR(src: string): Promise<Skydome> {
+    public static async parseHDR(src: string): Promise<Texture> {
         let hdr = parseHDR(await this.loadSkydome(src));
 
-        return new Skydome(
+        return new Texture(
             hdr.data,
             hdr.shape[0],
             hdr.shape[1],
@@ -49,7 +49,7 @@ export class GeometryLoader  {
     }
 
     public static async loadImageData(image: HTMLImageElement): Promise<Float32Array> {
-        let rgbList = new Float32Array(image.width * image.height * 3);
+        let rgbList = new Float32Array(image.width * image.height * 4);
 
         let albedoTextureCanvas = document.createElement('canvas') as HTMLCanvasElement;
         albedoTextureCanvas.width = image.width;
@@ -59,10 +59,11 @@ export class GeometryLoader  {
         await canvasContext2D.drawImage(image, 0, 0);
         let imageData = canvasContext2D.getImageData(0, 0, albedoTextureCanvas.width, albedoTextureCanvas.height).data;
 
-        for (let i = 0; i < rgbList.length / 3; i++) {
-            rgbList[i * 3 + 0] = imageData[i * 4 + 0] / 255.0;
-            rgbList[i * 3 + 1] = imageData[i * 4 + 1] / 255.0;
-            rgbList[i * 3 + 2] = imageData[i * 4 + 2] / 255.0;
+        for (let i = 0; i < rgbList.length / 4; i++) {
+            rgbList[i * 4 + 0] = imageData[i * 4 + 0] / 255.0;
+            rgbList[i * 4 + 1] = imageData[i * 4 + 1] / 255.0;
+            rgbList[i * 4 + 2] = imageData[i * 4 + 2] / 255.0;
+            rgbList[i * 4 + 3] = imageData[i * 4 + 3] / 255.0;
         }
 
         return rgbList;
@@ -100,9 +101,12 @@ export class GeometryLoader  {
                 let imageUri = path + asset.gltf.images[texture.source].uri;
 
                 let albedoTextureImage = await this.loadImage(imageUri);
-
-                material.setAlbedoImageElement(albedoTextureImage);
-                material.setAlbedoImageData(await this.loadImageData(albedoTextureImage));
+                material.setAlbedoTexture(new Texture(
+                        await this.loadImageData(albedoTextureImage),
+                        albedoTextureImage.width,
+                        albedoTextureImage.height,
+                    )
+                );
             }
 
             let baseColor = asset.gltf.materials[i].pbrMetallicRoughness.baseColorFactor;

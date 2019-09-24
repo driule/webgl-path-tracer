@@ -3,7 +3,7 @@ import { Light } from "./geometry/Light";
 import { Triangle } from "./geometry/Triangle";
 import { BVH } from "./geometry/BVH";
 import { Material } from "./geometry/Material";
-import { Skydome } from "./geometry/Skydome";
+import { Texture } from "./geometry/Texture";
 
 export class Scene {
 
@@ -12,7 +12,7 @@ export class Scene {
     private triangles: Triangle[];
     private materials: Material[];
     private lights: Light[];
-    private skydome: Skydome;
+    private skydome: Texture;
     
     private bvh: BVH;
 
@@ -40,7 +40,7 @@ export class Scene {
         return this.lights;
     }
 
-    public getSkydome(): Skydome {
+    public getSkydome(): Texture {
         return this.skydome;
     }
 
@@ -70,7 +70,7 @@ export class Scene {
         this.materials = this.materials.concat(materials);
     }
 
-    public setSkydome(skydome: Skydome): void {
+    public setSkydome(skydome: Texture): void {
         this.skydome = skydome;
     }
 }

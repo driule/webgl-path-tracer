@@ -1,17 +1,17 @@
-export class Skydome {
+export class Texture {
 
-    private data: number[]; // flat rgba list {r, g, b, a, r, g, b, a, ... }
+    private data: Float32Array;
 
     private width: number;
     private height: number;
 
-    public constructor(data: number[], width: number, height: number) {
+    public constructor(data: Float32Array, width: number, height: number) {
         this.data = data;
         this.width = width;
         this.height = height;
     }
 
-    public getData(): number[] {
+    public getData(): Float32Array {
         return this.data;
     }
 

@@ -3,7 +3,7 @@ import { Material } from "../geometry/Material";
 import { Triangle } from "../geometry/Triangle";
 import { Light } from "../geometry/Light";
 import { BoundingBox } from "../geometry/BoundingBox";
-import { Skydome } from "../geometry/Skydome";
+import { Texture } from "../geometry/Texture";
 
 export enum ShaderDataType {
     int,
@@ -211,24 +211,26 @@ export class Shader {
             materialList[i * 3 * 3 + 1] = material.getColor()[1];
             materialList[i * 3 * 3 + 2] = material.getColor()[2];
 
-            if (material.getAlbedoImageElement() != undefined) {
-                if (albedoPixelOffset + material.getAlbedoImageData().length / 3 > albedoTextureSize * albedoTextureSize) {
+            if (material.getalbedoTexture() != undefined) {
+                if (albedoPixelOffset + material.getalbedoTexture().getData().length / 4 > albedoTextureSize * albedoTextureSize) {
                     this.setMaterialAlbedoTexture(albedoTexturePointer, albedoImageDataList, albedoTextureSize);
                     albedoImageDataList = [];
                     albedoPixelOffset = 0;
                     albedoTexturePointer++;
                 }
 
+                console.log('albedo texture:', material.getalbedoTexture());
+
                 materialList[i * 3 * 3 + 3] = 1.0; // texture defined flag set to TRUE
                 materialList[i * 3 * 3 + 4] = albedoTexturePointer;
                 materialList[i * 3 * 3 + 5] = albedoPixelOffset;
 
-                materialList[i * 3 * 3 + 6] = material.getAlbedoImageElement().width;
-                materialList[i * 3 * 3 + 7] = material.getAlbedoImageElement().height;
+                materialList[i * 3 * 3 + 6] = material.getalbedoTexture().getWidth();
+                materialList[i * 3 * 3 + 7] = material.getalbedoTexture().getHeight();
                 materialList[i * 3 * 3 + 8] = 0.0;
 
-                albedoImageDataList.push(material.getAlbedoImageData());
-                albedoPixelOffset += material.getAlbedoImageData().length / 3;
+                albedoImageDataList.push(material.getalbedoTexture().getData());
+                albedoPixelOffset += material.getalbedoTexture().getData().length / 4;
             } else {
                 materialList[i * 3 * 3 + 3] = 0.0;
                 materialList[i * 3 * 3 + 4] = 0.0;
@@ -268,7 +270,7 @@ export class Shader {
 
         console.log("setting albedo texture", id);
 
-        let rgbList = new Float32Array(textureSize * textureSize * 3);
+        let rgbList = new Float32Array(textureSize * textureSize * 4);
         let offset = 0;
         for (let i = 0; i < imageDataList.length; i++) {
             let textureRgbList: Float32Array = imageDataList[i];
@@ -287,13 +289,13 @@ export class Shader {
         // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         // gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, textureSize, textureSize, 0, gl.RGB, gl.FLOAT, rgbList);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, textureSize, textureSize, 0, gl.RGBA, gl.FLOAT, rgbList);
 
         let materialsTextureLocation = gl.getUniformLocation(this.program, "albedoTexture" + (id + 1));
         gl.uniform1i(materialsTextureLocation, 5 + id);
     }
 
-    public setSkydome(skydome: Skydome) {
+    public setSkydome(skydome: Texture) {
         const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
         console.log("actual skydome texture size", textureSize);
 
