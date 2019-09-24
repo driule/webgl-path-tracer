@@ -2,7 +2,7 @@
 
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
-### Scenes
+### Rendered Scenes
 
 ![Sponza](http://www.students.science.uu.nl/~6070981/debug/assets/images/scenes/webgl-sponza.png)
 ![Avocados](http://www.students.science.uu.nl/~6070981/debug/assets/images/scenes/webgl-avocados.png)
