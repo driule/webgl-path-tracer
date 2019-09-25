@@ -511,28 +511,6 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             }
         }
 
-        // ray-light intersection
-        float tLight = INFINITY;
-        for (int i = 0; i < totalLights; i++) {
-            Light light = fetchLight(i);
-            tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
-            
-            if (tLight < t) {
-                accumulatedColor += throughput * lightColor * (bsdfPdf);
-                break;
-            }
-        }
-        
-        // sample skydome if no-hit
-        if (abs(t - INFINITY) <= EPSILON) {
-            if (isSkydomeLoaded) {
-                accumulatedColor += throughput * sampleSkydome(ray) * (bsdfPdf);
-            }
-            break;
-        } else {
-            ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
-        }
-
         // PORT FROM: lights_shared.cu
         // calculate light pdf and pick probability
         Light light = getRandomLight();
@@ -541,12 +519,34 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         float pickProb = 1.0 / float(totalLights);
         //
 
+        // ray-light intersection
+        float tLight = INFINITY;
+        for (int i = 0; i < totalLights; i++) {
+            Light light = fetchLight(i);
+            tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
+            
+            if (tLight < t) {
+                accumulatedColor += throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * pickProb));
+                break;
+            }
+        }
+        
+        // sample skydome if no-hit
+        if (abs(t - INFINITY) <= EPSILON) {
+            if (isSkydomeLoaded) {
+                accumulatedColor += throughput * sampleSkydome(ray) * (1.0 / bsdfPdf);
+            }
+            break;
+        } else {
+            ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
+        }
+
         // apply postponed bsdf pdf
         // throughput /= bsdfPdf;
 
         // PORT FROM: pathtracer.cu
         // actual shading
-        L = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;//light.position - hit;
+        L = light.position - hit;//(light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;//light.position - hit;
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
