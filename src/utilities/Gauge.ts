@@ -31,7 +31,7 @@ export class Gauge {
         if (this.elapsedTime >= 1000) {
             this.fps = this.frameCount;
             this.frameCount = 0;
-            this.elapsedTime -= 1000;
+            this.elapsedTime %= 1000;
         }
     }
 }

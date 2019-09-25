@@ -461,10 +461,22 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
 
 float getShadowIntensity(vec3 origin, vec3 ray) {
     Intersection intersection = intersectPrimitives(origin, ray, true);
-    if (intersection.t < 1.0) return 0.0;
-    // if (intersection.t < INFINITY) return 0.0;
+    // if (intersection.t < 1.0) return 0.0;
+    if (intersection.t < INFINITY) return 0.0;
 
     return 1.0;
+}
+
+vec3 clampColor(vec3 color) {
+    float v = max(color.x, max(color.y, color.z));
+    if (v > 1.0) {
+        float m = 1.0 / v;
+        color.x *= m;
+        color.y *= m;
+        color.z *= m;
+    }
+
+    return color;
 }
 
 vec3 calculateColor(vec3 origin, vec3 ray) {
@@ -473,16 +485,17 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
     vec3 accumulatedColor = vec3(0.0);
     vec3 surfaceColor = vec3(0.15);
     vec3 lightColor = vec3(1.0, 1.0, 0.85);
-    vec3 colorMask = vec3(1.0);
 
-    Light light;
-    float energyMultiplier = 1.0;
+    // float energyMultiplier = 1.0;
+    vec3 throughput = vec3(1.0);
+    float bsdfPdf = 1.0;
 
     for (int bounce = 0; bounce < BOUNCES; bounce++) {
         float t = INFINITY;
         vec3 normal;
         vec3 hit = origin + ray * t;
 
+        // ray-primitive intersection
         Intersection intersection = intersectPrimitives(origin, ray, false);
         if (intersection.t < t) {
             t = intersection.t;
@@ -492,56 +505,66 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             Material material = fetchMaterial(intersection.triangle.material);
             if (material.isAlbedoTextureDefined) {
                 vec3 textureColor = mapTexture(intersection.triangle, material, hit).rgb;
-                surfaceColor = textureColor * material.color;
+                surfaceColor = textureColor;// * material.color;
             } else {
                 surfaceColor = material.color;
             }
         }
 
+        // ray-light intersection
         float tLight = INFINITY;
         for (int i = 0; i < totalLights; i++) {
-            light = fetchLight(i);
+            Light light = fetchLight(i);
             tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
             
             if (tLight < t) {
-                accumulatedColor += colorMask * lightColor;
+                accumulatedColor += throughput * lightColor;
                 break;
             }
         }
         
+        // sample skydome if no-hit
         if (abs(t - INFINITY) <= EPSILON) {
             if (isSkydomeLoaded) {
-                accumulatedColor += colorMask * sampleSkydome(ray);
+                accumulatedColor += throughput * sampleSkydome(ray);
             }
             break;
         } else {
             ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
         }
 
-        light = getRandomLight();
+        // calculate light pdf and pick probability
+        Light light = getRandomLight();
+		vec3 L = hit - light.position; // L - reversed light position
+		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
+        float pickProb = 1.0 / float(totalLights);
+        //
 
-        vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
-        float diffuse = max(0.0, dot(normalize(toLight), normal));
-        float shadowIntensity = getShadowIntensity(hit + normal + EPSILON, toLight);
+        // apply postponed bsdf pdf
+        throughput *= 1.0 / bsdfPdf;
 
-        // skydome contribution for illumination
-        vec3 skydomeColor = vec3(0, 0, 0);
-        if (isSkydomeLoaded) {
-            skydomeColor += colorMask * sampleSkydome(ray);
-        }
-        
-        // ! ToDo: check this crap
-        colorMask *= surfaceColor;
-        accumulatedColor += colorMask * surfaceColor * ((lightColor * light.intensity * diffuse * shadowIntensity) + skydomeColor) * energyMultiplier;
-        
-        // Russian-Roulette to determine ray survival probability
-        float raySurviveProbability = min(1.0, max(max(accumulatedColor.x, accumulatedColor.y), accumulatedColor.z));
-        energyMultiplier = 1.0 / raySurviveProbability;
+        // actual shading
+        L = light.position - hit;
+        float dist = length(L);
+        L *= 1.0 / dist;
+        float NdotL = dot(L, normal);
+        if (NdotL > 0.0 && dot(normal, L) > 0.0 && lightPdf > 0.0)
+		{
+			float pdf = abs(dot(L, normal)) * INVERSE_PI;
+			if (pdf > 0.0)
+			{
+				accumulatedColor += throughput * surfaceColor * INVERSE_PI * lightColor * (NdotL / (pickProb * lightPdf + pdf));
+                accumulatedColor = clampColor(accumulatedColor);
+			}
+		}
+        //
 
-        float randomNumber = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(bounce));
-        if (randomNumber > raySurviveProbability) {
+        // calculate new bsdf
+        if (dot(ray, normal) <= EPSILON) {
             break;
         }
+        bsdfPdf = max(0.0, dot(ray, normal)) * INVERSE_PI;
+        //
 
         origin = hit;
     }
