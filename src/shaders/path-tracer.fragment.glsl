@@ -518,7 +518,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
             
             if (tLight < t) {
-                accumulatedColor += throughput * lightColor;
+                accumulatedColor += throughput * lightColor * (bsdfPdf);
                 break;
             }
         }
@@ -526,13 +526,14 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         // sample skydome if no-hit
         if (abs(t - INFINITY) <= EPSILON) {
             if (isSkydomeLoaded) {
-                accumulatedColor += throughput * sampleSkydome(ray);
+                accumulatedColor += throughput * sampleSkydome(ray) * (bsdfPdf);
             }
             break;
         } else {
             ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
         }
 
+        // PORT FROM: lights_shared.cu
         // calculate light pdf and pick probability
         Light light = getRandomLight();
 		vec3 L = hit - light.position; // L - reversed light position
@@ -541,20 +542,25 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         //
 
         // apply postponed bsdf pdf
-        throughput *= 1.0 / bsdfPdf;
+        // throughput /= bsdfPdf;
 
+        // PORT FROM: pathtracer.cu
         // actual shading
-        L = light.position - hit;
+        L = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;//light.position - hit;
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
-        if (NdotL > 0.0 && dot(normal, L) > 0.0 && lightPdf > 0.0)
+        if (NdotL >= EPSILON && dot(normal, L) >= EPSILON && lightPdf >= EPSILON)
 		{
 			float pdf = abs(dot(L, normal)) * INVERSE_PI;
-			if (pdf > 0.0)
+			if (pdf >= EPSILON)
 			{
-				accumulatedColor += throughput * surfaceColor * INVERSE_PI * lightColor * (NdotL / (pickProb * lightPdf + pdf));
+				accumulatedColor += throughput * surfaceColor * INVERSE_PI * lightColor * NdotL / (pickProb * lightPdf + pdf);
                 accumulatedColor = clampColor(accumulatedColor);
+
+                // DEBUG
+                // vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
+                // accumulatedColor += throughput * surfaceColor * INVERSE_PI * lightColor * (getShadowIntensity(hit + normal + EPSILON, L));
 			}
 		}
         //
@@ -564,6 +570,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             break;
         }
         bsdfPdf = max(0.0, dot(ray, normal)) * INVERSE_PI;
+        throughput = throughput * surfaceColor * INVERSE_PI;
         //
 
         origin = hit;
