@@ -459,12 +459,12 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
     return intersection;
 }
 
-float getShadowIntensity(vec3 origin, vec3 ray) {
+bool isOccluded(vec3 origin, vec3 ray, float dist) {
     Intersection intersection = intersectPrimitives(origin, ray, true);
     // if (intersection.t < 1.0) return 0.0;
-    if (intersection.t < INFINITY) return 0.0;
+    if (intersection.t < dist) return true;
 
-    return 1.0;
+    return false;
 }
 
 vec3 clampColor(vec3 color) {
@@ -526,19 +526,17 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
             
             if (tLight < t) {
-                accumulatedColor += throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * pickProb));
+                accumulatedColor += throughput * lightColor;// * (1.0 / (bsdfPdf + lightPdf * pickProb));
                 break;
             }
         }
         
-        // sample skydome if no-hit
+        // no-hit: sample skydome if loaded
         if (abs(t - INFINITY) <= EPSILON) {
             if (isSkydomeLoaded) {
                 accumulatedColor += throughput * sampleSkydome(ray) * (1.0 / bsdfPdf);
             }
             break;
-        } else {
-            ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
         }
 
         // apply postponed bsdf pdf
@@ -546,7 +544,8 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
         // PORT FROM: pathtracer.cu
         // actual shading
-        L = light.position - hit;//(light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;//light.position - hit;
+        L = light.position - hit;
+        // L = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
@@ -555,8 +554,13 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 			float pdf = abs(dot(L, normal)) * INVERSE_PI;
 			if (pdf >= EPSILON)
 			{
-				accumulatedColor += throughput * surfaceColor * INVERSE_PI * lightColor * NdotL / (pickProb * lightPdf + pdf);
-                accumulatedColor = clampColor(accumulatedColor);
+				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (pickProb * lightPdf + pdf);
+                // contribution = clampColor(accumulatedColor);
+
+                if (!isOccluded(hit, L, dist)) {
+                    accumulatedColor += contribution;
+                    accumulatedColor = clampColor(accumulatedColor);
+                }
 
                 // DEBUG
                 // vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
@@ -565,15 +569,16 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 		}
         //
 
-        // calculate new bsdf
+        // shoot a new ray
+        origin = hit;
+        ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
+
+        // calculate new bsdf & adjust throughput
         if (dot(ray, normal) <= EPSILON) {
             break;
         }
         bsdfPdf = max(0.0, dot(ray, normal)) * INVERSE_PI;
         throughput = throughput * surfaceColor * INVERSE_PI;
-        //
-
-        origin = hit;
     }
     
     return accumulatedColor;

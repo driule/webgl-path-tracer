@@ -10,7 +10,7 @@ export class SceneFactory  {
     
     public static async createPicaRoomScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
-            new Light(vec3.fromValues(12.5, 27.5, 0.5), 0.25, 0.75),
+            new Light(vec3.fromValues(12.5, 27.5, 0.5), 0.25, 500.0),
         ];
         let camera = new Camera(canvas, vec3.fromValues(-1.05, 27.05, 42.5), -0.35,-3.15, 0.5);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/pica-room/", "scene.gltf", 0);
@@ -46,10 +46,10 @@ export class SceneFactory  {
 
     public static async createSponzaScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
-            new Light(vec3.fromValues(825, 550, 305), 2.5, 5.0),
-            new Light(vec3.fromValues(825, 310, 372), 2.5, 5.0),
-            new Light(vec3.fromValues(0, 50, 0), 2.5, 20.0),
-            new Light(vec3.fromValues(0, 550, 0), 2.5, 5.0)
+            new Light(vec3.fromValues(825, 550, 305), 2.5, 25000.0),
+            new Light(vec3.fromValues(825, 310, 372), 2.5, 25000.0),
+            new Light(vec3.fromValues(0, 50, 0), 2.5, 25000.0),
+            new Light(vec3.fromValues(0, 550, 0), 2.5, 50000.0)
         ];
         let camera = new Camera(canvas, vec3.fromValues(462.0, 350.0, 0), 0.01, -1.6, 10.0);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/sponza/", "Sponza.gltf", 0);
@@ -66,9 +66,9 @@ export class SceneFactory  {
 
     public static async createAvocadoScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
-            new Light(vec3.fromValues(-0.5, 2.75, 12.5), 0.25, 7.5),
-            new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 10.0),
-            new Light(vec3.fromValues(-2.25, 2.75, -10.75), 0.15, 15.0)
+            new Light(vec3.fromValues(-0.5, 2.75, 12.5), 0.25, 200.5),
+            new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 200.0),
+            new Light(vec3.fromValues(-2.25, 2.75, -10.75), 0.15, 120.0)
         ];
         let camera = new Camera(canvas, vec3.fromValues(-2.0, 1.5, -12.5), 0.1, 0.35, 0.25);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", 0, 100);
