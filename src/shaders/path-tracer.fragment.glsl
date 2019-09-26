@@ -264,6 +264,15 @@ float random(vec3 scale, float seed) {
     return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
 }
 
+vec3 clampColor(vec3 color) {
+    float v = max(color.x, max(color.y, color.z));
+    if (v > 1.0) {
+        color *= 1.0 / v;
+    }
+
+    return color;
+}
+
 vec3 cosineWeightedDirection(float seed, vec3 normal) {
     float u = random(vec3(12.9898, 78.233, 151.7182), seed);
     float v = random(vec3(63.7264, 10.873, 623.6736), seed);
@@ -279,20 +288,6 @@ vec3 cosineWeightedDirection(float seed, vec3 normal) {
     tdir = cross(normal, sdir);
 
     return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;
-}
-
-vec3 uniformlyRandomDirection(float seed) {
-    float u = random(vec3(12.9898, 78.233, 151.7182), seed);
-    float v = random(vec3(63.7264, 10.873, 623.6736), seed);
-    float z = 1.0 - 2.0 * u;
-    float r = sqrt(1.0 - z * z);
-    float angle = 6.283185307179586 * v;
-
-    return vec3(r * cos(angle), r * sin(angle), z);
-}
-
-vec3 uniformlyRandomVector(float seed) {
-    return uniformlyRandomDirection(seed) * sqrt(random(vec3(36.7539, 50.3658, 306.2759), seed));
 }
 
 Light getRandomLight() {
@@ -454,23 +449,11 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
     return intersection;
 }
 
-bool isOccluded(vec3 origin, vec3 ray, float dist) {
+bool isOccluded(vec3 origin, vec3 ray, float lightDistance) {
     Intersection intersection = intersectPrimitives(origin, ray, true);
-    if (intersection.t < dist) return true;
+    if (intersection.t < lightDistance) return true;
 
     return false;
-}
-
-vec3 clampColor(vec3 color) {
-    float v = max(color.x, max(color.y, color.z));
-    if (v > 1.0) {
-        float m = 1.0 / v;
-        color.x *= m;
-        color.y *= m;
-        color.z *= m;
-    }
-
-    return color;
 }
 
 vec3 calculateColor(vec3 origin, vec3 ray) {
@@ -480,7 +463,6 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
     vec3 surfaceColor = vec3(0.15);
     vec3 lightColor = vec3(1.0, 1.0, 0.85);
 
-    // float energyMultiplier = 1.0;
     vec3 throughput = vec3(1.0);
     float bsdfPdf = 1.0;
 
@@ -508,12 +490,10 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         // PORT FROM: lights_shared.cu
         // calculate light pdf and pick probability
         Light light = getRandomLight();
-		vec3 L = hit - light.position; // L - reversed light position
+		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
         float pickProb = 1.0 / float(totalLights);
-        //
 
-        // ToDo: port multiple importance sampling
         // ray-light intersection
         float tLight = INFINITY;
         for (int i = 0; i < totalLights; i++) {
@@ -521,7 +501,15 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
             tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
             
             if (tLight < t) {
-                accumulatedColor += throughput * lightColor;// * (1.0 / (bsdfPdf + lightPdf * pickProb));
+                // hit light, apply MIS         
+                vec3 contribution;
+                if ((bsdfPdf + lightPdf * pickProb) > 0.0) {
+                    contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * pickProb));
+                } else {
+                    contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf));
+                }
+
+                accumulatedColor += clampColor(contribution);
                 break;
             }
         }
@@ -529,18 +517,17 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         // no-hit: sample skydome if loaded
         if (abs(t - INFINITY) <= EPSILON) {
             if (isSkydomeLoaded) {
-                accumulatedColor += throughput * sampleSkydome(ray) * (1.0 / bsdfPdf);
+                accumulatedColor += clampColor(throughput * sampleSkydome(ray) * (1.0 / bsdfPdf));
             }
             break;
         }
 
         // apply postponed bsdf pdf
-        // throughput /= bsdfPdf;
+        throughput *= 1.0f / bsdfPdf;
 
         // PORT FROM: pathtracer.cu
-        // actual shading
+        // shading
         L = light.position - hit;
-        // L = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
@@ -550,19 +537,12 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 			if (pdf >= EPSILON)
 			{
 				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (pickProb * lightPdf + pdf);
-                // contribution = clampColor(accumulatedColor);
 
                 if (!isOccluded(hit, L, dist)) {
-                    accumulatedColor += contribution;
-                    accumulatedColor = clampColor(accumulatedColor);
+                    accumulatedColor += clampColor(contribution);
                 }
-
-                // DEBUG
-                // vec3 toLight = (light.position + uniformlyRandomVector(timeSinceStart - 50.0) * light.radius) - hit;
-                // accumulatedColor += throughput * surfaceColor * INVERSE_PI * lightColor * (getShadowIntensity(hit + normal + EPSILON, L));
 			}
 		}
-        //
 
         // shoot a new ray
         origin = hit;
@@ -576,7 +556,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         throughput = throughput * surfaceColor * INVERSE_PI;
     }
     
-    return accumulatedColor;
+    return clampColor(accumulatedColor);
 }
 
 void main() {
