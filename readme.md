@@ -2,6 +2,11 @@
 
 Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~6070981)
 
+### Rendered Scenes
+
+![Sponza](http://www.students.science.uu.nl/~6070981/debug/assets/images/scenes/webgl-sponza.png)
+![Avocados](http://www.students.science.uu.nl/~6070981/debug/assets/images/scenes/webgl-space-avocado.png)
+
 ### Progress
 - [+] Multiple GL textures exploited for skydome and albedo textures loading
 - [+] Proper camera controls implemented
