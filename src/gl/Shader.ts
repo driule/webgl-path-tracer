@@ -219,8 +219,6 @@ export class Shader {
                     albedoTexturePointer++;
                 }
 
-                console.log('albedo texture:', material.getalbedoTexture());
-
                 materialList[i * 3 * 3 + 3] = 1.0; // texture defined flag set to TRUE
                 materialList[i * 3 * 3 + 4] = albedoTexturePointer;
                 materialList[i * 3 * 3 + 5] = albedoPixelOffset;
