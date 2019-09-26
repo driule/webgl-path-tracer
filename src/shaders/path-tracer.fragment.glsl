@@ -417,17 +417,13 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
             // }
 
             for (int i = 0; i < node.count; i++) {
-                if (i >= node.count) {
-                    break;
-                }
-
                 int index = fetchTriangleIndex(node.first + i);
 
                 Triangle triangle = fetchTriangle(index);
                 float tTriangle = intersectTriangle(origin, ray, triangle);
 
                 if (tTriangle < intersection.t) {
-                    // ToDo: calculate uv, color, intersection point, etc. extend Intersection structure
+                    // ToDo: extend Intersection structure (uv, normal, etc.)
 
                     // ignore intersection if alpha pixel was hit
                     if (hasMaterialAlpha(triangle.material)) {
@@ -437,7 +433,6 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
                             continue;
                         }
                     }
-                    //
 
                     intersection.t = tTriangle;
                     // intersection.hit = hit;
@@ -445,9 +440,9 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
                     // intersection.material = material;
 
                     // early out if shadowRay already hit any primitive
-                    // if (isShadowRay) {
-                    //     return intersection;
-                    // }
+                    if (isShadowRay) {
+                        return intersection;
+                    }
                 }
             }
         } else {
@@ -461,7 +456,6 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
 
 bool isOccluded(vec3 origin, vec3 ray, float dist) {
     Intersection intersection = intersectPrimitives(origin, ray, true);
-    // if (intersection.t < 1.0) return 0.0;
     if (intersection.t < dist) return true;
 
     return false;
@@ -519,6 +513,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         float pickProb = 1.0 / float(totalLights);
         //
 
+        // ToDo: port multiple importance sampling
         // ray-light intersection
         float tLight = INFINITY;
         for (int i = 0; i < totalLights; i++) {
