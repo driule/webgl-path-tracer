@@ -87,14 +87,15 @@ vec4 getColorValueFromTexture(sampler2D sampler, float index, float size) {
 }
 
 Triangle fetchTriangle(int id) {
-    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 6 + 0), triangleDataTextureSize);
-    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 6 + 1), triangleDataTextureSize);
-    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 6 + 2), triangleDataTextureSize);
+    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 7 + 0), triangleDataTextureSize);
+    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 7 + 1), triangleDataTextureSize);
+    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 7 + 2), triangleDataTextureSize);
     
-    vec3 uv1 = getValueFromTexture(triangleDataTexture, float(id * 6 + 3), triangleDataTextureSize);
-    vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 6 + 4), triangleDataTextureSize);
+    vec3 uv1 = getValueFromTexture(triangleDataTexture, float(id * 7 + 3), triangleDataTextureSize);
+    vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 7 + 4), triangleDataTextureSize);
 
-    vec3 material = getValueFromTexture(triangleDataTexture, float(id * 6 + 5), triangleDataTextureSize);
+    vec3 material = getValueFromTexture(triangleDataTexture, float(id * 7 + 5), triangleDataTextureSize);
+    // vec3 normal = getValueFromTexture(triangleDataTexture, float(id * 7 + 6), triangleDataTextureSize);
     
     Triangle triangle;
     triangle.a = coordA;
@@ -104,12 +105,13 @@ Triangle fetchTriangle(int id) {
     triangle.uvB = vec2(uv1[2], uv2[0]);
     triangle.uvC = vec2(uv2[1], uv2[2]);
     triangle.material = int(material[0]);
+    // triangle.normal = normal;
 
     return triangle;
 }
 
 int fetchTriangleIndex(int id) {
-    vec3 triangleIndex = getValueFromTexture(triangleDataTexture, float(id * 6 + 5), triangleDataTextureSize);
+    vec3 triangleIndex = getValueFromTexture(triangleDataTexture, float(id * 7 + 5), triangleDataTextureSize);
 
     return int(triangleIndex[1]);
 }
@@ -476,7 +478,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         if (intersection.t < t) {
             t = intersection.t;
             hit = origin + ray * t;
-            normal = getTriangleNormal(intersection.triangle);
+            normal = getTriangleNormal(intersection.triangle);//intersection.triangle.normal;
 
             Material material = fetchMaterial(intersection.triangle.material);
             if (material.isAlbedoTextureDefined) {

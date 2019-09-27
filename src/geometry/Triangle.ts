@@ -9,6 +9,8 @@ export class Triangle {
     private b: vec3;
     private c: vec3;
 
+    private normal: vec3;
+
     private uvA: vec2;
     private uvB: vec2;
     private uvC: vec2;
@@ -28,6 +30,15 @@ export class Triangle {
         this.a = a;
         this.b = b;
         this.c = c;
+
+        this.normal = vec3.normalize(
+            vec3.create(),
+            vec3.cross(
+                vec3.create(),
+                vec3.sub(vec3.create(), this.a, this.b),
+                vec3.sub(vec3.create(), this.b, this.c)
+            )
+        );
 
         this.material = material;
 
@@ -59,6 +70,10 @@ export class Triangle {
 
     public getC(): vec3 {
         return this.c;
+    }
+
+    public getNormal(): vec3 {
+        return this.normal;
     }
 
     public getUvA(): vec2 {

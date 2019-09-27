@@ -73,29 +73,33 @@ export class Shader {
         for (let i = 0; i < triangles.length; i++) {
             let triangle: Triangle = triangles[i];
 
-            triangleList[i * 3 * 6 + 0] = triangle.getA()[0];
-            triangleList[i * 3 * 6 + 1] = triangle.getA()[1];
-            triangleList[i * 3 * 6 + 2] = triangle.getA()[2];
+            triangleList[i * 3 * 7 + 0] = triangle.getA()[0];
+            triangleList[i * 3 * 7 + 1] = triangle.getA()[1];
+            triangleList[i * 3 * 7 + 2] = triangle.getA()[2];
 
-            triangleList[i * 3 * 6 + 3] = triangle.getB()[0];
-            triangleList[i * 3 * 6 + 4] = triangle.getB()[1];
-            triangleList[i * 3 * 6 + 5] = triangle.getB()[2];
+            triangleList[i * 3 * 7 + 3] = triangle.getB()[0];
+            triangleList[i * 3 * 7 + 4] = triangle.getB()[1];
+            triangleList[i * 3 * 7 + 5] = triangle.getB()[2];
 
-            triangleList[i * 3 * 6 + 6] = triangle.getC()[0];
-            triangleList[i * 3 * 6 + 7] = triangle.getC()[1];
-            triangleList[i * 3 * 6 + 8] = triangle.getC()[2];
+            triangleList[i * 3 * 7 + 6] = triangle.getC()[0];
+            triangleList[i * 3 * 7 + 7] = triangle.getC()[1];
+            triangleList[i * 3 * 7 + 8] = triangle.getC()[2];
 
-            triangleList[i * 3 * 6 + 9] = triangle.getUvA()[0];
-            triangleList[i * 3 * 6 + 10] = triangle.getUvA()[1];
-            triangleList[i * 3 * 6 + 11] = triangle.getUvB()[0];
+            triangleList[i * 3 * 7 + 9] = triangle.getUvA()[0];
+            triangleList[i * 3 * 7 + 10] = triangle.getUvA()[1];
+            triangleList[i * 3 * 7 + 11] = triangle.getUvB()[0];
             
-            triangleList[i * 3 * 6 + 12] = triangle.getUvB()[1];
-            triangleList[i * 3 * 6 + 13] = triangle.getUvC()[0];
-            triangleList[i * 3 * 6 + 14] = triangle.getUvC()[1];
+            triangleList[i * 3 * 7 + 12] = triangle.getUvB()[1];
+            triangleList[i * 3 * 7 + 13] = triangle.getUvC()[0];
+            triangleList[i * 3 * 7 + 14] = triangle.getUvC()[1];
 
-            triangleList[i * 3 * 6 + 15] = triangle.getMaterial().getId();
-            triangleList[i * 3 * 6 + 16] = triangleIndices[i];
-            triangleList[i * 3 * 6 + 17] = 1.0;
+            triangleList[i * 3 * 7 + 15] = triangle.getMaterial().getId();
+            triangleList[i * 3 * 7 + 16] = triangleIndices[i];
+            triangleList[i * 3 * 7 + 17] = 1.0;
+
+            triangleList[i * 3 * 7 + 18] = triangle.getNormal()[0];
+            triangleList[i * 3 * 7 + 19] = triangle.getNormal()[1];
+            triangleList[i * 3 * 7 + 20] = triangle.getNormal()[2];
         }
 
         gl.activeTexture(gl.TEXTURE1);
