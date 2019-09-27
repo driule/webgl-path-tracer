@@ -2,6 +2,7 @@
 
 @import ./common/precisions;
 
+@import ./common/entities/ray;
 @import ./common/entities/material;
 @import ./common/entities/sphere;
 @import ./common/entities/triangle;
@@ -169,10 +170,10 @@ bool hasMaterialAlpha(int id) {
     return bool(data[2]);
 }
 
-float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
-    vec3 toSphere = origin - sphere.center;
-    float a = dot(ray, ray);
-    float b = 2.0 * dot(toSphere, ray);
+float intersectSphere(Ray ray, Sphere sphere) {
+    vec3 toSphere = ray.origin - sphere.center;
+    float a = dot(ray.direction, ray.direction);
+    float b = 2.0 * dot(toSphere, ray.direction);
     float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;
     float discriminant = b * b - 4.0 * a * c;
 
@@ -184,23 +185,23 @@ float intersectSphere(vec3 origin, vec3 ray, Sphere sphere) {
     return INFINITY;
 }
 
-float intersectTriangle(vec3 origin, vec3 ray, Triangle triangle) {
+float intersectTriangle(Ray ray, Triangle triangle) {
     float t, u, v;
 
     vec3 ab = triangle.b - triangle.a;
     vec3 ac = triangle.c - triangle.a;
-    vec3 pvec = cross(ray, ac);
+    vec3 pvec = cross(ray.direction, ac);
     float det = dot(ab, pvec);
 
     float invDet = 1.0 / det;
 
-    vec3 tvec = origin - triangle.a;
+    vec3 tvec = ray.origin - triangle.a;
     u = dot(tvec, pvec) * invDet;
 
     if (u < 0.0 || u > 1.0) return INFINITY;
 
     vec3 qvec = cross(tvec, ab);
-    v = dot(ray, qvec) * invDet;
+    v = dot(ray.direction, qvec) * invDet;
     if (v < 0.0 || u + v > 1.0) return INFINITY;
 
     t = dot(ac, qvec) * invDet;
@@ -218,18 +219,17 @@ vec3 getTriangleNormal(Triangle triangle) {
     );
 }
 
-bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox boundingBox, Intersection intersection)
-{
+bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox, float lastIntersectionDistance) {
     float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;
 
-    txmin = (boundingBox.min.x - origin.x) * invertedDirection.x;
-    txmax = (boundingBox.max.x - origin.x) * invertedDirection.x;
+    txmin = (boundingBox.min.x - invertedRay.origin.x) * invertedRay.direction.x;
+    txmax = (boundingBox.max.x - invertedRay.origin.x) * invertedRay.direction.x;
 
-    tymin = (boundingBox.min.y - origin.y) * invertedDirection.y;
-    tymax = (boundingBox.max.y - origin.y) * invertedDirection.y;
+    tymin = (boundingBox.min.y - invertedRay.origin.y) * invertedRay.direction.y;
+    tymax = (boundingBox.max.y - invertedRay.origin.y) * invertedRay.direction.y;
 
-    tzmin = (boundingBox.min.z - origin.z) * invertedDirection.z;
-    tzmax = (boundingBox.max.z - origin.z) * invertedDirection.z;
+    tzmin = (boundingBox.min.z - invertedRay.origin.z) * invertedRay.direction.z;
+    tzmax = (boundingBox.max.z - invertedRay.origin.z) * invertedRay.direction.z;
 
     tmin = min(txmin, txmax);
     tmax = max(txmin, txmax);
@@ -241,7 +241,7 @@ bool isIntersectingBoundingBox(vec3 origin, vec3 invertedDirection, BoundingBox 
     tmax = min(tmax, max(tzmin, tzmax));
 
     // early out if intersection is further than the last one
-    if (tmin > intersection.t)
+    if (tmin > lastIntersectionDistance)
         return false;
 
     if (tmax >= EPSILON && tmax >= tmin) {
@@ -289,7 +289,9 @@ vec3 cosineWeightedDirection(float seed, vec3 normal) {
     }
     tdir = cross(normal, sdir);
 
-    return r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal;
+    return normalize(
+        r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal
+    );
 }
 
 Light getRandomLight() {
@@ -304,10 +306,10 @@ Light getRandomLight() {
     return fetchLight(0);
 }
 
-vec3 sampleSkydome(vec3 ray) {
+vec3 sampleSkydome(Ray ray) {
     vec3 color = vec3(0.25);
-    float u = mod(0.5 * (1.0 + atan(ray.z, -ray.x) * INVERSE_PI), 1.0);
-    float v = acos(ray.y) * INVERSE_PI;
+    float u = mod(0.5 * (1.0 + atan(ray.direction.z, -ray.direction.x) * INVERSE_PI), 1.0);
+    float v = acos(ray.direction.y) * INVERSE_PI;
 
     int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
 
@@ -385,12 +387,14 @@ vec4 mapTexture(Triangle triangle, Material material, vec3 hit) {
     return color;
 }
 
-Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
+Intersection intersectPrimitives(Ray ray, bool isShadowRay)
 {
     Intersection intersection;
     intersection.t = INFINITY;
 
-    vec3 invertedRay = vec3(1.0 / ray.x, 1.0 / ray.y, 1.0 / ray.z);
+    Ray invertedRay;
+    invertedRay.origin = ray.origin;
+    invertedRay.direction = vec3(1.0 / ray.direction.x, 1.0 / ray.direction.y, 1.0 / ray.direction.z);
 
     stackPointer = 0;
     push(0);
@@ -400,7 +404,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
 
         BoundingBox node = pop();
 
-        if (!isIntersectingBoundingBox(origin, invertedRay, node, intersection)) continue;
+        if (!isIntersectingBoundingBox(invertedRay, node, intersection.t)) continue;
 
         // DEBUG: visualize each bounding box
         // if (true) {
@@ -417,7 +421,7 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
                 int index = fetchTriangleIndex(node.first + i);
 
                 Triangle triangle = fetchTriangle(index);
-                float tTriangle = intersectTriangle(origin, ray, triangle);
+                float tTriangle = intersectTriangle(ray, triangle);
 
                 if (tTriangle < intersection.t) {
                     // ToDo: extend Intersection structure (uv, normal, etc.)
@@ -425,16 +429,14 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
                     // ignore intersection if alpha pixel was hit
                     if (hasMaterialAlpha(triangle.material)) {
                         Material material = fetchMaterial(triangle.material);
-                        vec4 textureColor = mapTexture(triangle, material, origin + ray * tTriangle);
+                        vec4 textureColor = mapTexture(triangle, material, ray.origin + ray.direction * tTriangle);
                         if (textureColor[3] <= EPSILON) {
                             continue;
                         }
                     }
 
                     intersection.t = tTriangle;
-                    // intersection.hit = hit;
                     intersection.triangle = triangle;
-                    // intersection.material = material;
 
                     // early out if shadowRay already hit any primitive
                     if (isShadowRay) {
@@ -451,16 +453,14 @@ Intersection intersectPrimitives(vec3 origin, vec3 ray, bool isShadowRay)
     return intersection;
 }
 
-bool isOccluded(vec3 origin, vec3 ray, float lightDistance) {
-    Intersection intersection = intersectPrimitives(origin, ray, true);
+bool isOccluded(Ray ray, float lightDistance) {
+    Intersection intersection = intersectPrimitives(ray, true);
     if (intersection.t < lightDistance) return true;
 
     return false;
 }
 
-vec3 calculateColor(vec3 origin, vec3 ray) {
-    ray = normalize(ray);
-
+vec3 calculateColor(Ray ray) {
     vec3 accumulatedColor = vec3(0.0);
     vec3 surfaceColor = vec3(0.15);
     vec3 lightColor = vec3(1.0, 1.0, 0.85);
@@ -471,18 +471,18 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
     for (int bounce = 0; bounce < BOUNCES; bounce++) {
         float t = INFINITY;
         vec3 normal;
-        vec3 hit = origin + ray * t;
+        vec3 I;
 
         // ray-primitive intersection
-        Intersection intersection = intersectPrimitives(origin, ray, false);
+        Intersection intersection = intersectPrimitives(ray, false);
         if (intersection.t < t) {
             t = intersection.t;
-            hit = origin + ray * t;
+            I = ray.origin + ray.direction * t;
             normal = getTriangleNormal(intersection.triangle);//intersection.triangle.normal;
 
             Material material = fetchMaterial(intersection.triangle.material);
             if (material.isAlbedoTextureDefined) {
-                vec3 textureColor = mapTexture(intersection.triangle, material, hit).rgb;
+                vec3 textureColor = mapTexture(intersection.triangle, material, I).rgb;
                 surfaceColor = textureColor;// * material.color;
             } else {
                 surfaceColor = material.color;
@@ -492,7 +492,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         // PORT FROM: lights_shared.cu
         // calculate light pdf and pick probability
         Light light = getRandomLight();
-		vec3 L = hit - light.position;
+		vec3 L = I - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
         float pickProb = 1.0 / float(totalLights);
 
@@ -500,7 +500,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
         float tLight = INFINITY;
         for (int i = 0; i < totalLights; i++) {
             Light light = fetchLight(i);
-            tLight = intersectSphere(origin, ray, Sphere(light.position, light.radius));
+            tLight = intersectSphere(ray, Sphere(light.position, light.radius));
             
             if (tLight < t) {
                 // hit light, apply MIS         
@@ -529,7 +529,7 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 
         // PORT FROM: pathtracer.cu
         // shading
-        L = light.position - hit;
+        L = light.position - I;
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
@@ -540,21 +540,24 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 			{
 				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (pickProb * lightPdf + pdf);
 
-                if (!isOccluded(hit, L, dist)) {
+                Ray shadowRay;
+                shadowRay.origin = I;
+                shadowRay.direction = L;
+                if (!isOccluded(shadowRay, dist)) {
                     accumulatedColor += clampColor(contribution);
                 }
 			}
 		}
 
         // shoot a new ray
-        origin = hit;
-        ray = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
+        ray.origin = I;
+        ray.direction = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
 
         // calculate new bsdf & adjust throughput
-        if (dot(ray, normal) <= EPSILON) {
+        if (dot(ray.direction, normal) <= EPSILON) {
             break;
         }
-        bsdfPdf = max(0.0, dot(ray, normal)) * INVERSE_PI;
+        bsdfPdf = max(0.0, dot(ray.direction, normal)) * INVERSE_PI;
         throughput = throughput * surfaceColor * INVERSE_PI;
     }
     
@@ -562,8 +565,12 @@ vec3 calculateColor(vec3 origin, vec3 ray) {
 }
 
 void main() {
+    Ray ray;
+    ray.origin = eye;
+    ray.direction = normalize(initialRay);
+
     vec3 color = texture(outputTexture, gl_FragCoord.xy / resolution).rgb;
-    pixelColor = vec4(mix(calculateColor(eye, initialRay), color, textureWeight), 1.0);
+    pixelColor = vec4(mix(calculateColor(ray), color, textureWeight), 1.0);
 
     // DEBUG mode
     // vec4(mix(calculateColor(eye, initialRay), color, textureWeight), 1.0);
