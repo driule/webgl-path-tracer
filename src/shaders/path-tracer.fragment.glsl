@@ -213,7 +213,7 @@ float intersectTriangle(Ray ray, Triangle triangle) {
 //     );
 // }
 
-bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox, float lastIntersectionDistance) {
+bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox) {
     float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;
 
     txmin = (boundingBox.min.x - invertedRay.origin.x) * invertedRay.direction.x;
@@ -235,7 +235,7 @@ bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox, float l
     tmax = min(tmax, max(tzmin, tzmax));
 
     // early out if intersection is further than the last one
-    if (tmin > lastIntersectionDistance)
+    if (tmin > invertedRay.t)
         return false;
 
     if (tmax >= EPSILON && tmax >= tmin) {
@@ -393,6 +393,7 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay)
     Ray invertedRay;
     invertedRay.origin = ray.origin;
     invertedRay.direction = vec3(1.0 / ray.direction.x, 1.0 / ray.direction.y, 1.0 / ray.direction.z);
+    invertedRay.t = intersection.t;
 
     stackPointer = 0;
     push(0);
@@ -402,7 +403,7 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay)
 
         BoundingBox node = pop();
 
-        if (!isIntersectingBoundingBox(invertedRay, node, intersection.t)) continue;
+        if (!isIntersectingBoundingBox(invertedRay, node)) continue;
 
         // DEBUG: visualize each bounding box
         // if (true) {
@@ -437,18 +438,19 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay)
                             }
                         }
                     }
-
                     intersection.t = tTriangle;
+
+                    // early out if shadowRay already hit any primitive
+                    if (isShadowRay && tTriangle < ray.t) {
+                        return intersection;
+                    }
+                    
                     intersection.hit = hit;
                     intersection.uv = uv;
                     intersection.triangle = triangle;
                     intersection.material = material;
 
-                    // (!) ToDo: check distance right here, not in isOccluded()
-                    // early out if shadowRay already hit any primitive
-                    if (isShadowRay) {
-                        return intersection;
-                    }
+                    invertedRay.t = intersection.t;
                 }
             }
         } else {
@@ -460,9 +462,12 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay)
     return intersection;
 }
 
-bool isOccluded(Ray ray, float lightDistance) {
+bool isOccluded(Ray ray) {
     Intersection intersection = intersectPrimitives(ray, true);
-    if (intersection.t < lightDistance) return true;
+
+    if (intersection.t < ray.t) {
+        return true;
+    }
 
     return false;
 }
@@ -547,7 +552,8 @@ vec3 calculateColor(Ray ray) {
                 Ray shadowRay;
                 shadowRay.origin = hit;
                 shadowRay.direction = L;
-                if (!isOccluded(shadowRay, dist)) {
+                shadowRay.t = dist;
+                if (!isOccluded(shadowRay)) {
                     accumulatedColor += clampColor(contribution);
                 }
 			}
