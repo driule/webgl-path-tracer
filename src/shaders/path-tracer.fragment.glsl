@@ -96,7 +96,7 @@ Triangle fetchTriangle(int id) {
     vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 7 + 4), triangleDataTextureSize);
 
     vec3 material = getValueFromTexture(triangleDataTexture, float(id * 7 + 5), triangleDataTextureSize);
-    // vec3 normal = getValueFromTexture(triangleDataTexture, float(id * 7 + 6), triangleDataTextureSize);
+    vec3 normal = getValueFromTexture(triangleDataTexture, float(id * 7 + 6), triangleDataTextureSize);
     
     Triangle triangle;
     triangle.a = coordA;
@@ -105,8 +105,8 @@ Triangle fetchTriangle(int id) {
     triangle.uvA = vec2(uv1[0], uv1[1]);
     triangle.uvB = vec2(uv1[2], uv2[0]);
     triangle.uvC = vec2(uv2[1], uv2[2]);
-    triangle.material = int(material[0]);
-    // triangle.normal = normal;
+    triangle.materialID = int(material[0]);
+    triangle.normal = normal;
 
     return triangle;
 }
@@ -153,7 +153,7 @@ Material fetchMaterial(int id) {
 
     Material material;
     material.color = color;
-    material.isAlbedoTextureDefined = bool(data[0]);
+    material.hasAlbedoTexture = bool(data[0]);
     material.albedoTextureId = int(data[1]);
     material.albedoPixelOffset = data[2];
 
@@ -162,12 +162,6 @@ Material fetchMaterial(int id) {
     material.hasAlpha = bool(albedoTextureSize[2]);
 
     return material;
-}
-
-bool hasMaterialAlpha(int id) {
-    vec3 data = getValueFromTexture(materialsTexture, float(id * 3 + 2), materialsTextureSize);
-    
-    return bool(data[2]);
 }
 
 float intersectSphere(Ray ray, Sphere sphere) {
@@ -213,11 +207,11 @@ float intersectTriangle(Ray ray, Triangle triangle) {
     return INFINITY;
 }
 
-vec3 getTriangleNormal(Triangle triangle) {
-    return normalize(
-        cross(triangle.a - triangle.b, triangle.b - triangle.c)
-    );
-}
+// vec3 getTriangleNormal(Triangle triangle) {
+//     return normalize(
+//         cross(triangle.a - triangle.b, triangle.b - triangle.c)
+//     );
+// }
 
 bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox, float lastIntersectionDistance) {
     float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;
@@ -349,9 +343,7 @@ vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
     return vec3(u, v, w);
 }
 
-vec4 mapTexture(Triangle triangle, Material material, vec3 hit) {
-    vec4 color = vec4(0.15, 0.15, 0.15, 1.0);
-
+vec2 calculateUV(Triangle triangle, vec3 hit) {
     vec3 barycentricCoord = calculateBarycentricCoordinates(triangle, hit);
     vec2 uv = barycentricCoord[0] * triangle.uvA + barycentricCoord[1] * triangle.uvB + barycentricCoord[2] * triangle.uvC;
 
@@ -363,9 +355,15 @@ vec4 mapTexture(Triangle triangle, Material material, vec3 hit) {
     // float u = clamp(u, 0.0, 1.0);
     // float v = clamp(v, 0.0, 1.0);
 
+    return vec2(u, v);
+}
+
+vec4 mapTexture(Triangle triangle, Material material, vec2 uv) {
+    vec4 color = vec4(0.15, 0.15, 0.15, 1.0);
+
     // multiple images per GL texture
-    float x = floor((u * material.albedoTextureWidth));
-    float y = floor((v * material.albedoTextureHeight));
+    float x = floor((uv[0] * material.albedoTextureWidth));
+    float y = floor((uv[1] * material.albedoTextureHeight));
     float pixelId = x + y * material.albedoTextureWidth;
 
     if (material.albedoTextureId == 0) {
@@ -424,20 +422,29 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay)
                 float tTriangle = intersectTriangle(ray, triangle);
 
                 if (tTriangle < intersection.t) {
-                    // ToDo: extend Intersection structure (uv, normal, etc.)
+                    vec3 hit = ray.origin + ray.direction * tTriangle;
+                    vec2 uv = vec2(0.0);
+                    Material material = fetchMaterial(triangle.materialID);
 
-                    // ignore intersection if alpha pixel was hit
-                    if (hasMaterialAlpha(triangle.material)) {
-                        Material material = fetchMaterial(triangle.material);
-                        vec4 textureColor = mapTexture(triangle, material, ray.origin + ray.direction * tTriangle);
-                        if (textureColor[3] <= EPSILON) {
-                            continue;
+                    if (material.hasAlbedoTexture) {
+                        uv = calculateUV(triangle, hit);
+
+                        // ignore intersection if alpha pixel was hit
+                        if (material.hasAlpha) {
+                            vec4 textureColor = mapTexture(triangle, material, uv);
+                            if (textureColor[3] <= EPSILON) {
+                                continue;
+                            }
                         }
                     }
 
                     intersection.t = tTriangle;
+                    intersection.hit = hit;
+                    intersection.uv = uv;
                     intersection.triangle = triangle;
+                    intersection.material = material;
 
+                    // (!) ToDo: check distance right here, not in isOccluded()
                     // early out if shadowRay already hit any primitive
                     if (isShadowRay) {
                         return intersection;
@@ -470,29 +477,26 @@ vec3 calculateColor(Ray ray) {
 
     for (int bounce = 0; bounce < BOUNCES; bounce++) {
         float t = INFINITY;
-        vec3 normal;
-        vec3 I;
+        vec3 hit, normal;
 
         // ray-primitive intersection
         Intersection intersection = intersectPrimitives(ray, false);
         if (intersection.t < t) {
             t = intersection.t;
-            I = ray.origin + ray.direction * t;
-            normal = getTriangleNormal(intersection.triangle);//intersection.triangle.normal;
+            hit = intersection.hit;
+            normal = intersection.triangle.normal;//getTriangleNormal(intersection.triangle);
 
-            Material material = fetchMaterial(intersection.triangle.material);
-            if (material.isAlbedoTextureDefined) {
-                vec3 textureColor = mapTexture(intersection.triangle, material, I).rgb;
-                surfaceColor = textureColor;// * material.color;
+            if (intersection.material.hasAlbedoTexture) {
+                surfaceColor = mapTexture(intersection.triangle, intersection.material, intersection.uv).rgb;// * intersection.material.color;
             } else {
-                surfaceColor = material.color;
+                surfaceColor = intersection.material.color;
             }
         }
 
         // PORT FROM: lights_shared.cu
         // calculate light pdf and pick probability
         Light light = getRandomLight();
-		vec3 L = I - light.position;
+		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
         float pickProb = 1.0 / float(totalLights);
 
@@ -529,7 +533,7 @@ vec3 calculateColor(Ray ray) {
 
         // PORT FROM: pathtracer.cu
         // shading
-        L = light.position - I;
+        L = light.position - hit;
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
@@ -541,7 +545,7 @@ vec3 calculateColor(Ray ray) {
 				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (pickProb * lightPdf + pdf);
 
                 Ray shadowRay;
-                shadowRay.origin = I;
+                shadowRay.origin = hit;
                 shadowRay.direction = L;
                 if (!isOccluded(shadowRay, dist)) {
                     accumulatedColor += clampColor(contribution);
@@ -550,7 +554,7 @@ vec3 calculateColor(Ray ray) {
 		}
 
         // shoot a new ray
-        ray.origin = I;
+        ray.origin = hit;
         ray.direction = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
 
         // calculate new bsdf & adjust throughput

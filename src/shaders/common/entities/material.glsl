@@ -4,7 +4,7 @@ struct Material
     vec3 color;
 
     // albedo
-    bool isAlbedoTextureDefined;
+    bool hasAlbedoTexture;
     bool hasAlpha;
     int albedoTextureId;
     float albedoPixelOffset;
