@@ -256,9 +256,24 @@ void push(int node) {
     stackPointer = stackPointer + 1;
 }
 
-float random(vec3 scale, float seed) {
-    return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
+// painted image
+float random(vec3 v, float seed) {
+    const uint k = 1103515245U;
+    uvec3 x = uvec3(v);
+    
+    x = ((x>>8U)^x.yzx)*k;
+    x = ((x>>8U)^x.yzx)*k;
+    x = ((x>>8U)^x.yzx)*k;
+
+    return float(x.x * x.y * x.z) * (1.0 / float(0xffffffffU));
 }
+//
+
+//
+// float random(vec3 scale, float seed) {
+//     return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
+// }
+//
 
 vec3 clampColor(vec3 color) {
     float v = max(color.x, max(color.y, color.z));
