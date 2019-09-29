@@ -398,8 +398,7 @@ vec4 mapTexture(Triangle triangle, Material material, vec2 uv) {
     return color;
 }
 
-Intersection intersectPrimitives(Ray ray, bool isShadowRay)
-{
+Intersection intersectPrimitives(Ray ray, bool isShadowRay) {
     Intersection intersection;
     intersection.t = INFINITY;
 
