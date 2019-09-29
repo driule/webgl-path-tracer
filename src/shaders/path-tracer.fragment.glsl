@@ -128,10 +128,15 @@ Light fetchLight(int id) {
 }
 
 BoundingBox fetchBoundingBox(int id) {
-    vec3 min = getValueFromTexture(bvhDataTexture, float(id * 4 + 0), bvhDataTextureSize);
-    vec3 max = getValueFromTexture(bvhDataTexture, float(id * 4 + 1), bvhDataTextureSize);
-    vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);
-    vec3 children = getValueFromTexture(bvhDataTexture, float(id * 4 + 3), bvhDataTextureSize);
+    vec3 min = getValueFromTexture(bvhDataTexture, float(id * 8 + 0), bvhDataTextureSize);
+    vec3 max = getValueFromTexture(bvhDataTexture, float(id * 8 + 1), bvhDataTextureSize);
+    vec3 data = getValueFromTexture(bvhDataTexture, float(id * 8 + 2), bvhDataTextureSize);
+    vec3 children = getValueFromTexture(bvhDataTexture, float(id * 8 + 3), bvhDataTextureSize);
+
+    vec3 leftMin = getValueFromTexture(bvhDataTexture, float(id * 8 + 4), bvhDataTextureSize);
+    vec3 leftMax = getValueFromTexture(bvhDataTexture, float(id * 8 + 5), bvhDataTextureSize);
+    vec3 rightMin = getValueFromTexture(bvhDataTexture, float(id * 8 + 6), bvhDataTextureSize);
+    vec3 rightMax = getValueFromTexture(bvhDataTexture, float(id * 8 + 7), bvhDataTextureSize);
 
     BoundingBox boundingBox;
     boundingBox.min = min;
@@ -142,6 +147,13 @@ BoundingBox fetchBoundingBox(int id) {
     boundingBox.left = int(children[0]);
     boundingBox.right = int(children[1]);
     boundingBox.id = int(children[2]);
+
+    boundingBox.leftMin = leftMin;
+    boundingBox.leftMax = leftMax;
+    boundingBox.rightMin = rightMin;
+    boundingBox.rightMax = rightMax;
+
+    boundingBox.isProcessed = false;
 
     return boundingBox;
 }
@@ -213,7 +225,7 @@ float intersectTriangle(Ray ray, Triangle triangle) {
 //     );
 // }
 
-bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox) {
+bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox, out float t) {
     float tmin, tmax, txmin, txmax, tymin, tymax, tzmin, tzmax;
 
     txmin = (boundingBox.min.x - invertedRay.origin.x) * invertedRay.direction.x;
@@ -239,6 +251,7 @@ bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox) {
         return false;
 
     if (tmax >= EPSILON && tmax >= tmin) {
+        t = tmin;
         return true;
     }
 
@@ -396,14 +409,21 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay)
     invertedRay.t = intersection.t;
 
     stackPointer = 0;
-    push(0);
+    BoundingBox node = fetchBoundingBox(0); //root
+
+    float tmin = 0.0;
+    if (!isIntersectingBoundingBox(invertedRay, node, tmin)) {
+        node.isProcessed = true;
+    }
 
     while (true) {
-        if (stackPointer <= 0 || stackPointer > STACK_SIZE) break;
+        if (node.isProcessed && (stackPointer <= 0 || stackPointer > STACK_SIZE)) {
+            break;
+        }
 
-        BoundingBox node = pop();
-
-        if (!isIntersectingBoundingBox(invertedRay, node)) continue;
+        if (node.isProcessed && stackPointer > 0) {
+            node = pop();
+        }
 
         // DEBUG: visualize each bounding box
         // if (true) {
@@ -454,9 +474,33 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay)
                 }
             }
         } else {
-            push(node.left);
-            push(node.right);
+            // determine which child to traverse first
+            BoundingBox leftChild = fetchBoundingBox(node.left);
+            BoundingBox rightChild = fetchBoundingBox(node.right);
+
+            float tLeft = 0.0, tRight = 0.0;
+            bool hitLeft = isIntersectingBoundingBox(invertedRay, leftChild, tLeft);
+            bool hitRight = isIntersectingBoundingBox(invertedRay, rightChild, tRight);
+
+            if (hitLeft && !hitRight) {
+                node = leftChild;
+                continue;
+            } else if (hitRight && !hitLeft) {
+                node = rightChild;
+                continue;
+            } else if (hitLeft && hitRight) {
+                if (tRight >= tLeft) {
+                    push(node.right);
+                    node = leftChild;
+                    continue;
+                }
+
+                push(node.left);
+                node = rightChild;
+                continue;
+            }
         }
+        node.isProcessed = true;
     }
 
     return intersection;

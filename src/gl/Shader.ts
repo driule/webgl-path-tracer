@@ -155,29 +155,66 @@ export class Shader {
     public setBvhData(bvhNodeList: BoundingBox[]) {
         const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
         let bvhNodeDataList = new Float32Array(textureSize * textureSize * 3);
+
+        const d = 8;
         for (let i = 0; i < bvhNodeList.length; i++) {
             let bvhNode: BoundingBox = bvhNodeList[i];
 
-            bvhNodeDataList[i * 3 * 4 + 0] = bvhNode.min[0];
-            bvhNodeDataList[i * 3 * 4 + 1] = bvhNode.min[1];
-            bvhNodeDataList[i * 3 * 4 + 2] = bvhNode.min[2];
+            bvhNodeDataList[i * 3 * d + 0] = bvhNode.min[0];
+            bvhNodeDataList[i * 3 * d + 1] = bvhNode.min[1];
+            bvhNodeDataList[i * 3 * d + 2] = bvhNode.min[2];
 
-            bvhNodeDataList[i * 3 * 4 + 3] = bvhNode.max[0];
-            bvhNodeDataList[i * 3 * 4 + 4] = bvhNode.max[1];
-            bvhNodeDataList[i * 3 * 4 + 5] = bvhNode.max[2];
+            bvhNodeDataList[i * 3 * d + 3] = bvhNode.max[0];
+            bvhNodeDataList[i * 3 * d + 4] = bvhNode.max[1];
+            bvhNodeDataList[i * 3 * d + 5] = bvhNode.max[2];
 
-            bvhNodeDataList[i * 3 * 4 + 6] = bvhNode.isLeaf ? 1 : 0;
-            bvhNodeDataList[i * 3 * 4 + 7] = bvhNode.first;
-            bvhNodeDataList[i * 3 * 4 + 8] = bvhNode.count;
+            bvhNodeDataList[i * 3 * d + 6] = bvhNode.isLeaf ? 1 : 0;
+            bvhNodeDataList[i * 3 * d + 7] = bvhNode.first;
+            bvhNodeDataList[i * 3 * d + 8] = bvhNode.count;
 
             if (!bvhNode.isLeaf) {
-                bvhNodeDataList[i * 3 * 4 + 9] = bvhNode.left.getId();
-                bvhNodeDataList[i * 3 * 4 + 10] = bvhNode.right.getId();
+                bvhNodeDataList[i * 3 * d + 9] = bvhNode.left.getId();
+                bvhNodeDataList[i * 3 * d + 10] = bvhNode.right.getId();
+                bvhNodeDataList[i * 3 * d + 11] = bvhNode.getId();
+
+                // children bounding boxes
+                bvhNodeDataList[i * 3 * d + 12] = bvhNode.left.min[0];
+                bvhNodeDataList[i * 3 * d + 13] = bvhNode.left.min[1];
+                bvhNodeDataList[i * 3 * d + 14] = bvhNode.left.min[2];
+
+                bvhNodeDataList[i * 3 * d + 15] = bvhNode.left.max[0];
+                bvhNodeDataList[i * 3 * d + 16] = bvhNode.left.max[1];
+                bvhNodeDataList[i * 3 * d + 17] = bvhNode.left.max[2];
+
+                bvhNodeDataList[i * 3 * d + 18] = bvhNode.right.min[0];
+                bvhNodeDataList[i * 3 * d + 19] = bvhNode.right.min[1];
+                bvhNodeDataList[i * 3 * d + 20] = bvhNode.right.min[2];
+
+                bvhNodeDataList[i * 3 * d + 21] = bvhNode.right.max[0];
+                bvhNodeDataList[i * 3 * d + 22] = bvhNode.right.max[1];
+                bvhNodeDataList[i * 3 * d + 23] = bvhNode.right.max[2];
             } else {
-                bvhNodeDataList[i * 3 * 4 + 9] = 1.0;
-                bvhNodeDataList[i * 3 * 4 + 10] = 1.0;
+                bvhNodeDataList[i * 3 * d + 9] = 1.0;
+                bvhNodeDataList[i * 3 * d + 10] = 1.0;
+                bvhNodeDataList[i * 3 * d + 11] = bvhNode.getId();
+
+                // children bounding boxes
+                bvhNodeDataList[i * 3 * d + 12] = 1.0;
+                bvhNodeDataList[i * 3 * d + 13] = 1.0;
+                bvhNodeDataList[i * 3 * d + 14] = 1.0;
+
+                bvhNodeDataList[i * 3 * d + 15] = 1.0;
+                bvhNodeDataList[i * 3 * d + 16] = 1.0;
+                bvhNodeDataList[i * 3 * d + 17] = 1.0;
+
+                bvhNodeDataList[i * 3 * d + 18] = 1.0;
+                bvhNodeDataList[i * 3 * d + 19] = 1.0;
+                bvhNodeDataList[i * 3 * d + 20] = 1.0;
+
+                bvhNodeDataList[i * 3 * d + 21] = 1.0;
+                bvhNodeDataList[i * 3 * d + 22] = 1.0;
+                bvhNodeDataList[i * 3 * d + 23] = 1.0;
             }
-            bvhNodeDataList[i * 3 * 4 + 11] = bvhNode.getId();
         }
 
         gl.activeTexture(gl.TEXTURE3);

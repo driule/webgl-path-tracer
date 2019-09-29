@@ -16,7 +16,8 @@ window.onload = async function() {
     
     renderer = new Renderer(canvas, gauge);
     setLoadingScreen();
-    renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
+    // renderer.setScene(await SceneFactory.createAvocadoScene(canvas));
+    renderer.setScene(await SceneFactory.createBasicScene(canvas));
     removeLoadingScreen();
 
     // primitive count and FPS measurement
