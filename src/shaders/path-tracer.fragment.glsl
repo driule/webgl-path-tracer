@@ -515,6 +515,13 @@ bool isOccluded(Ray ray) {
     return false;
 }
 
+vec3 safeOrigin(vec3 origin, vec3 direction, vec3 normal) {
+	float parallel = 1.0 - abs(dot(normal, direction));
+	float v = parallel * parallel;
+
+	return origin + direction * EPSILON * (1.0 - v) + normal * EPSILON * v;
+}
+
 vec3 calculateColor(Ray ray) {
     vec3 accumulatedColor = vec3(0.0);
     vec3 surfaceColor = vec3(0.15);
@@ -593,7 +600,7 @@ vec3 calculateColor(Ray ray) {
 				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (pickProb * lightPdf + pdf);
 
                 Ray shadowRay;
-                shadowRay.origin = hit;
+                shadowRay.origin = safeOrigin(hit, L, normal);
                 shadowRay.direction = L;
                 shadowRay.t = dist;
                 if (!isOccluded(shadowRay)) {
@@ -603,8 +610,8 @@ vec3 calculateColor(Ray ray) {
 		}
 
         // shoot a new ray
-        ray.origin = hit;
         ray.direction = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
+        ray.origin = safeOrigin(hit, ray.direction, normal);
 
         // calculate new bsdf & adjust throughput
         float theta = dot(ray.direction, normal);
