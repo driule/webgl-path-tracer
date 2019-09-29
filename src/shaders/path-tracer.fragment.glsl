@@ -607,10 +607,11 @@ vec3 calculateColor(Ray ray) {
         ray.direction = cosineWeightedDirection(timeSinceStart + float(bounce), normal);
 
         // calculate new bsdf & adjust throughput
-        if (dot(ray.direction, normal) <= EPSILON) {
+        float theta = dot(ray.direction, normal);
+        if (theta <= EPSILON) {
             break;
         }
-        bsdfPdf = max(0.0, dot(ray.direction, normal)) * INVERSE_PI;
+        bsdfPdf = max(0.0, theta) * INVERSE_PI;
         throughput = throughput * surfaceColor * INVERSE_PI;
     }
     
