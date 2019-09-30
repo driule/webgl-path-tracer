@@ -25,25 +25,7 @@ export class SceneFactory  {
 
         return scene;
     }
-
-    // public static async createIslandScene(canvas: HTMLCanvasElement) {
-    //     let lights: Light[] = [
-    //         new Light(vec3.fromValues(0.0, 5.75, 200.25), 0.25, 1.0),
-    //         new Light(vec3.fromValues(200.25, 22.75, 0.25), 1.5, 1.0),
-    //         new Light(vec3.fromValues(-20.25, 200.75, 0.25), 0.15, 1.5),
-    //         new Light(vec3.fromValues(3.2, -84.5, 9.0), 0.15, 5.0)
-    //     ];
-    //     let camera = new Camera(canvas, vec3.fromValues(3.2, -84.5, 7.0), 1.55, -3.15, 1.0);
-    //     let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/ftm/", "scene.gltf", 0, 5);
     
-    //     let scene = new Scene(camera);
-    //     scene.setLights(lights);
-    //     scene.setTriangles(geometry[0]);
-    //     scene.setMaterials(geometry[1]);
-
-    //     return scene;
-    // }
-
     public static async createSponzaScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
             new Light(vec3.fromValues(825, 550, 305), 2.5, 250000.0),

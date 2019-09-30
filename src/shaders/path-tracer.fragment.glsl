@@ -408,7 +408,7 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay) {
     invertedRay.t = intersection.t;
 
     stackPointer = 0;
-    BoundingBox node = fetchBoundingBox(0); //root
+    BoundingBox node = fetchBoundingBox(0); // BVH root node
 
     float tmin = 0.0;
     if (!isIntersectingBoundingBox(invertedRay, node, tmin)) {
