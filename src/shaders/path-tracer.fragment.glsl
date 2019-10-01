@@ -370,7 +370,7 @@ vec3 sampleSkydome(Ray ray) {
     return color;
 }
 
-//
+// MIS
 float potentialLightContribution(Light light, vec3 hit, vec3 N) {
     vec3 L = light.position - hit;
     float NdotL = max(0.0, dot( N, L ) );
@@ -391,11 +391,9 @@ float[SMALL_STACK_SIZE] calculateLightPotentials(vec3 hit, vec3 N, out float tot
     return potentials;
 }
 
-float lightPickProbability(inout int lightID, vec3 hit, vec3 N) {
+float lightPickProbability(int lightID, float potentials[SMALL_STACK_SIZE], float totalPotential) {
     float lightPickProb = 0.0;
-    float totalPotential = 0.0;
 
-    float[] potentials = calculateLightPotentials(hit, N, totalPotential);
     if (totalPotential <= 0.0) {
         lightPickProb = 0.0;
     } else {
@@ -405,8 +403,7 @@ float lightPickProbability(inout int lightID, vec3 hit, vec3 N) {
     return lightPickProb;
 }
 
-// ToDo: precalculate lights potentials to avoid double calculation
-Light getRandomLight(vec3 hit, vec3 N) {
+Light getRandomLight(float potentials[SMALL_STACK_SIZE], float totalPotential) {
     // for (int i = 0; i < totalLights; i++) {
     //     float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
 
@@ -414,9 +411,6 @@ Light getRandomLight(vec3 hit, vec3 N) {
     //         return fetchLight(i);
     //     }
     // }
-
-    float totalPotential = 0.0;
-    float[SMALL_STACK_SIZE] potentials = calculateLightPotentials(hit, N, totalPotential);
 
     float sum = 0.0;
 	for (int i = 0; i < totalLights; i++) {
@@ -473,7 +467,10 @@ vec3 calculateColor(Ray ray) {
                 // if (DdotNL > 0.0) { /* double sided check */
                     float lightArea = 4.0 * PI * light.radius * light.radius;
                     float lightPdf = (tLight * tLight) / (DdotNL * lightArea);
-                    float lightPickProb = lightPickProbability(i, hit, lastN);
+
+                    float totalPotential = 0.0;
+                    float[] potentials = calculateLightPotentials(hit, lastN, totalPotential);
+                    float lightPickProb = lightPickProbability(i, potentials, totalPotential);
 
                     if ((bsdfPdf + lightPdf * lightPickProb) > 0.0) {
                         contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * lightPickProb));
@@ -502,11 +499,14 @@ vec3 calculateColor(Ray ray) {
         // shading with NEE
 
         // PORT FROM: lights_shared.cu
-        // calculate light pdf and pick probability
-        Light light = getRandomLight(hit, normal);
+        
+        float totalPotential = 0.0;
+        float[] potentials = calculateLightPotentials(hit, normal, totalPotential);
+
+        Light light = getRandomLight(potentials, totalPotential);
 		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
-        float lightPickProb = lightPickProbability(light.id, hit, normal); // float lightPickProb = 1.0 / float(totalLights);
+        float lightPickProb = lightPickProbability(light.id, potentials, totalPotential); // float lightPickProb = 1.0 / float(totalLights);
         lastN = normal;
 
         L = light.position - hit;

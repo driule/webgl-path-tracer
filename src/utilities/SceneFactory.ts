@@ -11,6 +11,7 @@ export class SceneFactory  {
     public static async createPicaRoomScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
             new Light(vec3.fromValues(12.5, 27.5, 0.5), 0.25, 500.0),
+            // new Light(vec3.fromValues(7.5, 2.5, 7.5), 0.25, 15.0),
         ];
         let camera = new Camera(canvas, vec3.fromValues(-1.05, 27.05, 42.5), -0.35,-3.15, 0.5);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/pica-room/", "scene.gltf", 0);
