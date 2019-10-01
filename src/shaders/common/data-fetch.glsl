@@ -54,7 +54,7 @@ Light fetchLight(int id) {
     float radius = featureVector[0];
     float intensity = featureVector[1];
     
-    return Light(position, radius, intensity);
+    return Light(id, position, radius, intensity);
 }
 
 BoundingBox fetchBoundingBox(int id) {

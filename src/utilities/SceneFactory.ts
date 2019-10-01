@@ -48,9 +48,9 @@ export class SceneFactory  {
 
     public static async createAvocadoScene(canvas: HTMLCanvasElement) {
         let lights: Light[] = [
-            new Light(vec3.fromValues(-0.5, 2.75, 12.5), 0.25, 200.5),
+            new Light(vec3.fromValues(-0.5, 2.75, 12.5), 0.25, 200.0),
             new Light(vec3.fromValues(2.25, 12.75, 0.25), 1.5, 200.0),
-            new Light(vec3.fromValues(-2.25, 2.75, -10.75), 0.15, 120.0)
+            new Light(vec3.fromValues(-2.25, 2.75, -10.75), 0.15, 250.0)
         ];
         let camera = new Camera(canvas, vec3.fromValues(-2.0, 1.5, -12.5), 0.1, 0.35, 0.25);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/avocado/", "Avocado.gltf", 0, 100);

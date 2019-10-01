@@ -10,6 +10,7 @@
 
 #define BOUNCES 3
 #define STACK_SIZE 256
+#define SMALL_STACK_SIZE 16
 
 @import ./common/entities/ray;
 @import ./common/entities/triangle;
@@ -336,18 +337,6 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay) {
     return intersection;
 }
 
-Light getRandomLight() {
-    for (int i = 0; i < totalLights; i++) {
-        float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
-
-        if (randomValue < float(1.0 / float(totalLights))) {
-            return fetchLight(i);
-        }
-    }
-
-    return fetchLight(0);
-}
-
 bool isOccluded(Ray ray) {
     Intersection intersection = intersectPrimitives(ray, true);
 
@@ -387,7 +376,57 @@ float potentialLightContribution(Light light, vec3 hit, vec3 N) {
     float NdotL = max(0.0, dot( N, L ) );
     float att = 1.0 / dot( L, L );
     
-    return /*POINTLIGHT_ENERGY * */NdotL * att * light.radius;
+    return /*POINTLIGHT_ENERGY * */NdotL * att;
+}
+
+float[SMALL_STACK_SIZE] calculateLightPotentials(vec3 hit, vec3 N, out float totalPotential) {
+    float potentials[SMALL_STACK_SIZE];
+
+    for (int i = 0; i < totalLights; i++) {
+        float c = potentialLightContribution(fetchLight(i), hit, N);
+        totalPotential += c;
+        potentials[i] = c;
+    }
+
+    return potentials;
+}
+
+float lightPickProbability(inout int lightID, vec3 hit, vec3 N) {
+    float lightPickProb = 0.0;
+    float totalPotential = 0.0;
+
+    float[] potentials = calculateLightPotentials(hit, N, totalPotential);
+    if (totalPotential <= 0.0) {
+        lightPickProb = 0.0;
+    } else {
+        lightPickProb = potentials[lightID] / totalPotential; // float lightPickProb = 1.0 / float(totalLights);
+    }
+
+    return lightPickProb;
+}
+
+Light getRandomLight(vec3 hit, vec3 N) {
+    // for (int i = 0; i < totalLights; i++) {
+    //     float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
+
+    //     if (randomValue < float(1.0 / float(totalLights))) {
+    //         return fetchLight(i);
+    //     }
+    // }
+
+    float totalPotential = 0.0;
+    float[SMALL_STACK_SIZE] potentials = calculateLightPotentials(hit, N, totalPotential);
+
+    float randomValue = totalPotential * random(vec3(12.9898, 78.233, 151.7182), timeSinceStart/* + float(i)*/);
+    float sum = 0.0;
+	for (int i = 0; i < totalLights; i++) {
+		sum += potentials[i];
+		if (sum >= randomValue) {
+            return fetchLight(i);
+        }
+	}
+
+    return fetchLight(0);
 }
 //
 
@@ -433,23 +472,8 @@ vec3 calculateColor(Ray ray) {
                 vec3 contribution;
                 if (DdotNL > 0.0) {
                     float lightArea = 4.0 * PI * light.radius * light.radius;
-                    float lightPdf = (tLight * tLight) / (-dot( ray.direction, lightNormal) * lightArea);
-
-                    // in: ray.origin, lastN, hit
-                    float potentials[STACK_SIZE];
-                    float total = 0.0;
-                    for (int j = 0; j < totalLights; j++) {
-                        float c = potentialLightContribution(fetchLight(j), hit, lastN);
-                        total += c;
-                        potentials[j] = c;
-                    }
-
-                    float lightPickProb;
-                    if (total <= 0.0) {
-                        lightPickProb = 0.0;
-                    } else {
-                        lightPickProb = potentials[i] / total; // float lightPickProb = 1.0 / float(totalLights);
-                    }
+                    float lightPdf = abs((tLight * tLight) / (-dot( ray.direction, lightNormal) * lightArea));
+                    float lightPickProb = lightPickProbability(i, hit, lastN);
 
                     if ((bsdfPdf + lightPdf * lightPickProb) > 0.0) {
                         contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * lightPickProb));
@@ -463,7 +487,6 @@ vec3 calculateColor(Ray ray) {
                 break;
             }
         }
-        lastN = normal;
         
         // no-hit: sample skydome if loaded
         if (abs(t - INFINITY) <= EPSILON) {
@@ -474,17 +497,19 @@ vec3 calculateColor(Ray ray) {
         }
 
         // apply postponed bsdf pdf
-        throughput *= 1.0f / bsdfPdf;
+        throughput *= 1.0 / bsdfPdf;
 
         // PORT FROM: pathtracer.cu
         // shading
 
         // PORT FROM: lights_shared.cu
         // calculate light pdf and pick probability
-        Light light = getRandomLight();
+        Light light = getRandomLight(hit, lastN);
 		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
-        float pickProb = 1.0 / float(totalLights);
+        // float pickProb = 1.0 / float(totalLights);
+        float lightPickProb = lightPickProbability(light.id, hit, normal);
+        lastN = normal;
 
         L = light.position - hit;
         float dist = length(L);
@@ -495,7 +520,7 @@ vec3 calculateColor(Ray ray) {
 			float pdf = abs(dot(L, normal)) * INVERSE_PI;
 			if (pdf >= EPSILON)
 			{
-				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (pickProb * lightPdf + pdf);
+				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (lightPickProb * lightPdf + pdf);
 
                 Ray shadowRay;
                 shadowRay.origin = safeOrigin(hit, L, normal);
