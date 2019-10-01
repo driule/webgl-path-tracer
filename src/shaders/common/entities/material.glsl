@@ -1,12 +1,13 @@
 struct Material
 {
-    // base color
-    vec3 color;
+    vec3 baseColor;
 
     // albedo
+    int albedoTextureId;
+    
     bool hasAlbedoTexture;
     bool hasAlpha;
-    int albedoTextureId;
+
     float albedoPixelOffset;
     float albedoTextureWidth;
     float albedoTextureHeight;

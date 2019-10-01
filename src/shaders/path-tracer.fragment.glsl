@@ -2,14 +2,6 @@
 
 @import ./common/precisions;
 
-@import ./common/entities/ray;
-@import ./common/entities/material;
-@import ./common/entities/sphere;
-@import ./common/entities/triangle;
-@import ./common/entities/light;
-@import ./common/entities/bounding-box;
-@import ./common/entities/intersection;
-
 #define EPSILON 0.0001
 #define INFINITY 10000.0
 
@@ -18,6 +10,15 @@
 
 #define BOUNCES 3
 #define STACK_SIZE 256
+
+@import ./common/entities/ray;
+@import ./common/entities/triangle;
+@import ./common/entities/material;
+@import ./common/entities/bounding-box;
+@import ./common/entities/intersection;
+@import ./common/entities/sphere;
+@import ./common/entities/light;
+@import ./common/utils;
 
 in vec3 initialRay;
 out vec4 pixelColor;
@@ -38,10 +39,11 @@ uniform int totalLights;
 uniform float lightDataTextureSize;
 uniform sampler2D lightDataTexture; // #2
 
-// bvh
+// bvh: list of nodes (bounding boxes) with references to children nodes
 uniform float bvhDataTextureSize;
 uniform sampler2D bvhDataTexture; // #3
 
+// stack for BVH traversal
 int stackPointer;
 int stack[STACK_SIZE];
 
@@ -69,127 +71,8 @@ uniform sampler2D skydomeTexture2; // #13
 uniform sampler2D skydomeTexture3; // #14
 uniform sampler2D skydomeTexture4; // #15
 
-vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
-	ivec2 uv = ivec2(
-        mod(index, size),
-        floor(index / size)
-    );
-	
-	return texelFetch(sampler, uv, 0).rgb;
-}
-
-vec4 getColorValueFromTexture(sampler2D sampler, float index, float size) {
-	ivec2 uv = ivec2(
-        mod(index, size),
-        floor(index / size)
-    );
-	
-	return texelFetch(sampler, uv, 0).rgba;
-}
-
-Triangle fetchTriangle(int id) {
-    vec3 coordA = getValueFromTexture(triangleDataTexture, float(id * 7 + 0), triangleDataTextureSize);
-    vec3 coordB = getValueFromTexture(triangleDataTexture, float(id * 7 + 1), triangleDataTextureSize);
-    vec3 coordC = getValueFromTexture(triangleDataTexture, float(id * 7 + 2), triangleDataTextureSize);
-    
-    vec3 uv1 = getValueFromTexture(triangleDataTexture, float(id * 7 + 3), triangleDataTextureSize);
-    vec3 uv2 = getValueFromTexture(triangleDataTexture, float(id * 7 + 4), triangleDataTextureSize);
-
-    vec3 material = getValueFromTexture(triangleDataTexture, float(id * 7 + 5), triangleDataTextureSize);
-    vec3 normal = getValueFromTexture(triangleDataTexture, float(id * 7 + 6), triangleDataTextureSize);
-    
-    Triangle triangle;
-    triangle.a = coordA;
-    triangle.b = coordB;
-    triangle.c = coordC;
-    triangle.uvA = vec2(uv1[0], uv1[1]);
-    triangle.uvB = vec2(uv1[2], uv2[0]);
-    triangle.uvC = vec2(uv2[1], uv2[2]);
-    triangle.materialID = int(material[0]);
-    triangle.normal = normal;
-
-    return triangle;
-}
-
-int fetchTriangleIndex(int id) {
-    vec3 triangleIndex = getValueFromTexture(triangleDataTexture, float(id * 7 + 5), triangleDataTextureSize);
-
-    return int(triangleIndex[1]);
-}
-
-Light fetchLight(int id) {
-    vec3 position = getValueFromTexture(lightDataTexture, float(id * 2), lightDataTextureSize);
-    vec3 featureVector = getValueFromTexture(lightDataTexture, float(id * 2 + 1), lightDataTextureSize);
-
-    float radius = featureVector[0];
-    float intensity = featureVector[1];
-    
-    return Light(position, radius, intensity);
-}
-
-BoundingBox fetchBoundingBox(int id) {
-    vec3 min = getValueFromTexture(bvhDataTexture, float(id * 4 + 0), bvhDataTextureSize);
-    vec3 max = getValueFromTexture(bvhDataTexture, float(id * 4 + 1), bvhDataTextureSize);
-    vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);
-    vec3 children = getValueFromTexture(bvhDataTexture, float(id * 4 + 3), bvhDataTextureSize);
-
-    // vec3 leftMin = getValueFromTexture(bvhDataTexture, float(id * 8 + 4), bvhDataTextureSize);
-    // vec3 leftMax = getValueFromTexture(bvhDataTexture, float(id * 8 + 5), bvhDataTextureSize);
-    // vec3 rightMin = getValueFromTexture(bvhDataTexture, float(id * 8 + 6), bvhDataTextureSize);
-    // vec3 rightMax = getValueFromTexture(bvhDataTexture, float(id * 8 + 7), bvhDataTextureSize);
-
-    BoundingBox boundingBox;
-    boundingBox.min = min;
-    boundingBox.max = max;
-    boundingBox.isLeaf = bool(data[0]);
-    boundingBox.first = int(data[1]);
-    boundingBox.count = int(data[2]);
-    boundingBox.left = int(children[0]);
-    boundingBox.right = int(children[1]);
-    boundingBox.id = int(children[2]);
-
-    // boundingBox.leftMin = leftMin;
-    // boundingBox.leftMax = leftMax;
-    // boundingBox.rightMin = rightMin;
-    // boundingBox.rightMax = rightMax;
-
-    boundingBox.isProcessed = false;
-
-    return boundingBox;
-}
-
-Material fetchMaterial(int id) {
-    vec3 color = getValueFromTexture(materialsTexture, float(id * 3 + 0), materialsTextureSize);
-    vec3 data = getValueFromTexture(materialsTexture, float(id * 3 + 1), materialsTextureSize);
-    vec3 albedoTextureSize = getValueFromTexture(materialsTexture, float(id * 3 + 2), materialsTextureSize);
-
-    Material material;
-    material.color = color;
-    material.hasAlbedoTexture = bool(data[0]);
-    material.albedoTextureId = int(data[1]);
-    material.albedoPixelOffset = data[2];
-
-    material.albedoTextureWidth = albedoTextureSize[0];
-    material.albedoTextureHeight = albedoTextureSize[1];
-    material.hasAlpha = bool(albedoTextureSize[2]);
-
-    return material;
-}
-
-float intersectSphere(Ray ray, Sphere sphere) {
-    vec3 toSphere = ray.origin - sphere.center;
-    float a = dot(ray.direction, ray.direction);
-    float b = 2.0 * dot(toSphere, ray.direction);
-    float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;
-    float discriminant = b * b - 4.0 * a * c;
-
-    if (discriminant > 0.0) {
-        float t = (-b - sqrt(discriminant)) / (2.0 * a);
-        if (t >= EPSILON) return t;
-    }
-
-    return INFINITY;
-}
+// data structures fetching from textures
+@import ./common/data-fetch;
 
 float intersectTriangle(Ray ray, Triangle triangle) {
     float t, u, v;
@@ -258,82 +141,19 @@ bool isIntersectingBoundingBox(Ray invertedRay, BoundingBox boundingBox, out flo
     return false;
 }
 
-BoundingBox pop() {
-    stackPointer = stackPointer - 1;
+float intersectSphere(Ray ray, Sphere sphere) {
+    vec3 toSphere = ray.origin - sphere.center;
+    float a = dot(ray.direction, ray.direction);
+    float b = 2.0 * dot(toSphere, ray.direction);
+    float c = dot(toSphere, toSphere) - sphere.radius * sphere.radius;
+    float discriminant = b * b - 4.0 * a * c;
 
-    return fetchBoundingBox(stack[stackPointer]);
-}
-
-void push(int node) {
-    stack[stackPointer] = node;
-    stackPointer = stackPointer + 1;
-}
-
-float random(vec3 scale, float seed) {
-    return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
-}
-
-vec3 clampColor(vec3 color) {
-    float v = max(color.x, max(color.y, color.z));
-    if (v > 1.0) {
-        color *= 1.0 / v;
+    if (discriminant > 0.0) {
+        float t = (-b - sqrt(discriminant)) / (2.0 * a);
+        if (t >= EPSILON) return t;
     }
 
-    return color;
-}
-
-vec3 cosineWeightedDirection(float seed, vec3 normal) {
-    float u = random(vec3(12.9898, 78.233, 151.7182), seed);
-    float v = random(vec3(63.7264, 10.873, 623.6736), seed);
-    float r = sqrt(u);
-    float angle = 6.283185307179586 * v;
-
-    vec3 sdir, tdir;
-    if (abs(normal.x) < 0.5) {
-        sdir = cross(normal, vec3(1, 0, 0));
-    } else {
-        sdir = cross(normal, vec3(0, 1, 0));
-    }
-    tdir = cross(normal, sdir);
-
-    return normalize(
-        r * cos(angle) * sdir + r * sin(angle) * tdir + sqrt(1.0 - u) * normal
-    );
-}
-
-Light getRandomLight() {
-    for (int i = 0; i < totalLights; i++) {
-        float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
-
-        if (randomValue < float(1.0 / float(totalLights))) {
-            return fetchLight(i);
-        }
-    }
-
-    return fetchLight(0);
-}
-
-vec3 sampleSkydome(Ray ray) {
-    vec3 color = vec3(0.25);
-    float u = mod(0.5 * (1.0 + atan(ray.direction.z, -ray.direction.x) * INVERSE_PI), 1.0);
-    float v = acos(ray.direction.y) * INVERSE_PI;
-
-    int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
-
-    float textureId = floor(float(pixelId) / (skydomeTextureSize * skydomeTextureSize));
-    float offset = mod(float(pixelId), skydomeTextureSize * skydomeTextureSize);
-
-    if (abs(textureId - 0.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture1, offset, skydomeTextureSize);
-    } else if (abs(textureId - 1.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture2, offset, skydomeTextureSize);
-    } else if (abs(textureId - 2.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture3, offset, skydomeTextureSize);
-    } else if (abs(textureId - 3.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture4, offset, skydomeTextureSize);
-    }
-
-    return color;
+    return INFINITY;
 }
 
 vec3 calculateBarycentricCoordinates(Triangle triangle, vec3 hit) {
@@ -396,6 +216,17 @@ vec4 mapTexture(Triangle triangle, Material material, vec2 uv) {
     }
 
     return color;
+}
+
+BoundingBox pop() {
+    stackPointer = stackPointer - 1;
+
+    return fetchBoundingBox(stack[stackPointer]);
+}
+
+void push(int node) {
+    stack[stackPointer] = node;
+    stackPointer = stackPointer + 1;
 }
 
 Intersection intersectPrimitives(Ray ray, bool isShadowRay) {
@@ -505,6 +336,18 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay) {
     return intersection;
 }
 
+Light getRandomLight() {
+    for (int i = 0; i < totalLights; i++) {
+        float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
+
+        if (randomValue < float(1.0 / float(totalLights))) {
+            return fetchLight(i);
+        }
+    }
+
+    return fetchLight(0);
+}
+
 bool isOccluded(Ray ray) {
     Intersection intersection = intersectPrimitives(ray, true);
 
@@ -515,11 +358,27 @@ bool isOccluded(Ray ray) {
     return false;
 }
 
-vec3 safeOrigin(vec3 origin, vec3 direction, vec3 normal) {
-	float parallel = 1.0 - abs(dot(normal, direction));
-	float v = parallel * parallel;
+vec3 sampleSkydome(Ray ray) {
+    vec3 color = vec3(0.25);
+    float u = mod(0.5 * (1.0 + atan(ray.direction.z, -ray.direction.x) * INVERSE_PI), 1.0);
+    float v = acos(ray.direction.y) * INVERSE_PI;
 
-	return origin + direction * EPSILON * (1.0 - v) + normal * EPSILON * v;
+    int pixelId = int(u * float(skydomeWidth)) + (int(v * float(skydomeHeight)) * skydomeWidth);
+
+    float textureId = floor(float(pixelId) / (skydomeTextureSize * skydomeTextureSize));
+    float offset = mod(float(pixelId), skydomeTextureSize * skydomeTextureSize);
+
+    if (abs(textureId - 0.0) <= EPSILON) {
+        color = getValueFromTexture(skydomeTexture1, offset, skydomeTextureSize);
+    } else if (abs(textureId - 1.0) <= EPSILON) {
+        color = getValueFromTexture(skydomeTexture2, offset, skydomeTextureSize);
+    } else if (abs(textureId - 2.0) <= EPSILON) {
+        color = getValueFromTexture(skydomeTexture3, offset, skydomeTextureSize);
+    } else if (abs(textureId - 3.0) <= EPSILON) {
+        color = getValueFromTexture(skydomeTexture4, offset, skydomeTextureSize);
+    }
+
+    return color;
 }
 
 vec3 calculateColor(Ray ray) {
@@ -542,9 +401,9 @@ vec3 calculateColor(Ray ray) {
             normal = intersection.triangle.normal;//getTriangleNormal(intersection.triangle);
 
             if (intersection.material.hasAlbedoTexture) {
-                surfaceColor = mapTexture(intersection.triangle, intersection.material, intersection.uv).rgb;// * intersection.material.color;
+                surfaceColor = mapTexture(intersection.triangle, intersection.material, intersection.uv).rgb;// * intersection.material.baseColor;
             } else {
-                surfaceColor = intersection.material.color;
+                surfaceColor = intersection.material.baseColor;
             }
         }
 
