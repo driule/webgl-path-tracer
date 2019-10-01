@@ -405,6 +405,7 @@ float lightPickProbability(inout int lightID, vec3 hit, vec3 N) {
     return lightPickProb;
 }
 
+// ToDo: precalculate lights potentials to avoid double calculation
 Light getRandomLight(vec3 hit, vec3 N) {
     // for (int i = 0; i < totalLights; i++) {
     //     float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
@@ -417,10 +418,10 @@ Light getRandomLight(vec3 hit, vec3 N) {
     float totalPotential = 0.0;
     float[SMALL_STACK_SIZE] potentials = calculateLightPotentials(hit, N, totalPotential);
 
-    float randomValue = totalPotential * random(vec3(12.9898, 78.233, 151.7182), timeSinceStart/* + float(i)*/);
     float sum = 0.0;
 	for (int i = 0; i < totalLights; i++) {
 		sum += potentials[i];
+        float randomValue = totalPotential * random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
 		if (sum >= randomValue) {
             return fetchLight(i);
         }
@@ -465,14 +466,13 @@ vec3 calculateColor(Ray ray) {
             
             if (tLight < t) {
                 // hit light, apply MIS
-
                 vec3 lightNormal = hit - light.position; // LH2: N
                 float DdotNL = -dot(ray.direction, lightNormal);
 
                 vec3 contribution;
-                if (DdotNL > 0.0) {
+                // if (DdotNL > 0.0) { /* double sided check */
                     float lightArea = 4.0 * PI * light.radius * light.radius;
-                    float lightPdf = abs((tLight * tLight) / (-dot( ray.direction, lightNormal) * lightArea));
+                    float lightPdf = (tLight * tLight) / (DdotNL * lightArea);
                     float lightPickProb = lightPickProbability(i, hit, lastN);
 
                     if ((bsdfPdf + lightPdf * lightPickProb) > 0.0) {
@@ -482,8 +482,7 @@ vec3 calculateColor(Ray ray) {
                     }
 
                     accumulatedColor += clampColor(contribution);
-                }
-                lastN = lightNormal;
+                // }
                 break;
             }
         }
@@ -500,15 +499,14 @@ vec3 calculateColor(Ray ray) {
         throughput *= 1.0 / bsdfPdf;
 
         // PORT FROM: pathtracer.cu
-        // shading
+        // shading with NEE
 
         // PORT FROM: lights_shared.cu
         // calculate light pdf and pick probability
-        Light light = getRandomLight(hit, lastN);
+        Light light = getRandomLight(hit, normal);
 		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
-        // float pickProb = 1.0 / float(totalLights);
-        float lightPickProb = lightPickProbability(light.id, hit, normal);
+        float lightPickProb = lightPickProbability(light.id, hit, normal); // float lightPickProb = 1.0 / float(totalLights);
         lastN = normal;
 
         L = light.position - hit;
