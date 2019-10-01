@@ -381,6 +381,16 @@ vec3 sampleSkydome(Ray ray) {
     return color;
 }
 
+//
+float potentialLightContribution(Light light, vec3 hit, vec3 N) {
+    vec3 L = light.position - hit;
+    float NdotL = max(0.0, dot( N, L ) );
+    float att = 1.0 / dot( L, L );
+    
+    return /*POINTLIGHT_ENERGY * */NdotL * att * light.radius;
+}
+//
+
 vec3 calculateColor(Ray ray) {
     vec3 accumulatedColor = vec3(0.0);
     vec3 surfaceColor = vec3(0.15);
@@ -388,6 +398,7 @@ vec3 calculateColor(Ray ray) {
 
     vec3 throughput = vec3(1.0);
     float bsdfPdf = 1.0;
+    vec3 lastN = vec3(1.0);
 
     for (int bounce = 0; bounce < BOUNCES; bounce++) {
         float t = INFINITY;
@@ -407,13 +418,6 @@ vec3 calculateColor(Ray ray) {
             }
         }
 
-        // PORT FROM: lights_shared.cu
-        // calculate light pdf and pick probability
-        Light light = getRandomLight();
-		vec3 L = hit - light.position;
-		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
-        float pickProb = 1.0 / float(totalLights);
-
         // ray-light intersection
         float tLight = INFINITY;
         for (int i = 0; i < totalLights; i++) {
@@ -421,18 +425,45 @@ vec3 calculateColor(Ray ray) {
             tLight = intersectSphere(ray, Sphere(light.position, light.radius));
             
             if (tLight < t) {
-                // hit light, apply MIS         
-                vec3 contribution;
-                if ((bsdfPdf + lightPdf * pickProb) > 0.0) {
-                    contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * pickProb));
-                } else {
-                    contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf));
-                }
+                // hit light, apply MIS
 
-                accumulatedColor += clampColor(contribution);
+                vec3 lightNormal = hit - light.position; // LH2: N
+                float DdotNL = -dot(ray.direction, lightNormal);
+
+                vec3 contribution;
+                if (DdotNL > 0.0) {
+                    float lightArea = 4.0 * PI * light.radius * light.radius;
+                    float lightPdf = (tLight * tLight) / (-dot( ray.direction, lightNormal) * lightArea);
+
+                    // in: ray.origin, lastN, hit
+                    float potentials[STACK_SIZE];
+                    float total = 0.0;
+                    for (int j = 0; j < totalLights; j++) {
+                        float c = potentialLightContribution(fetchLight(j), hit, lastN);
+                        total += c;
+                        potentials[j] = c;
+                    }
+
+                    float lightPickProb;
+                    if (total <= 0.0) {
+                        lightPickProb = 0.0;
+                    } else {
+                        lightPickProb = potentials[i] / total; // float lightPickProb = 1.0 / float(totalLights);
+                    }
+
+                    if ((bsdfPdf + lightPdf * lightPickProb) > 0.0) {
+                        contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * lightPickProb));
+                    } else {
+                        contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf));
+                    }
+
+                    accumulatedColor += clampColor(contribution);
+                }
+                lastN = lightNormal;
                 break;
             }
         }
+        lastN = normal;
         
         // no-hit: sample skydome if loaded
         if (abs(t - INFINITY) <= EPSILON) {
@@ -447,6 +478,14 @@ vec3 calculateColor(Ray ray) {
 
         // PORT FROM: pathtracer.cu
         // shading
+
+        // PORT FROM: lights_shared.cu
+        // calculate light pdf and pick probability
+        Light light = getRandomLight();
+		vec3 L = hit - light.position;
+		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
+        float pickProb = 1.0 / float(totalLights);
+
         L = light.position - hit;
         float dist = length(L);
         L *= 1.0 / dist;

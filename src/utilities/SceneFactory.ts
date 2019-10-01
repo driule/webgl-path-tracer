@@ -31,7 +31,7 @@ export class SceneFactory  {
             new Light(vec3.fromValues(825, 550, 305), 2.5, 250000.0),
             new Light(vec3.fromValues(825, 310, 372), 2.5, 250000.0),
             new Light(vec3.fromValues(0, 50, 0), 2.5, 250000.0),
-            new Light(vec3.fromValues(0, 550, 0), 2.5, 500000.0)
+            new Light(vec3.fromValues(0, 550, 0), 2.5, 250000.0)
         ];
         let camera = new Camera(canvas, vec3.fromValues(462.0, 350.0, 0), 0.01, -1.6, 10.0);
         let geometry: [Triangle[], Material[]] = await GeometryLoader.loadGltf("assets/models/sponza/", "Sponza.gltf", 0);
