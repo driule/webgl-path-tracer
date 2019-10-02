@@ -511,17 +511,12 @@ vec3 calculateColor(Ray ray) {
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
-        if (NdotL >= EPSILON && dot(normal, L) >= EPSILON && lightPdf >= EPSILON)
-		{
-			float pdf = abs(dot(L, normal)) * INVERSE_PI;
-			if (pdf >= EPSILON)
-			{
+        if (NdotL > 0.0 /*&& dot(normal, L) >= EPSILON*/ && lightPdf > 0.0) {
+			float pdf = abs(NdotL) * INVERSE_PI;
+			if (pdf > 0.0) {
 				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (lightPickProb * lightPdf + pdf);
 
-                Ray shadowRay;
-                shadowRay.origin = safeOrigin(hit, L, normal);
-                shadowRay.direction = L;
-                shadowRay.t = dist;
+                Ray shadowRay = Ray(safeOrigin(hit, L, normal), L, dist);
                 if (!isOccluded(shadowRay)) {
                     accumulatedColor += clampColor(contribution);
                 }
