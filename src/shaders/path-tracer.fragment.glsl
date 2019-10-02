@@ -371,19 +371,19 @@ vec3 sampleSkydome(Ray ray) {
 }
 
 // MIS
-float potentialLightContribution(Light light, vec3 hit, vec3 N) {
+float potentialLightContribution(Light light, vec3 hit, vec3 normal) {
     vec3 L = light.position - hit;
-    float NdotL = max(0.0, dot( N, L ) );
+    float NdotL = max(0.0, dot( normal, L ) );
     float att = 1.0 / dot( L, L );
     
     return /*POINTLIGHT_ENERGY * */NdotL * att;
 }
 
-float[SMALL_STACK_SIZE] calculateLightPotentials(vec3 hit, vec3 N, out float totalPotential) {
+float[SMALL_STACK_SIZE] calculateLightPotentials(vec3 hit, vec3 normal, out float totalPotential) {
     float potentials[SMALL_STACK_SIZE];
 
     for (int i = 0; i < totalLights; i++) {
-        float c = potentialLightContribution(fetchLight(i), hit, N);
+        float c = potentialLightContribution(fetchLight(i), hit, normal);
         totalPotential += c;
         potentials[i] = c;
     }
@@ -429,10 +429,9 @@ vec3 calculateColor(Ray ray) {
     vec3 accumulatedColor = vec3(0.0);
     vec3 surfaceColor = vec3(0.15);
     vec3 lightColor = vec3(1.0, 1.0, 0.85);
-
     vec3 throughput = vec3(1.0);
+    vec3 lastNormal = vec3(0.0);
     float bsdfPdf = 1.0;
-    vec3 lastN = vec3(1.0);
 
     for (int bounce = 0; bounce < BOUNCES; bounce++) {
         float t = INFINITY;
@@ -469,7 +468,7 @@ vec3 calculateColor(Ray ray) {
                     float lightPdf = (tLight * tLight) / (DdotNL * lightArea);
 
                     float totalPotential = 0.0;
-                    float[] potentials = calculateLightPotentials(hit, lastN, totalPotential);
+                    float[] potentials = calculateLightPotentials(hit, lastNormal, totalPotential);
                     float lightPickProb = lightPickProbability(i, potentials, totalPotential);
 
                     if ((bsdfPdf + lightPdf * lightPickProb) > 0.0) {
@@ -499,7 +498,6 @@ vec3 calculateColor(Ray ray) {
         // shading with NEE
 
         // PORT FROM: lights_shared.cu
-        
         float totalPotential = 0.0;
         float[] potentials = calculateLightPotentials(hit, normal, totalPotential);
 
@@ -507,7 +505,7 @@ vec3 calculateColor(Ray ray) {
 		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
         float lightPickProb = lightPickProbability(light.id, potentials, totalPotential); // float lightPickProb = 1.0 / float(totalLights);
-        lastN = normal;
+        lastNormal = normal;
 
         L = light.position - hit;
         float dist = length(L);
