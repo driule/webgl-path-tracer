@@ -4,10 +4,13 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 
 ### Rendered Scenes
 
-![Sponza](http://www.students.science.uu.nl/~6070981/debug/assets/images/scenes/webgl-sponza.png)
-![Avocados](http://www.students.science.uu.nl/~6070981/debug/assets/images/scenes/webgl-space-avocado.png)
+![Sponza](http://www.students.science.uu.nl/~6070981/assets/images/scenes/gl-sponza.png)
+![Pica Room](http://www.students.science.uu.nl/~6070981/assets/images/scenes/gl-pica-room.png)
+![Avocados](http://www.students.science.uu.nl/~6070981/assets/images/scenes/gl-avocados.png)
 
 ### Progress
+- [+] Next Event Estimation and Multiple Importance Sampling ported from LightHouse2
+- [+] Ordered BVH traversal implemented
 - [+] Multiple GL textures exploited for skydome and albedo textures loading
 - [+] Proper camera controls implemented
 - [+] GLTF file loading improved: multiple meshes with different textures support; few crucial bug fixes: do not calculate texture size at run-time
@@ -22,9 +25,6 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 - [+] Randomize light based on seed {time, pixel coordinates, loop iteration}
 - [+] Initiated *npm* project, all dependencies and typings controlled via *npm* package manager
 - [+] Pass triangles and lights to the scene via texture
-
-### ToDo
-- [-] Port shading functionality from LightHouse
 
 ### How to run?
 - Install all dependencies listed in *package.json*: **npm install**
