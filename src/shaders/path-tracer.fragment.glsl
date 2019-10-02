@@ -19,7 +19,6 @@
 @import ./common/entities/intersection;
 @import ./common/entities/sphere;
 @import ./common/entities/light;
-@import ./common/utils;
 
 in vec3 initialRay;
 out vec4 pixelColor;
@@ -74,6 +73,9 @@ uniform sampler2D skydomeTexture4; // #15
 
 // data structures fetching from textures
 @import ./common/data-fetch;
+
+// general GL utilities
+@import ./common/utils;
 
 float intersectTriangle(Ray ray, Triangle triangle) {
     float t, u, v;
@@ -405,7 +407,7 @@ float lightPickProbability(int lightID, float potentials[SMALL_STACK_SIZE], floa
 
 Light pickPotentialLight(float potentials[SMALL_STACK_SIZE], float totalPotential) {
     float sum = 0.0;
-    float r = totalPotential * random(vec3(12.9898, 78.233, 151.7182), timeSinceStart/* + float(i)*/);
+    float r = totalPotential * randomFloat(vec3(12.9898, 78.233, 151.7182), timeSinceStart/* + float(i)*/);
 	for (int i = 0; i < totalLights; i++) {
 		sum += potentials[i];
 		if (sum >= r) {
