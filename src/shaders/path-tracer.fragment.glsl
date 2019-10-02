@@ -403,15 +403,7 @@ float lightPickProbability(int lightID, float potentials[SMALL_STACK_SIZE], floa
     return lightPickProb;
 }
 
-Light getRandomLight(float potentials[SMALL_STACK_SIZE], float totalPotential) {
-    // for (int i = 0; i < totalLights; i++) {
-    //     float randomValue = random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
-
-    //     if (randomValue < float(1.0 / float(totalLights))) {
-    //         return fetchLight(i);
-    //     }
-    // }
-
+Light pickPotentialLight(float potentials[SMALL_STACK_SIZE], float totalPotential) {
     float sum = 0.0;
 	for (int i = 0; i < totalLights; i++) {
 		sum += potentials[i];
@@ -500,12 +492,11 @@ vec3 calculateColor(Ray ray) {
         // PORT FROM: lights_shared.cu
         float totalPotential = 0.0;
         float[] potentials = calculateLightPotentials(hit, normal, totalPotential);
-
-        Light light = getRandomLight(potentials, totalPotential);
+        Light light = pickPotentialLight(potentials, totalPotential);
+        
 		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
         float lightPickProb = lightPickProbability(light.id, potentials, totalPotential); // float lightPickProb = 1.0 / float(totalLights);
-        lastNormal = normal;
 
         L = light.position - hit;
         float dist = length(L);
@@ -534,6 +525,7 @@ vec3 calculateColor(Ray ray) {
         }
         bsdfPdf = max(0.0, theta) * INVERSE_PI;
         throughput = throughput * surfaceColor * INVERSE_PI;
+        lastNormal = normal;
     }
     
     return clampColor(accumulatedColor);
