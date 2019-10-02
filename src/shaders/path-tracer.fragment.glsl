@@ -449,12 +449,11 @@ vec3 calculateColor(Ray ray) {
             Light light = fetchLight(i);
             tLight = intersectSphere(ray, Sphere(light.position, light.radius));
             
+            // light-hit: apply MIS
             if (tLight < t) {
-                // hit light, apply MIS
                 vec3 lightNormal = hit - light.position; // LH2: N
                 float DdotNL = -dot(ray.direction, lightNormal);
 
-                vec3 contribution;
                 // if (DdotNL > 0.0) { /* double sided check is irrelevant for spherical lights */
                     float lightArea = 4.0 * PI * light.radius * light.radius;
                     float lightPdf = (tLight * tLight) / (DdotNL * lightArea);
@@ -463,6 +462,7 @@ vec3 calculateColor(Ray ray) {
                     float[] potentials = calculateLightPotentials(hit, lastNormal, totalPotential);
                     float lightPickProb = lightPickProbability(i, potentials, totalPotential);
 
+                    vec3 contribution;
                     if ((bsdfPdf + lightPdf * lightPickProb) > 0.0) {
                         contribution = throughput * lightColor * (1.0 / (bsdfPdf + lightPdf * lightPickProb));
                     } else {
@@ -486,10 +486,7 @@ vec3 calculateColor(Ray ray) {
         // apply postponed bsdf pdf
         throughput *= 1.0 / bsdfPdf;
 
-        // PORT FROM: pathtracer.cu
-        // shading with NEE
-
-        // PORT FROM: lights_shared.cu
+        // primitive-hit: apply NEE
         float totalPotential = 0.0;
         float[] potentials = calculateLightPotentials(hit, normal, totalPotential);
         Light light = pickPotentialLight(potentials, totalPotential);
@@ -520,7 +517,7 @@ vec3 calculateColor(Ray ray) {
 
         // calculate new bsdf & adjust throughput
         float theta = dot(ray.direction, normal);
-        if (theta <= EPSILON) {
+        if (theta < EPSILON) {
             break;
         }
         bsdfPdf = max(0.0, theta) * INVERSE_PI;
