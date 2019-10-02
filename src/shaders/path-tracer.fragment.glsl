@@ -455,7 +455,7 @@ vec3 calculateColor(Ray ray) {
                 float DdotNL = -dot(ray.direction, lightNormal);
 
                 vec3 contribution;
-                // if (DdotNL > 0.0) { /* double sided check */
+                // if (DdotNL > 0.0) { /* double sided check is irrelevant for spherical lights */
                     float lightArea = 4.0 * PI * light.radius * light.radius;
                     float lightPdf = (tLight * tLight) / (DdotNL * lightArea);
 
