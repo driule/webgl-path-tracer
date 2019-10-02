@@ -405,10 +405,10 @@ float lightPickProbability(int lightID, float potentials[SMALL_STACK_SIZE], floa
 
 Light pickPotentialLight(float potentials[SMALL_STACK_SIZE], float totalPotential) {
     float sum = 0.0;
+    float r = totalPotential * random(vec3(12.9898, 78.233, 151.7182), timeSinceStart/* + float(i)*/);
 	for (int i = 0; i < totalLights; i++) {
 		sum += potentials[i];
-        float randomValue = totalPotential * random(vec3(12.9898, 78.233, 151.7182), timeSinceStart + float(i));
-		if (sum >= randomValue) {
+		if (sum >= r) {
             return fetchLight(i);
         }
 	}
