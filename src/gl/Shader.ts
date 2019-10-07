@@ -7,6 +7,7 @@ import { Texture } from "../geometry/Texture";
 
 export enum ShaderDataType {
     int,
+    uint,
     float,
     vec2,
     vec3
@@ -57,6 +58,8 @@ export class Shader {
 
             if (type == ShaderDataType.int) {
                 gl.uniform1i(location, value);
+            } else if (type == ShaderDataType.uint) {
+                gl.uniform1ui(location, value);
             } else if (type == ShaderDataType.float) {
                 gl.uniform1f(location, value);
             } else if (type == ShaderDataType.vec2) {

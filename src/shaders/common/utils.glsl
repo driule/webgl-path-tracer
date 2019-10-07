@@ -39,7 +39,13 @@ float randomFloat(vec3 scale, float seed) {
     //     gl_FragCoord.x * resolution[0] + gl_FragCoord.y * resolution[0] * resolution[1]
     // );
 
-    uint pixelIdx = uint( dot(gl_FragCoord.xyz + seed, scale) );
+    // uint pixelIdx = uint( dot(gl_FragCoord.xyz + seed, scale) );
+    // uint hash = wangHash(pixelIdx + uint(seed));
+
+    uint xpos = uint(gl_FragCoord.x * resolution[0]);
+    uint ypos = uint(gl_FragCoord.y * resolution[1]);
+    uint pixelIdx = xpos + ypos * uint(resolution[0]);
+
     uint hash = wangHash(pixelIdx + uint(seed));
 
     return float( randomInt(hash) ) * 2.3283064365387e-10;

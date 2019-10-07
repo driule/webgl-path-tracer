@@ -74,6 +74,10 @@ export class PathTracer {
         
         this.vertexBuffer.draw();
     }
+
+    private getRandomInt(max: number) {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
     
     private update(timeSinceStart: number): void {
         let uniforms: any = {};
@@ -84,6 +88,12 @@ export class PathTracer {
         uniforms.ray11 = [this.scene.getCamera().getRay(+1, +1), ShaderDataType.vec3];
         uniforms.timeSinceStart = [timeSinceStart, ShaderDataType.float];
         uniforms.textureWeight = [this.sampleCount / (this.sampleCount + 1), ShaderDataType.float];
+
+        // random number (in the canvas resolution range) to seed random number generator inside the shader
+        uniforms.hostSeed = [
+            this.getRandomInt(this.canvas.width * this.canvas.width),
+            ShaderDataType.uint
+        ];
         
         // render to texture
         this.pathTracerShader.use();
