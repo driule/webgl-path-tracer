@@ -65,8 +65,8 @@ export class PathTracer {
         this.vertexBuffer.addAttributeLocation(renderVertexAttribute);
     }
 
-    public render(timeSinceStart: number): void {
-        this.update(timeSinceStart);
+    public render(): void {
+        this.update();
         this.renderShader.use();
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -79,14 +79,13 @@ export class PathTracer {
         return Math.floor(Math.random() * Math.floor(max));
     }
     
-    private update(timeSinceStart: number): void {
+    private update(): void {
         let uniforms: any = {};
         uniforms.eye = [this.scene.getCamera().getPosition(), ShaderDataType.vec3];
         uniforms.ray00 = [this.scene.getCamera().getRay(-1, -1), ShaderDataType.vec3];
         uniforms.ray01 = [this.scene.getCamera().getRay(-1, +1), ShaderDataType.vec3];
         uniforms.ray10 = [this.scene.getCamera().getRay(+1, -1), ShaderDataType.vec3];
         uniforms.ray11 = [this.scene.getCamera().getRay(+1, +1), ShaderDataType.vec3];
-        uniforms.timeSinceStart = [timeSinceStart, ShaderDataType.float];
         uniforms.textureWeight = [this.sampleCount / (this.sampleCount + 1), ShaderDataType.float];
 
         // random number (in the canvas resolution range) to seed random number generator inside the shader

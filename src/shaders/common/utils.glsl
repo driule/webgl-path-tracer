@@ -26,7 +26,15 @@ uint wangHash(uint s) {
     return s;
 }
 
-uint randomInt(uint s) {
+uint unifySeed(uint seed) {
+    uint xpos = uint(gl_FragCoord.x * resolution[0]);
+    uint ypos = uint(gl_FragCoord.y * resolution[1]);
+    uint pixelIdx = xpos + ypos * uint(resolution[0]);
+    
+    return wangHash(pixelIdx + seed);
+}
+
+uint randomInt(inout uint s) {
     s ^= s << 13u,
     s ^= s >> 17u,
     s ^= s << 5;
@@ -34,31 +42,21 @@ uint randomInt(uint s) {
     return s;
 }
 
-float randomFloat(vec3 scale, float seed) {
-    // uint pixelIdx = uint(
-    //     gl_FragCoord.x * resolution[0] + gl_FragCoord.y * resolution[0] * resolution[1]
-    // );
-
-    // uint pixelIdx = uint( dot(gl_FragCoord.xyz + seed, scale) );
-    // uint hash = wangHash(pixelIdx + uint(seed));
-
-    uint xpos = uint(gl_FragCoord.x * resolution[0]);
-    uint ypos = uint(gl_FragCoord.y * resolution[1]);
-    uint pixelIdx = xpos + ypos * uint(resolution[0]);
-
-    uint hash = wangHash(pixelIdx + uint(seed));
-
-    return float( randomInt(hash) ) * 2.3283064365387e-10;
+float randomFloat(inout uint seed) {
+    return float( randomInt(seed) ) * 2.3283064365387e-10;
 }
 //
 
+// ToDo: remove. Legacy RNG algorithm. scale: vec3(12.9898, 78.233, 151.7182), vec3(63.7264, 10.873, 623.6736)
 // float randomFloat(vec3 scale, float seed) {
 //     return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
 // }
 
-vec3 cosineWeightedDirection(float seed, vec3 normal) {
-    float u = randomFloat(vec3(12.9898, 78.233, 151.7182), seed);
-    float v = randomFloat(vec3(63.7264, 10.873, 623.6736), seed);
+vec3 cosineWeightedDirection(uint seed, vec3 normal) {
+    uint uSeed = unifySeed(seed);
+
+    float u = randomFloat(uSeed);
+    float v = randomFloat(uSeed);
     float r = sqrt(u);
     float angle = 6.283185307179586 * v;
 

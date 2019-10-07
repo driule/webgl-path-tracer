@@ -24,9 +24,7 @@ export class Renderer {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         this.isRendering = true;
-
-        let startTime = new Date().getTime();
-        this.tick(new Date().getTime() - startTime);
+        this.tick();
     }
 
     public stop(): void {
@@ -50,9 +48,9 @@ export class Renderer {
         this.gauge.primitiveCount = this.scene.getTriangles().length;
     }
 
-    private tick(timeSinceStart: number): void {
+    private tick(): void {
         if (this.isRendering) {
-            this.pathTracer.render(timeSinceStart / 1000.0);
+            this.pathTracer.render();
             this.gauge.measureFPS();
             requestAnimationFrame(this.tick.bind(this));
         }

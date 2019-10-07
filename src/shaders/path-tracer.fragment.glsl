@@ -27,7 +27,6 @@ out vec4 pixelColor;
 uniform vec2 resolution;
 uniform vec3 eye;
 uniform float textureWeight;
-uniform float timeSinceStart;
 uniform uint hostSeed;
 uniform sampler2D outputTexture; // #0
 
@@ -408,7 +407,8 @@ float lightPickProbability(int lightID, float potentials[SMALL_STACK_SIZE], floa
 
 Light pickPotentialLight(float potentials[SMALL_STACK_SIZE], float totalPotential) {
     float sum = 0.0;
-    float r = totalPotential * randomFloat(vec3(12.9898, 78.233, 151.7182), float(hostSeed)/* + float(i)*/);
+    uint uSeed = unifySeed(hostSeed);
+    float r = totalPotential * randomFloat(uSeed);
 	for (int i = 0; i < totalLights; i++) {
 		sum += potentials[i];
 		if (sum >= r) {
@@ -515,7 +515,7 @@ vec3 calculateColor(Ray ray) {
 		}
 
         // shoot a new ray
-        ray.direction = cosineWeightedDirection(float(hostSeed), normal);
+        ray.direction = cosineWeightedDirection(hostSeed + uint(bounce), normal);
         ray.origin = safeOrigin(hit, ray.direction, normal);
 
         // calculate new bsdf & adjust throughput
