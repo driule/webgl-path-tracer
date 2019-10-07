@@ -238,7 +238,7 @@ export class Shader {
 
     public setMaterials(materials: Material[]) {
         const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
+        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
         
         console.log("actual albedo texture size", albedoTextureSize);
 
