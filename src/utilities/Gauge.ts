@@ -1,3 +1,5 @@
+import { gl } from ".././gl/GLUtilities";
+
 export class Gauge {
     public primitiveCount: number;
     public mouseDownId: NodeJS.Timeout;
@@ -33,5 +35,16 @@ export class Gauge {
             this.frameCount = 0;
             this.elapsedTime %= 1000;
         }
+    }
+
+    public detectDevice(): string {
+            let debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            let vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+            let renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+
+            console.log('vendor:', vendor + renderer);
+            // console.log('renderer:', renderer);
+
+            return vendor + " " + renderer;
     }
 }

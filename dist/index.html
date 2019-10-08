@@ -3,9 +3,16 @@
     <head>
         <title>WebGL Path Tracer (UU)</title>
         <style type="text/css">
-            html, body {
-                padding: 0;
-                margin: 10;
+            a {
+                color: #333;
+                text-decoration: none;
+                outline: 0;
+            }
+
+            a:hover {
+                color: #666;
+                text-decoration: none;
+                outline: 0;
             }
 
             .noSelect {
@@ -15,6 +22,26 @@
                 -moz-user-select: none; /* Firefox */
                 -ms-user-select: none; /* Internet Explorer/Edge */
                 user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
+            }
+
+            button, select {
+                border: 1px solid #555555;
+                border-radius: 5px;
+
+                -webkit-transition-duration: 0.4s; /* Safari */
+                transition-duration: 0.4s;
+                cursor: pointer;
+            }
+
+            button:disabled, button[disabled] {
+                border: 1px solid #999999;
+                background-color: #cccccc;
+                color: #666666;
+            }
+
+            button:hover:enabled {
+                background-color: #333333;
+                color: black;
             }
 
             .playbackButton {
@@ -64,8 +91,18 @@
 
             #renderer {
                 position: relative;
+                margin: auto;
                 width: 640px;
                 height: 480px;
+            }
+
+            #gauge {
+                text-align: center;
+                padding: 5px;
+            }
+            
+            #footer {
+                text-align: center;
             }
         </style>
         <meta name="viewport" content="user-scalable=no">
@@ -79,31 +116,36 @@
             <canvas id="pathTracer" width="640" height="480"></canvas>
         </div>
 
-        <br/>
-        <label id="fps">...</label> | <label id="primitiveCount">...</label>
-        | Does your browser exploit GPU power? Settings for <a href="assets/images/nvidia-settings.png">NVIDIA</a><br/>
-
-        <br/>
-        <button class="playbackButton noSelect" id="render" disabled="true">Render</button>
-        <button class="playbackButton noSelect" id="stop">Stop</button>
-        <select id="canvasSizeSelect">
-            <option>320:240</option>
-            <option selected>640:480</option>
-            <option>960:720</option>
-            <option>1280:720</option>
-            <option>1920:1080</option>
-        </select>
-        <br/>
-        <br/>
-        <button class="sceneButton noSelect" id="changeScene1">Basic Geometry</button>
-        <button class="sceneButton noSelect" id="changeScene2">Duck</button>
-        <button class="sceneButton noSelect" id="changeScene3">Suzanne</button>
-        <button class="sceneButton noSelect" id="changeScene4">Avocado</button>
-        <button class="sceneButton noSelect" id="changeScene5">Sponza</button>
-        <button class="sceneButton noSelect" id="changeScene6">Pica Room</button>
+        <div id="gauge">
+            <label id="primitiveCount">...</label>
+            |
+            <select id="canvasSizeSelect">
+                <option>320:240</option>
+                <option selected>640:480</option>
+                <option>960:720</option>
+                <option>1280:720</option>
+                <option>1920:1080</option>
+            </select>
+            |
+            <label id="fps">...</label>
+            |
+            <i><label id="device">...</label></i><br/>
+            <br/>
+            <button class="playbackButton noSelect" id="render" disabled="true">Render</button>
+            <button class="playbackButton noSelect" id="stop">Stop</button>
+            <br/>
+            <br/>
+            <button class="sceneButton noSelect" id="changeScene1">Basic Geometry</button>
+            <button class="sceneButton noSelect" id="changeScene2">Duck</button>
+            <button class="sceneButton noSelect" id="changeScene3">Suzanne</button>
+            <button class="sceneButton noSelect" id="changeScene4">Avocado</button>
+            <button class="sceneButton noSelect" id="changeScene5">Sponza</button>
+            <button class="sceneButton noSelect" id="changeScene6">Pica Room</button>
+        </div>
 
         <hr/>
-        <table class="noSelect">
+
+        <table class="noSelect" align="center">
             <tr>
                 <td colspan="3" align="center"><h4>Camera Movement</h4></td>
                 <td>&nbsp;</td>
@@ -137,7 +179,14 @@
                 <td><button class="controllerButton" id="zoomIn">+</button></td>
             </tr>
         </table>
+
         <hr/>
-        <a href="./debug">/debug</a> | <a href="./history">/history</a> | <a href="https://github.com/driule/webgl-path-tracer">GitHub</a>
+        
+        <div id="footer">
+            <a href="./debug">/debug</a>
+            | <a href="./history">/history</a>
+            | <a href="https://github.com/driule/webgl-path-tracer" target="blank">GitHub</a>
+            | <a class="settingsButton" href="assets/images/nvidia-settings.png" target="blank">NVIDIA settings</a>
+        </div>
     </body>
 </html>

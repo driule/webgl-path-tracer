@@ -24,9 +24,11 @@ window.onload = async function() {
     let fpsLabel = document.getElementById("fps");
     let primitiveCountLabel = document.getElementById("primitiveCount");
     setInterval(function() {
-        fpsLabel.innerHTML = gauge.getFps().toFixed(1) + " fps";
-        primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives loaded";
+        fpsLabel.innerHTML = gauge.getFps().toFixed(1) + " FPS";
+        primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
     }, 200);
+
+    document.getElementById("device").innerHTML = gauge.detectDevice();
 
     // control buttons event listeners
     addEventListeners();
