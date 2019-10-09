@@ -23,8 +23,8 @@ export class Camera {
         position: vec3 = vec3.fromValues(0.0, 0.0, 2.5),
         angleX: number = 0.0,
         angleY: number = 3.15,
-        movementSpeed: number = 0.1,
-        rotationSpeed: number = 0.05
+        movementSpeed: number = 0.1 * 10,
+        rotationSpeed: number = 0.05 * 10
     ) {
         this.canvas = canvas;
 
