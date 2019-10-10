@@ -36,14 +36,4 @@ export class Gauge {
             this.elapsedTime %= 1000;
         }
     }
-
-    public detectDevice(): string {
-            let debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
-            let vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-            let renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-
-            console.log('detected device:', vendor + " " + renderer);
-
-            return vendor + " " + renderer;
-    }
 }

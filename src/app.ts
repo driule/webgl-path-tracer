@@ -28,7 +28,7 @@ window.onload = async function() {
         primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
     }, 200);
 
-    document.getElementById("device").innerHTML = gauge.detectDevice();
+    document.getElementById("device").innerHTML = GLUtilities.detectDevice();
 
     // control buttons event listeners
     addEventListeners();
