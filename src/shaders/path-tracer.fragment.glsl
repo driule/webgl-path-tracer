@@ -285,7 +285,6 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay) {
 
                         // early out if shadowRay already hit any primitive
                         if (isShadowRay && tTriangle < ray.t) {
-                            // return intersection;
                             stackPointer = 0;
                         }
                         
@@ -374,7 +373,7 @@ float potentialLightContribution(Light light, vec3 hit, vec3 normal) {
     float NdotL = max(0.0, dot( normal, L ) );
     float att = 1.0 / dot( L, L );
     
-    return /*POINTLIGHT_ENERGY * */NdotL * att;
+    return NdotL * att;
 }
 
 float[SMALL_STACK_SIZE] calculateLightPotentials(vec3 hit, vec3 normal, out float totalPotential) {
@@ -395,7 +394,7 @@ float lightPickProbability(int lightID, float potentials[SMALL_STACK_SIZE], floa
     if (totalPotential <= 0.0) {
         lightPickProb = 0.0;
     } else {
-        lightPickProb = potentials[lightID] / totalPotential; // float lightPickProb = 1.0 / float(totalLights);
+        lightPickProb = potentials[lightID] / totalPotential;
     }
 
     return lightPickProb;
@@ -492,13 +491,13 @@ vec3 calculateColor(Ray ray) {
         
 		vec3 L = hit - light.position;
 		float lightPdf = dot(L, normal) < 0.0 ? dot(L, L) : 0.0;
-        float lightPickProb = lightPickProbability(light.id, potentials, totalPotential); // float lightPickProb = 1.0 / float(totalLights);
+        float lightPickProb = lightPickProbability(light.id, potentials, totalPotential);
 
         L = light.position - hit;
         float dist = length(L);
         L *= 1.0 / dist;
         float NdotL = dot(L, normal);
-        if (NdotL > 0.0 /*&& dot(normal, L) >= EPSILON*/ && lightPdf > 0.0) {
+        if (NdotL > 0.0 && lightPdf > 0.0) {
 			float pdf = abs(NdotL) * INVERSE_PI;
 			if (pdf > 0.0) {
 				vec3 contribution = throughput * surfaceColor * INVERSE_PI * lightColor * light.intensity * NdotL / (lightPickProb * lightPdf + pdf);
