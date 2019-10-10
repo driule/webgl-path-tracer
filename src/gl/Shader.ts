@@ -179,44 +179,10 @@ export class Shader {
                 bvhNodeDataList[i * 3 * d + 9] = bvhNode.left.getId();
                 bvhNodeDataList[i * 3 * d + 10] = bvhNode.right.getId();
                 bvhNodeDataList[i * 3 * d + 11] = bvhNode.getId();
-
-                // children bounding boxes
-                // bvhNodeDataList[i * 3 * d + 12] = bvhNode.left.min[0];
-                // bvhNodeDataList[i * 3 * d + 13] = bvhNode.left.min[1];
-                // bvhNodeDataList[i * 3 * d + 14] = bvhNode.left.min[2];
-
-                // bvhNodeDataList[i * 3 * d + 15] = bvhNode.left.max[0];
-                // bvhNodeDataList[i * 3 * d + 16] = bvhNode.left.max[1];
-                // bvhNodeDataList[i * 3 * d + 17] = bvhNode.left.max[2];
-
-                // bvhNodeDataList[i * 3 * d + 18] = bvhNode.right.min[0];
-                // bvhNodeDataList[i * 3 * d + 19] = bvhNode.right.min[1];
-                // bvhNodeDataList[i * 3 * d + 20] = bvhNode.right.min[2];
-
-                // bvhNodeDataList[i * 3 * d + 21] = bvhNode.right.max[0];
-                // bvhNodeDataList[i * 3 * d + 22] = bvhNode.right.max[1];
-                // bvhNodeDataList[i * 3 * d + 23] = bvhNode.right.max[2];
             } else {
                 bvhNodeDataList[i * 3 * d + 9] = 1.0;
                 bvhNodeDataList[i * 3 * d + 10] = 1.0;
                 bvhNodeDataList[i * 3 * d + 11] = bvhNode.getId();
-
-                // children bounding boxes
-                // bvhNodeDataList[i * 3 * d + 12] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 13] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 14] = 1.0;
-
-                // bvhNodeDataList[i * 3 * d + 15] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 16] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 17] = 1.0;
-
-                // bvhNodeDataList[i * 3 * d + 18] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 19] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 20] = 1.0;
-
-                // bvhNodeDataList[i * 3 * d + 21] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 22] = 1.0;
-                // bvhNodeDataList[i * 3 * d + 23] = 1.0;
             }
         }
 

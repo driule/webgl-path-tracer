@@ -63,11 +63,6 @@ BoundingBox fetchBoundingBox(int id) {
     vec3 data = getValueFromTexture(bvhDataTexture, float(id * 4 + 2), bvhDataTextureSize);
     vec3 children = getValueFromTexture(bvhDataTexture, float(id * 4 + 3), bvhDataTextureSize);
 
-    // vec3 leftMin = getValueFromTexture(bvhDataTexture, float(id * 8 + 4), bvhDataTextureSize);
-    // vec3 leftMax = getValueFromTexture(bvhDataTexture, float(id * 8 + 5), bvhDataTextureSize);
-    // vec3 rightMin = getValueFromTexture(bvhDataTexture, float(id * 8 + 6), bvhDataTextureSize);
-    // vec3 rightMax = getValueFromTexture(bvhDataTexture, float(id * 8 + 7), bvhDataTextureSize);
-
     BoundingBox boundingBox;
     boundingBox.min = min;
     boundingBox.max = max;
@@ -77,13 +72,6 @@ BoundingBox fetchBoundingBox(int id) {
     boundingBox.left = int(children[0]);
     boundingBox.right = int(children[1]);
     boundingBox.id = int(children[2]);
-
-    // boundingBox.leftMin = leftMin;
-    // boundingBox.leftMax = leftMax;
-    // boundingBox.rightMin = rightMin;
-    // boundingBox.rightMax = rightMax;
-
-    boundingBox.isProcessed = false;
 
     return boundingBox;
 }

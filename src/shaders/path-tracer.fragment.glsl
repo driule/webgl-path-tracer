@@ -241,99 +241,95 @@ Intersection intersectPrimitives(Ray ray, bool isShadowRay) {
     invertedRay.direction = vec3(1.0 / ray.direction.x, 1.0 / ray.direction.y, 1.0 / ray.direction.z);
     invertedRay.t = intersection.t;
 
+    float tmin;
     stackPointer = 0;
     BoundingBox node = fetchBoundingBox(0); // BVH root node
 
-    float tmin = 0.0;
-    if (!isIntersectingBoundingBox(invertedRay, node, tmin)) {
-        node.isProcessed = true;
-    }
+    if (isIntersectingBoundingBox(invertedRay, node, tmin)) {
+        while (true) {
 
-    while (true) {
-        if (node.isProcessed && (stackPointer <= 0 || stackPointer > STACK_SIZE)) {
-            break;
-        }
-
-        if (node.isProcessed && stackPointer > 0) {
-            node = pop();
-        }
-
-        // DEBUG: visualize each bounding box
-        // if (true) {
-        //     pixelColor = pixelColor + vec4(0.05, 00, 0.0, 1.0);
-        // }
-
-        if (node.isLeaf) {
-            // DEBUG: visualize leaf bounding boxes
+            // DEBUG: visualize each bounding box
             // if (true) {
-            //     pixelColor = pixelColor + vec4(0.0, 0.1, 0.0, 1.0);
+            //     pixelColor = pixelColor + vec4(0.05, 00, 0.0, 1.0);
             // }
 
-            for (int i = 0; i < node.count; i++) {
-                int index = fetchTriangleIndex(node.first + i);
+            if (node.isLeaf) {
+                // DEBUG: visualize leaf bounding boxes
+                // if (true) {
+                //     pixelColor = pixelColor + vec4(0.0, 0.1, 0.0, 1.0);
+                // }
 
-                Triangle triangle = fetchTriangle(index);
-                float tTriangle = intersectTriangle(ray, triangle);
+                for (int i = 0; i < node.count; i++) {
+                    int index = fetchTriangleIndex(node.first + i);
 
-                if (tTriangle < intersection.t) {
-                    vec3 hit = ray.origin + ray.direction * tTriangle;
-                    vec2 uv = vec2(0.0);
-                    Material material = fetchMaterial(triangle.materialID);
+                    Triangle triangle = fetchTriangle(index);
+                    float tTriangle = intersectTriangle(ray, triangle);
 
-                    if (material.hasAlbedoTexture) {
-                        uv = calculateUV(triangle, hit);
+                    if (tTriangle < intersection.t) {
+                        vec3 hit = ray.origin + ray.direction * tTriangle;
+                        vec2 uv = vec2(0.0);
+                        Material material = fetchMaterial(triangle.materialID);
 
-                        // ignore intersection if alpha pixel was hit
-                        if (material.hasAlpha) {
-                            vec4 textureColor = mapTexture(triangle, material, uv);
-                            if (textureColor[3] <= EPSILON) {
-                                continue;
+                        if (material.hasAlbedoTexture) {
+                            uv = calculateUV(triangle, hit);
+
+                            // ignore intersection if alpha pixel was hit
+                            if (material.hasAlpha) {
+                                vec4 textureColor = mapTexture(triangle, material, uv);
+                                if (textureColor[3] <= EPSILON) {
+                                    continue;
+                                }
                             }
                         }
-                    }
-                    intersection.t = tTriangle;
+                        intersection.t = tTriangle;
 
-                    // early out if shadowRay already hit any primitive
-                    if (isShadowRay && tTriangle < ray.t) {
-                        return intersection;
-                    }
-                    
-                    intersection.hit = hit;
-                    intersection.uv = uv;
-                    intersection.triangle = triangle;
-                    intersection.material = material;
+                        // early out if shadowRay already hit any primitive
+                        if (isShadowRay && tTriangle < ray.t) {
+                            // return intersection;
+                            stackPointer = 0;
+                        }
+                        
+                        intersection.hit = hit;
+                        intersection.uv = uv;
+                        intersection.triangle = triangle;
+                        intersection.material = material;
 
-                    invertedRay.t = intersection.t;
+                        invertedRay.t = intersection.t;
+                    }
                 }
-            }
-        } else {
-            // determine which child to traverse first
-            BoundingBox leftChild = fetchBoundingBox(node.left);
-            BoundingBox rightChild = fetchBoundingBox(node.right);
+            } else {
+                // determine which child to traverse first
+                BoundingBox leftChild = fetchBoundingBox(node.left);
+                BoundingBox rightChild = fetchBoundingBox(node.right);
 
-            float tLeft = 0.0, tRight = 0.0;
-            bool hitLeft = isIntersectingBoundingBox(invertedRay, leftChild, tLeft);
-            bool hitRight = isIntersectingBoundingBox(invertedRay, rightChild, tRight);
+                float tLeft = 0.0, tRight = 0.0;
+                bool hitLeft = isIntersectingBoundingBox(invertedRay, leftChild, tLeft);
+                bool hitRight = isIntersectingBoundingBox(invertedRay, rightChild, tRight);
 
-            if (hitLeft && !hitRight) {
-                node = leftChild;
-                continue;
-            } else if (hitRight && !hitLeft) {
-                node = rightChild;
-                continue;
-            } else if (hitLeft && hitRight) {
-                if (tRight >= tLeft) {
-                    push(node.right);
+                if (hitLeft && !hitRight) {
                     node = leftChild;
                     continue;
-                }
+                } else if (hitRight && !hitLeft) {
+                    node = rightChild;
+                    continue;
+                } else if (hitLeft && hitRight) {
+                    if (tRight >= tLeft) {
+                        push(node.right);
+                        node = leftChild;
+                        continue;
+                    }
 
-                push(node.left);
-                node = rightChild;
-                continue;
+                    push(node.left);
+                    node = rightChild;
+                    continue;
+                }
             }
+            
+            if (stackPointer <= 0 || stackPointer > STACK_SIZE) {
+                break;
+            }
+            node = pop();
         }
-        node.isProcessed = true;
     }
 
     return intersection;

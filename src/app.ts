@@ -119,34 +119,34 @@ async function onButtonDown(event: MouseEvent) {
 
     if (gauge.mouseDownId == null) {
         if (element.id == "moveUp") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveUp(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.moveUp(); }, 10);
         }
         if (element.id == "moveDown") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveDown(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.moveDown(); }, 10);
         }
         if (element.id == "moveLeft") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveLeft(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.moveLeft(); }, 10);
         }
         if (element.id == "moveRight") {
-            gauge.mouseDownId = setInterval(function() { renderer.moveRight(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.moveRight(); }, 10);
         }
         if (element.id == "zoomIn") {
-            gauge.mouseDownId = setInterval(function() { renderer.zoomIn(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.zoomIn(); }, 10);
         }
         if (element.id == "zoomOut") {
-            gauge.mouseDownId = setInterval(function() { renderer.zoomOut(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.zoomOut(); }, 10);
         }
         if (element.id == "rotateUp") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateUp(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateUp(); }, 10);
         }
         if (element.id == "rotateDown") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateDown(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateDown(); }, 10);
         }
         if (element.id == "rotateLeft") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateLeft(); }, 10);
         }
         if (element.id == "rotateRight") {
-            gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 50);
+            gauge.mouseDownId = setInterval(function() { renderer.rotateRight(); }, 10);
         }
         if (element.id == "render") {
             (<HTMLButtonElement>document.getElementById("render")).disabled = true;
