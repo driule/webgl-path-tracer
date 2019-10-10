@@ -26,7 +26,7 @@ export class GLUtilities {
         let vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
         let renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
 
-        console.log('detected device:', vendor + " " + renderer);
+        console.log("detected device:", vendor + " " + renderer);
 
         return vendor + " " + renderer;
     }
