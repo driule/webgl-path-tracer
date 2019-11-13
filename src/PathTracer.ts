@@ -94,7 +94,8 @@ export class PathTracer {
             ShaderDataType.uint
         ];
         
-        // render to texture
+        // render to the texture: this.outputTextures[1]
+        // input accumulated image texture: this.outputTextures[0]
         this.pathTracerShader.use();
         this.pathTracerShader.setUniforms(uniforms);
 
@@ -106,7 +107,7 @@ export class PathTracer {
         this.vertexBuffer.upload();
         this.vertexBuffer.draw();
         
-        // ping pong output textures
+        // swap output textures
         this.outputTextures.reverse();
         this.sampleCount++;
     }

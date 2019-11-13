@@ -28,7 +28,7 @@ uniform vec2 resolution;
 uniform vec3 eye;
 uniform float textureWeight;
 uniform uint hostSeed;
-uniform sampler2D outputTexture; // #0
+uniform sampler2D accumulatedImage; // #0
 
 // geometry
 uniform float triangleDataTextureSize;
@@ -531,8 +531,15 @@ void main() {
     ray.origin = eye;
     ray.direction = normalize(initialRay);
 
-    vec3 color = texture(outputTexture, gl_FragCoord.xy / resolution).rgb;
-    pixelColor = vec4(mix(calculateColor(ray), color, textureWeight), 1.0);
+    vec3 accumulatedColor = texture(accumulatedImage, gl_FragCoord.xy / resolution).rgb;
+    pixelColor = vec4(
+        mix(
+            calculateColor(ray),
+            accumulatedColor,
+            textureWeight
+        ),
+        1.0
+    );
 
     // DEBUG mode
     // vec4(mix(calculateColor(eye, initialRay), color, textureWeight), 1.0);
