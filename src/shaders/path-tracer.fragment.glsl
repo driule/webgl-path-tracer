@@ -203,19 +203,19 @@ vec4 mapTexture(Triangle triangle, Material material, vec2 uv) {
     float pixelId = x + y * material.albedoTextureWidth;
 
     if (material.albedoTextureId == 0) {
-        color = getColorValueFromTexture(albedoTexture1, pixelId + material.albedoPixelOffset, albedoTextureSize);
+        color = getValueFromTexture(albedoTexture1, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 1) {
-        color = getColorValueFromTexture(albedoTexture2, pixelId + material.albedoPixelOffset, albedoTextureSize);
+        color = getValueFromTexture(albedoTexture2, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 2) {
-        color = getColorValueFromTexture(albedoTexture3, pixelId + material.albedoPixelOffset, albedoTextureSize);
+        color = getValueFromTexture(albedoTexture3, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 3) {
-        color = getColorValueFromTexture(albedoTexture4, pixelId + material.albedoPixelOffset, albedoTextureSize);
+        color = getValueFromTexture(albedoTexture4, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 4) {
-        color = getColorValueFromTexture(albedoTexture5, pixelId + material.albedoPixelOffset, albedoTextureSize);
+        color = getValueFromTexture(albedoTexture5, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 5) {
-        color = getColorValueFromTexture(albedoTexture6, pixelId + material.albedoPixelOffset, albedoTextureSize);
+        color = getValueFromTexture(albedoTexture6, pixelId + material.albedoPixelOffset, albedoTextureSize);
     } else if (material.albedoTextureId == 6) {
-        color = getColorValueFromTexture(albedoTexture7, pixelId + material.albedoPixelOffset, albedoTextureSize);
+        color = getValueFromTexture(albedoTexture7, pixelId + material.albedoPixelOffset, albedoTextureSize);
     }
 
     return color;
@@ -355,13 +355,13 @@ vec3 sampleSkydome(Ray ray) {
     float offset = mod(float(pixelId), skydomeTextureSize * skydomeTextureSize);
 
     if (abs(textureId - 0.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture1, offset, skydomeTextureSize);
+        color = getValueFromTexture(skydomeTexture1, offset, skydomeTextureSize).rgb;
     } else if (abs(textureId - 1.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture2, offset, skydomeTextureSize);
+        color = getValueFromTexture(skydomeTexture2, offset, skydomeTextureSize).rgb;
     } else if (abs(textureId - 2.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture3, offset, skydomeTextureSize);
+        color = getValueFromTexture(skydomeTexture3, offset, skydomeTextureSize).rgb;
     } else if (abs(textureId - 3.0) <= EPSILON) {
-        color = getValueFromTexture(skydomeTexture4, offset, skydomeTextureSize);
+        color = getValueFromTexture(skydomeTexture4, offset, skydomeTextureSize).rgb;
     }
 
     return color;
