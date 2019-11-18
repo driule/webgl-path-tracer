@@ -1,20 +1,20 @@
 
-vec3 getValueFromTexture(sampler2D sampler, float index, float size) {
+vec3 getValueFromTexture(sampler2D texture, float index, float size) {
 	ivec2 uv = ivec2(
         mod(index, size),
         floor(index / size)
     );
 	
-	return texelFetch(sampler, uv, 0).rgb;
+	return texelFetch(texture, uv, 0).rgb;
 }
 
-vec4 getColorValueFromTexture(sampler2D sampler, float index, float size) {
+vec4 getColorValueFromTexture(sampler2D texture, float index, float size) {
 	ivec2 uv = ivec2(
         mod(index, size),
         floor(index / size)
     );
 	
-	return texelFetch(sampler, uv, 0).rgba;
+	return texelFetch(texture, uv, 0).rgba;
 }
 
 Triangle fetchTriangle(int id) {
