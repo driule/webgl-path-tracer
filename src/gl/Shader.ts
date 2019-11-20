@@ -71,7 +71,10 @@ export class Shader {
     }
 
     public setTriangleData(triangles: Triangle[], triangleIndices: number[]) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        const textureSize = 2048;
+        const textureSizePower = 11;
+
         let triangleList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < triangles.length; i++) {
             let triangle: Triangle = triangles[i];
@@ -118,11 +121,17 @@ export class Shader {
         let triangleDataLocation = gl.getUniformLocation(this.program, "triangleDataTexture");
         gl.uniform1i(triangleDataLocation, 1);
 
-        this.setUniforms({triangleDataTextureSize: [textureSize, ShaderDataType.float]});
+        this.setUniforms({
+            triangleDataTextureSize: [textureSize, ShaderDataType.int],
+            triangleDataTextureSizePower: [textureSizePower, ShaderDataType.int]
+        });
     }
 
     public setLights(lights: Light[]) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 512.0);
+        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        const textureSize = 512;
+        const textureSizePower = 9;
+
         let lightList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < lights.length; i++) {
             let light: Light = lights[i];
@@ -150,13 +159,17 @@ export class Shader {
         gl.uniform1i(lightDataLocation, 2);
 
         this.setUniforms({
-            lightDataTextureSize: [textureSize, ShaderDataType.float],
+            lightDataTextureSize: [textureSize, ShaderDataType.int],
+            lightDataTextureSizePower: [textureSizePower, ShaderDataType.int],
             totalLights: [lights.length, ShaderDataType.int]
         });
     }
 
     public setBvhData(bvhNodeList: BoundingBox[]) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        const textureSize = 2048;
+        const textureSizePower = 11;
+
         let bvhNodeDataList = new Float32Array(textureSize * textureSize * 3);
 
         const d = 4;
@@ -199,12 +212,21 @@ export class Shader {
         let bvhDataLocation = gl.getUniformLocation(this.program, "bvhDataTexture");
         gl.uniform1i(bvhDataLocation, 3);
 
-        this.setUniforms({bvhDataTextureSize: [textureSize, ShaderDataType.float]});
+        this.setUniforms({
+            bvhDataTextureSize: [textureSize, ShaderDataType.int],
+            bvhDataTextureSizePower: [textureSizePower, ShaderDataType.int]
+        });
     }
 
     public setMaterials(materials: Material[]) {
-        const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        // const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        // const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+
+        const materialsTextureSize = 2048;
+        const materialsTextureSizePower = 11;
+
+        const albedoTextureSize = 2048;
+        const albedoTextureSizePower = 11;
         
         console.log("actual albedo texture size", albedoTextureSize);
 
@@ -266,8 +288,10 @@ export class Shader {
         gl.uniform1i(materialsTextureLocation, 4);
 
         this.setUniforms({
-            materialsTextureSize: [materialsTextureSize, ShaderDataType.float],
-            albedoTextureSize: [albedoTextureSize, ShaderDataType.float]
+            materialsTextureSize: [materialsTextureSize, ShaderDataType.int],
+            materialsTextureSizePower: [materialsTextureSizePower, ShaderDataType.int],
+            albedoTextureSize: [albedoTextureSize, ShaderDataType.int],
+            albedoTextureSizePower: [albedoTextureSizePower, ShaderDataType.int]
         });
     }
 
@@ -304,8 +328,11 @@ export class Shader {
     }
 
     public setSkydome(skydome: Texture) {
-        const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 4096.0);
-        console.log("actual skydome texture size", textureSize);
+        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        // console.log("actual skydome texture size", textureSize);
+
+        const textureSize = 2048;
+        const textureSizePower = 11;
 
         let rgbList = new Float32Array(textureSize * textureSize * 3);
         let counter = 0;
@@ -333,9 +360,10 @@ export class Shader {
         }
 
         this.setUniforms({
-            skydomeTextureSize: [textureSize,ShaderDataType.float],
-            skydomeWidth: [skydome.getWidth(), ShaderDataType.int],
-            skydomeHeight: [skydome.getHeight(), ShaderDataType.int]
+            skydomeTextureSize: [textureSize, ShaderDataType.int],
+            skydomeTextureSizePower: [textureSizePower, ShaderDataType.int],
+            skydomeWidth: [skydome.getWidth(), ShaderDataType.float],
+            skydomeHeight: [skydome.getHeight(), ShaderDataType.float]
         });
     }
 

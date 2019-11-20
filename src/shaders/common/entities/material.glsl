@@ -8,7 +8,8 @@ struct Material
     bool hasAlbedoTexture;
     bool hasAlpha;
 
-    float albedoPixelOffset;
+    int albedoPixelOffset;
+    
     float albedoTextureWidth;
     float albedoTextureHeight;
 };
