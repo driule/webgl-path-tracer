@@ -71,9 +71,9 @@ export class Shader {
     }
 
     public setTriangleData(triangles: Triangle[], triangleIndices: number[]) {
-        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const textureSize = 2048;
-        const textureSizePower = 11;
+        let size = this.calculateTextureSize(4096, 12);
+        const textureSize = size[0];
+        const textureSizePower = size[1];
 
         let triangleList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < triangles.length; i++) {
@@ -128,9 +128,9 @@ export class Shader {
     }
 
     public setLights(lights: Light[]) {
-        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const textureSize = 512;
-        const textureSizePower = 9;
+        let size = this.calculateTextureSize(512, 9);
+        const textureSize = size[0];
+        const textureSizePower = size[1];
 
         let lightList = new Float32Array(textureSize * textureSize * 3);
         for (let i = 0; i < lights.length; i++) {
@@ -166,9 +166,9 @@ export class Shader {
     }
 
     public setBvhData(bvhNodeList: BoundingBox[]) {
-        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        const textureSize = 2048;
-        const textureSizePower = 11;
+        let size = this.calculateTextureSize(2048, 11);
+        const textureSize = size[0];
+        const textureSizePower = size[1];
 
         let bvhNodeDataList = new Float32Array(textureSize * textureSize * 3);
 
@@ -219,16 +219,15 @@ export class Shader {
     }
 
     public setMaterials(materials: Material[]) {
-        // const materialsTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        // const albedoTextureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
+        let size = this.calculateTextureSize(2048, 11);
+        const materialsTextureSize = size[0];
+        const materialsTextureSizePower = size[1];
 
-        const materialsTextureSize = 2048;
-        const materialsTextureSizePower = 11;
-
-        const albedoTextureSize = 2048;
-        const albedoTextureSizePower = 11;
+        size = this.calculateTextureSize(2048, 11);
+        const albedoTextureSize = size[0];
+        const albedoTextureSizePower = size[1];
         
-        console.log("actual albedo texture size", albedoTextureSize);
+        console.log("actual GL texture size for albedo images", albedoTextureSize);
 
         let albedoTexturePointer = 0;
         let albedoPixelOffset = 0;
@@ -328,11 +327,9 @@ export class Shader {
     }
 
     public setSkydome(skydome: Texture) {
-        // const textureSize = Math.min(gl.MAX_TEXTURE_SIZE, 2048.0);
-        // console.log("actual skydome texture size", textureSize);
-
-        const textureSize = 2048;
-        const textureSizePower = 11;
+        let size = this.calculateTextureSize(2048, 11);
+        const textureSize = size[0];
+        const textureSizePower = size[1];
 
         let rgbList = new Float32Array(textureSize * textureSize * 3);
         let counter = 0;
@@ -445,5 +442,24 @@ export class Shader {
 
             this.uniforms[uniform.name] = gl.getUniformLocation(this.program, uniform.name);
         }
+    }
+
+    // input size must be power of 2
+    private calculateTextureSize(desiredSize: number, desiredPower: number): [number, number] {
+        const maxSize = gl.MAX_TEXTURE_SIZE;
+
+        if (desiredSize <= maxSize) {
+            return [desiredSize, desiredPower];
+        }
+
+        let actualSize: number = desiredSize;
+        let actualPower: number = desiredPower;
+
+        while (actualSize > maxSize) {
+            actualSize /= 2;
+            actualPower--;
+        }
+
+        return [actualSize, actualPower];
     }
 }
