@@ -26,6 +26,16 @@ window.onload = async function() {
     setInterval(function() {
         fpsLabel.innerHTML = gauge.getFps().toFixed(1) + " FPS";
         primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
+
+        if (gauge.hasEvaluated) {
+            window.alert(
+                "Performance evaluation has been completed: \n"
+                + gauge.minFps.toFixed(1) + " min FPS \n"
+                + gauge.maxFps.toFixed(1) + " max FPS \n"
+                + gauge.averageFps.toFixed(1) + " avg FPS \n"
+            );
+            gauge.hasEvaluated = false;
+        }
     }, 200);
 
     document.getElementById("device").innerHTML = GLUtilities.detectDevice();
@@ -182,6 +192,8 @@ async function onButtonDown(event: MouseEvent) {
             setLoadingScreen();
             renderer.setScene(await SceneFactory.createPicaRoomScene(canvas));
             removeLoadingScreen();
+        } if (element.id == "evaluate") {
+            gauge.evaluatePerformance();
         }
     }
 }
@@ -328,6 +340,11 @@ function addEventListeners(): void {
     (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("mouseup", onButtonUp, false);
     (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchstart", onButtonDown, false);
     (<HTMLButtonElement>document.getElementById("changeScene6")).addEventListener("touchend", onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById("evaluate")).addEventListener("mousedown", onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById("evaluate")).addEventListener("mouseup", onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById("evaluate")).addEventListener("touchstart", onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById("evaluate")).addEventListener("touchend", onButtonUp, false);
 
     preventDefaultControls();
 }
