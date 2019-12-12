@@ -35,6 +35,11 @@ window.onload = async function() {
                 + gauge.averageFps.toFixed(1) + " avg FPS \n"
             );
             gauge.hasEvaluated = false;
+
+            (<HTMLButtonElement>document.getElementById("render")).disabled = false;
+            (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
+
+            renderer.stop();
         }
     }, 200);
 
