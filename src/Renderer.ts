@@ -46,6 +46,7 @@ export class Renderer {
         this.scene = scene;
         this.pathTracer.setScene(this.scene);
         this.gauge.primitiveCount = this.scene.getTriangles().length;
+        this.gauge.bvhBuildTime = this.scene.getBVH().getBuildingTime();
     }
 
     private tick(): void {

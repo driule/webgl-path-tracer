@@ -29,7 +29,8 @@ window.onload = async function() {
 
         if (gauge.hasEvaluated) {
             window.alert(
-                "Performance evaluation has been completed: \n"
+                "Performance evaluation has been completed! \n\n"
+                + "BVH build time: " + gauge.bvhBuildTime + " ms \n"
                 + gauge.minFps.toFixed(1) + " min FPS \n"
                 + gauge.maxFps.toFixed(1) + " max FPS \n"
                 + gauge.averageFps.toFixed(1) + " avg FPS \n"

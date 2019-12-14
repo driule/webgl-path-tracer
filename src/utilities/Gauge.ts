@@ -19,6 +19,7 @@ export class Gauge {
     public minFps: number;
     public maxFps: number;
     public averageFps: number;
+    public bvhBuildTime: number;
 
     public constructor() {
         this.primitiveCount = 0;
