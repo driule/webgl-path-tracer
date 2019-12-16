@@ -61,7 +61,7 @@ export class Camera {
         let projection = mat4.perspective(mat4.create(), this.fieldOfView, this.canvas.width / this.canvas.height, 0.1, 1000);
         this.viewProjectionMatrix = mat4.invert(mat4.create(), mat4.multiply(mat4.create(), projection, view));
         
-        // console.log('Camera configuration:', this.position, this.angleX, this.angleY);
+        console.log('Camera configuration:', this.position, this.angleX, this.angleY);
     }
     
     public getRay(x: number, y: number): vec3 {
