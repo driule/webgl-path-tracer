@@ -1,6 +1,7 @@
 import { gl } from ".././gl/GLUtilities";
 
 const TOTAL_EVALUATION_FRAMES: number = 100;
+const WARM_UP_FRAME_COUNT = 10;
 
 export class Gauge {
     public primitiveCount: number;
@@ -9,8 +10,8 @@ export class Gauge {
     private fps: number;
     private frameRate: number;
 
-    private startTick: number;
     private lastTick: number;
+    private evaluationStartTick: number;
     private elapsedTime: number;
 
     private frameCount: number;
@@ -40,11 +41,11 @@ export class Gauge {
     }
 
     public measureFPS(): void {
-        let currentTick = new Date().getTime();
+        let currentTick = performance.now();//new Date().getTime();
 
         this.frameCount++;
         this.elapsedTime += (currentTick - this.lastTick);
-        this.frameRate = currentTick - this.lastTick;//this.elapsedTime / this.frameCount;
+        this.frameRate = currentTick - this.lastTick;
         this.lastTick = currentTick;
 
         if (this.elapsedTime >= 1000) {
@@ -54,8 +55,13 @@ export class Gauge {
         }
 
         // performance evaluation
-        if (!this.hasEvaluated && this.evaluatedFrameCount < TOTAL_EVALUATION_FRAMES) {
+        if (!this.hasEvaluated && this.evaluatedFrameCount < TOTAL_EVALUATION_FRAMES + WARM_UP_FRAME_COUNT) {
             this.evaluatedFrameCount++;
+
+            if (this.evaluatedFrameCount < WARM_UP_FRAME_COUNT) return;
+            if (this.evaluatedFrameCount == WARM_UP_FRAME_COUNT) {
+                this.evaluationStartTick = performance.now();
+            }
 
             // frame rate peak/drop detection
             if (this.frameRate > 0.0) {
@@ -67,9 +73,9 @@ export class Gauge {
                 }
             }
 
-            if (this.evaluatedFrameCount == TOTAL_EVALUATION_FRAMES) {
-                let elapsedTime = (currentTick - this.startTick) / 1000.0;
-                this.averageFps = this.evaluatedFrameCount / elapsedTime;
+            if (this.evaluatedFrameCount == TOTAL_EVALUATION_FRAMES + WARM_UP_FRAME_COUNT) {
+                let elapsedTime = (currentTick - this.evaluationStartTick) / 1000.0;
+                this.averageFps = (this.evaluatedFrameCount - WARM_UP_FRAME_COUNT) / elapsedTime;
 
                 this.hasEvaluated = true;
             }
@@ -80,8 +86,8 @@ export class Gauge {
         this.fps = 0;
         this.frameRate = 0;
 
-        this.lastTick = new Date().getTime();
-        this.startTick = new Date().getTime();
+        this.lastTick = performance.now();
+        this.evaluationStartTick = performance.now();
         this.elapsedTime = 0;
 
         this.frameCount = 0;
