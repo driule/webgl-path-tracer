@@ -7,34 +7,36 @@ export class Gauge {
     public mouseDownId: NodeJS.Timeout;
 
     private fps: number;
+    private frameRate: number;
+
+    private startTick: number;
     private lastTick: number;
     private elapsedTime: number;
-    private frameCount: number;
 
-    // performance evaluation
-    private totalFramesEvaluated: number;
-    private startTick: number;
+    private frameCount: number;
+    private evaluatedFrameCount: number;
 
     public hasEvaluated: boolean;
-    public minFps: number;
-    public maxFps: number;
+    public isEvaluationRequested: boolean;
+
+    // performance evaluation outcome
+    public minFrameRate: number;
+    public maxFrameRate: number;
     public averageFps: number;
     public bvhBuildTime: number;
 
     public constructor() {
         this.primitiveCount = 0;
         this.mouseDownId = null;
-
-        this.fps = 0;
-        this.lastTick = Date.now();
-        this.elapsedTime = 0;
-        this.frameCount = 0;
-
-        this.hasEvaluated = false;
+        this.reset();
     }
 
     public getFps(): number {
         return this.fps;
+    }
+
+    public getFrameRate(): number {
+        return this.frameRate;
     }
 
     public measureFPS(): void {
@@ -45,37 +47,51 @@ export class Gauge {
         this.lastTick = currentTick;
 
         if (this.elapsedTime >= 1000) {
+            this.frameRate = this.elapsedTime / this.frameCount;
             this.fps = this.frameCount;
             this.frameCount = 0;
-            this.elapsedTime %= 1000;
+            this.elapsedTime = 0;
         }
 
         // performance evaluation
-        if (!this.hasEvaluated && this.totalFramesEvaluated < TOTAL_EVALUATION_FRAMES) {
-            
-            // fps peak/drop detection
-            if (this.fps < this.minFps) {
-                this.minFps = this.fps;
-            }
-            if (this.fps > this.maxFps) {
-                this.maxFps = this.fps;
+        if (!this.hasEvaluated && this.evaluatedFrameCount < TOTAL_EVALUATION_FRAMES) {
+            this.evaluatedFrameCount++;
+
+            // frame rate peak/drop detection
+            if (this.frameRate > 0.0) {
+                if (this.frameRate < this.minFrameRate) {
+                    this.minFrameRate = this.frameRate;
+                }
+                if (this.frameRate > this.maxFrameRate) {
+                    this.maxFrameRate = this.frameRate;
+                }
             }
 
-            this.totalFramesEvaluated++;
-            if (this.totalFramesEvaluated == TOTAL_EVALUATION_FRAMES) {
-                let elapsedTime = (currentTick - this.startTick) / 1000;
-                this.averageFps = this.totalFramesEvaluated / (elapsedTime);
+            if (this.evaluatedFrameCount == TOTAL_EVALUATION_FRAMES) {
+                let elapsedTime = (currentTick - this.startTick) / 1000.0;
+                this.averageFps = this.evaluatedFrameCount / elapsedTime;
 
                 this.hasEvaluated = true;
             }
         }
     }
 
-    public evaluatePerformance(): void {
+    public reset(): void {
+        this.fps = 0;
+        this.frameRate = 0;
+
+        this.lastTick = new Date().getTime();
         this.startTick = new Date().getTime();
-        this.totalFramesEvaluated = 0;
-        this.minFps = this.fps;
-        this.maxFps = this.fps;
+        this.elapsedTime = 0;
+
+        this.frameCount = 0;
+        this.evaluatedFrameCount = 0;
+
+        this.isEvaluationRequested = false;
         this.hasEvaluated = false;
+
+        this.minFrameRate = Infinity;
+        this.maxFrameRate = 0.0;
+        this.averageFps = 0.0;
     }
 }

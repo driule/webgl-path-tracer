@@ -24,18 +24,18 @@ window.onload = async function() {
     let fpsLabel = document.getElementById("fps");
     let primitiveCountLabel = document.getElementById("primitiveCount");
     setInterval(function() {
-        fpsLabel.innerHTML = gauge.getFps().toFixed(1) + " FPS";
+        fpsLabel.innerHTML = gauge.getFrameRate().toFixed(0) + " ms per frame (" + gauge.getFps() + " FPS)";
         primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
 
-        if (gauge.hasEvaluated) {
+        if (gauge.isEvaluationRequested && gauge.hasEvaluated) {
             window.alert(
                 "Performance evaluation has been completed! \n\n"
                 + "BVH build time: " + gauge.bvhBuildTime + " ms \n"
-                + gauge.minFps.toFixed(1) + " min FPS \n"
-                + gauge.maxFps.toFixed(1) + " max FPS \n"
-                + gauge.averageFps.toFixed(1) + " avg FPS \n"
+                + "Min frame rate: " + gauge.minFrameRate.toFixed(0) + " ms\n"
+                + "Max frame rate: " + gauge.maxFrameRate.toFixed(0) + " ms \n"
+                + "Average: " + gauge.averageFps.toFixed(1) + " FPS \n"
             );
-            gauge.hasEvaluated = false;
+            gauge.isEvaluationRequested = false;
 
             (<HTMLButtonElement>document.getElementById("render")).disabled = false;
             (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
@@ -199,7 +199,7 @@ async function onButtonDown(event: MouseEvent) {
             renderer.setScene(await SceneFactory.createPicaRoomScene(canvas));
             removeLoadingScreen();
         } if (element.id == "evaluate") {
-            gauge.evaluatePerformance();
+            gauge.isEvaluationRequested = true;
         }
     }
 }
