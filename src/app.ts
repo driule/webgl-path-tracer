@@ -24,7 +24,7 @@ window.onload = async function() {
     let fpsLabel = document.getElementById("fps");
     let primitiveCountLabel = document.getElementById("primitiveCount");
     setInterval(function() {
-        fpsLabel.innerHTML = gauge.getFrameRate().toFixed(0) + " ms per frame (" + gauge.getFps() + " FPS)";
+        fpsLabel.innerHTML = gauge.getFrameRate().toFixed(0) + " ms per frame (" + gauge.getFps().toFixed(1) + " FPS)";
         primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
 
         if (gauge.isEvaluationRequested && gauge.hasEvaluated) {

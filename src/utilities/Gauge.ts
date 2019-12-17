@@ -44,11 +44,11 @@ export class Gauge {
 
         this.frameCount++;
         this.elapsedTime += (currentTick - this.lastTick);
+        this.frameRate = currentTick - this.lastTick;//this.elapsedTime / this.frameCount;
         this.lastTick = currentTick;
 
         if (this.elapsedTime >= 1000) {
-            this.frameRate = this.elapsedTime / this.frameCount;
-            this.fps = this.frameCount;
+            this.fps = 1000.0 / (this.elapsedTime / this.frameCount);
             this.frameCount = 0;
             this.elapsedTime = 0;
         }
