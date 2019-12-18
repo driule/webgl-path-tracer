@@ -27,7 +27,7 @@ export class BVH {
     }
 
     public constructor(triangles: Triangle[]) {
-        let buildingStartTime = new Date().getTime();
+        let buildingStartTime = performance.now();
 
         this.nodeList = [];
         this.triangles = triangles;
@@ -45,7 +45,7 @@ export class BVH {
         this.calculateBounds(this.root);
         this.subdivide(this.root, 0);
 
-        this.buildTime = (new Date().getTime()) - buildingStartTime;
+        this.buildTime = performance.now() - buildingStartTime;
     }
 
     private calculateBounds(node: BoundingBox): void {
