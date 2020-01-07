@@ -1,7 +1,7 @@
 import { gl } from ".././gl/GLUtilities";
 
 const TOTAL_EVALUATION_FRAMES: number = 100;
-const WARM_UP_FRAME_COUNT = 10;
+const WARM_UP_FRAME_COUNT = 20;
 
 export class Gauge {
     public primitiveCount: number;
@@ -24,7 +24,10 @@ export class Gauge {
     public minFrameRate: number;
     public maxFrameRate: number;
     public averageFps: number;
+    public fpsDeviation: number;
     public bvhBuildTime: number;
+
+    private frameTimes: number[];
 
     public constructor() {
         this.primitiveCount = 0;
@@ -57,11 +60,15 @@ export class Gauge {
         // performance evaluation
         if (!this.hasEvaluated && this.evaluatedFrameCount < TOTAL_EVALUATION_FRAMES + WARM_UP_FRAME_COUNT) {
             this.evaluatedFrameCount++;
-
             if (this.evaluatedFrameCount < WARM_UP_FRAME_COUNT) return;
+
             if (this.evaluatedFrameCount == WARM_UP_FRAME_COUNT) {
                 this.evaluationStartTick = performance.now();
+                return;
             }
+
+            this.frameTimes[this.evaluatedFrameCount - WARM_UP_FRAME_COUNT - 1] = this.frameRate;
+            console.log(this.evaluatedFrameCount - WARM_UP_FRAME_COUNT - 1);
 
             // frame rate peak/drop detection
             if (this.frameRate > 0.0) {
@@ -76,6 +83,20 @@ export class Gauge {
             if (this.evaluatedFrameCount == TOTAL_EVALUATION_FRAMES + WARM_UP_FRAME_COUNT) {
                 let elapsedTime = (currentTick - this.evaluationStartTick) / 1000.0;
                 this.averageFps = (this.evaluatedFrameCount - WARM_UP_FRAME_COUNT) / elapsedTime;
+
+                // calculate standart deviation
+                let averageTime = 0;
+                for (let i = 0; i < TOTAL_EVALUATION_FRAMES; i++) {
+                    averageTime += this.frameTimes[i];
+                }
+                console.log("ok?", averageTime, currentTick - this.evaluationStartTick);
+                averageTime /= (TOTAL_EVALUATION_FRAMES);
+
+                let sum = 0;
+                for (let i = 0; i < TOTAL_EVALUATION_FRAMES; i++) {
+                    sum += (this.frameTimes[i] - averageTime) * (this.frameTimes[i] - averageTime);
+                }
+                this.fpsDeviation = Math.sqrt(sum / (TOTAL_EVALUATION_FRAMES));
 
                 this.hasEvaluated = true;
             }
@@ -92,6 +113,9 @@ export class Gauge {
 
         this.frameCount = 0;
         this.evaluatedFrameCount = 0;
+        
+        this.fpsDeviation = 0;
+        this.frameTimes = [];
 
         this.isEvaluationRequested = false;
         this.hasEvaluated = false;

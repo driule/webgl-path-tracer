@@ -20,7 +20,7 @@ window.onload = async function() {
     renderer.setScene(await SceneFactory.createBasicScene(canvas));
     removeLoadingScreen();
 
-    // primitive count and FPS measurement
+    // measurements data output
     let fpsLabel = document.getElementById("fps");
     let primitiveCountLabel = document.getElementById("primitiveCount");
     setInterval(function() {
@@ -30,10 +30,9 @@ window.onload = async function() {
         if (gauge.isEvaluationRequested && gauge.hasEvaluated) {
             window.alert(
                 "Performance evaluation has been completed! \n\n"
-                + "BVH build time: " + gauge.bvhBuildTime.toFixed(0) + " ms \n"
-                + "Min frame rate: " + gauge.minFrameRate.toFixed(0) + " ms\n"
-                + "Max frame rate: " + gauge.maxFrameRate.toFixed(0) + " ms \n"
-                + "Average: " + gauge.averageFps.toFixed(1) + " FPS \n"
+                + "BVH build time: " + gauge.bvhBuildTime.toFixed(2) + " ms \n"
+                + "Average performance: " + gauge.averageFps.toFixed(2) + " FPS \n"
+                + "Standard deviation of rendering time per frame: " + gauge.fpsDeviation.toFixed(2) + "ms \n"
             );
             gauge.isEvaluationRequested = false;
 
