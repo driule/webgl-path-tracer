@@ -1,7 +1,9 @@
 import { Renderer } from "./Renderer";
-import { Gauge } from "./utilities/Gauge";
 import { SceneFactory } from "./utilities/SceneFactory";
 import { GLUtilities } from "./gl/GLUtilities";
+import { Gauge } from "./utilities/Gauge";
+
+import * as GaugeConstants from "./utilities/Gauge";
 
 let renderer: Renderer;
 let gauge: Gauge;
@@ -23,10 +25,15 @@ window.onload = async function() {
     // measurements data output
     let fpsLabel = document.getElementById("fps");
     let primitiveCountLabel = document.getElementById("primitiveCount");
+    let totalEvaluationFramesLabel = document.getElementById("totalEvaluationFrames");
     setInterval(function() {
         fpsLabel.innerHTML = gauge.getFrameRate().toFixed(0) + " ms per frame (" + gauge.getFps().toFixed(1) + " FPS)";
         primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
 
+        if (gauge.evaluatedFrameCount > GaugeConstants.WARM_UP_FRAME_COUNT) {
+            totalEvaluationFramesLabel.innerHTML = (gauge.evaluatedFrameCount - GaugeConstants.WARM_UP_FRAME_COUNT) + "/" + (GaugeConstants.TOTAL_EVALUATION_FRAMES);
+        }
+        
         if (gauge.isEvaluationRequested && gauge.hasEvaluated) {
             window.alert(
                 "Performance evaluation has been completed! \n\n"

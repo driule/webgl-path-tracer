@@ -1,7 +1,5 @@
-import { gl } from ".././gl/GLUtilities";
-
-const TOTAL_EVALUATION_FRAMES: number = 100;
-const WARM_UP_FRAME_COUNT = 20;
+export const TOTAL_EVALUATION_FRAMES: number = 500;
+export const WARM_UP_FRAME_COUNT = 20;
 
 export class Gauge {
     public primitiveCount: number;
@@ -15,7 +13,7 @@ export class Gauge {
     private elapsedTime: number;
 
     private frameCount: number;
-    private evaluatedFrameCount: number;
+    public evaluatedFrameCount: number;
 
     public hasEvaluated: boolean;
     public isEvaluationRequested: boolean;
