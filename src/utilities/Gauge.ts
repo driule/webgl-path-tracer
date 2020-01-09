@@ -21,8 +21,8 @@ export class Gauge {
     public isEvaluationRequested: boolean;
 
     // performance evaluation outcome
-    public minFrameRate: number;
-    public maxFrameRate: number;
+    // public minFrameRate: number;
+    // public maxFrameRate: number;
     public averageFps: number;
     public fpsDeviation: number;
     public bvhBuildTime: number;
@@ -68,17 +68,16 @@ export class Gauge {
             }
 
             this.frameTimes[this.evaluatedFrameCount - WARM_UP_FRAME_COUNT - 1] = this.frameRate;
-            console.log(this.evaluatedFrameCount - WARM_UP_FRAME_COUNT - 1);
 
             // frame rate peak/drop detection
-            if (this.frameRate > 0.0) {
-                if (this.frameRate < this.minFrameRate) {
-                    this.minFrameRate = this.frameRate;
-                }
-                if (this.frameRate > this.maxFrameRate) {
-                    this.maxFrameRate = this.frameRate;
-                }
-            }
+            // if (this.frameRate > 0.0) {
+            //     if (this.frameRate < this.minFrameRate) {
+            //         this.minFrameRate = this.frameRate;
+            //     }
+            //     if (this.frameRate > this.maxFrameRate) {
+            //         this.maxFrameRate = this.frameRate;
+            //     }
+            // }
 
             if (this.evaluatedFrameCount == TOTAL_EVALUATION_FRAMES + WARM_UP_FRAME_COUNT) {
                 let elapsedTime = (currentTick - this.evaluationStartTick) / 1000.0;
@@ -89,7 +88,6 @@ export class Gauge {
                 for (let i = 0; i < TOTAL_EVALUATION_FRAMES; i++) {
                     averageTime += this.frameTimes[i];
                 }
-                console.log("ok?", averageTime, currentTick - this.evaluationStartTick);
                 averageTime /= (TOTAL_EVALUATION_FRAMES);
 
                 let sum = 0;
@@ -120,8 +118,8 @@ export class Gauge {
         this.isEvaluationRequested = false;
         this.hasEvaluated = false;
 
-        this.minFrameRate = Infinity;
-        this.maxFrameRate = 0.0;
+        // this.minFrameRate = Infinity;
+        // this.maxFrameRate = 0.0;
         this.averageFps = 0.0;
     }
 }
