@@ -27,26 +27,28 @@ window.onload = async function() {
     let primitiveCountLabel = document.getElementById("primitiveCount");
     let totalEvaluationFramesLabel = document.getElementById("totalEvaluationFrames");
     setInterval(function() {
-        fpsLabel.innerHTML = gauge.getFrameRate().toFixed(0) + " ms per frame (" + gauge.getFps().toFixed(1) + " FPS)";
-        primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
+        if (renderer.isRunning()) {
+            fpsLabel.innerHTML = gauge.getFrameRate().toFixed(0) + " ms per frame (" + gauge.getFps().toFixed(1) + " FPS)";
+            primitiveCountLabel.innerHTML = gauge.primitiveCount + " primitives";
 
-        if (gauge.evaluatedFrameCount > GaugeConstants.WARM_UP_FRAME_COUNT) {
-            totalEvaluationFramesLabel.innerHTML = (gauge.evaluatedFrameCount - GaugeConstants.WARM_UP_FRAME_COUNT) + "/" + (GaugeConstants.TOTAL_EVALUATION_FRAMES);
-        }
-        
-        if (gauge.isEvaluationRequested && gauge.hasEvaluated) {
-            window.alert(
-                "Performance evaluation has been completed! \n\n"
-                + "BVH build time: " + gauge.bvhBuildTime.toFixed(2) + " ms \n"
-                + "Average performance: " + gauge.averageFps.toFixed(2) + " FPS \n"
-                + "Standard deviation of rendering time per frame: " + gauge.fpsDeviation.toFixed(2) + "ms \n"
-            );
-            gauge.isEvaluationRequested = false;
+            if (gauge.evaluatedFrameCount > GaugeConstants.WARM_UP_FRAME_COUNT) {
+                totalEvaluationFramesLabel.innerHTML = (gauge.evaluatedFrameCount - GaugeConstants.WARM_UP_FRAME_COUNT) + "/" + (GaugeConstants.TOTAL_EVALUATION_FRAMES);
+            }
+            
+            if (gauge.isEvaluationRequested && gauge.hasEvaluated) {
+                window.alert(
+                    "Performance evaluation has been completed! \n\n"
+                    + "BVH build time: " + gauge.bvhBuildTime.toFixed(2) + " ms \n"
+                    + "Average performance: " + gauge.averageFps.toFixed(2) + " FPS \n"
+                    + "Standard deviation of rendering time per frame: " + gauge.fpsDeviation.toFixed(2) + "ms \n"
+                );
+                gauge.isEvaluationRequested = false;
 
-            (<HTMLButtonElement>document.getElementById("render")).disabled = false;
-            (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
+                (<HTMLButtonElement>document.getElementById("render")).disabled = false;
+                (<HTMLButtonElement>document.getElementById("stop")).disabled = true;
 
-            renderer.stop();
+                renderer.stop();
+            }
         }
     }, 200);
 
@@ -221,6 +223,10 @@ function setLoadingScreen(): void {
         buttons[i].disabled = true;
     }
     (<HTMLSelectElement>document.getElementById("canvasSizeSelect")).disabled = true;
+
+    document.getElementById("fps").innerHTML = "...";
+    document.getElementById("primitiveCount").innerHTML = "...";
+    document.getElementById("totalEvaluationFrames").innerHTML = "...";
 }
 
 function removeLoadingScreen(): void {

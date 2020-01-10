@@ -50,6 +50,10 @@ export class Renderer {
         this.gauge.bvhBuildTime = this.scene.getBVH().getBuildingTime();
     }
 
+    public isRunning(): boolean {
+        return this.isRendering;
+    }
+
     private tick(): void {
         if (this.isRendering) {
             this.pathTracer.render();
