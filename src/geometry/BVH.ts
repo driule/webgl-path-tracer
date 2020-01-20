@@ -46,6 +46,7 @@ export class BVH {
         this.subdivide(this.root, 0);
 
         this.buildTime = performance.now() - buildingStartTime;
+        console.log("BVH build time", this.buildTime);
     }
 
     private calculateBounds(node: BoundingBox): void {
