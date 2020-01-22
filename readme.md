@@ -28,6 +28,6 @@ Demo: [students.science.uu.nl/~6070981](http://www.students.science.uu.nl/~60709
 
 ### How to run?
 - Install all dependencies listed in *package.json*: **npm install**
-- Compile TypeScript to JavaScript: run *Build Task* in Visual Studio Code (**CTRL + SHIFT + B**)
-- Bundle JavasScript source files into one JS bundle: **npm run develop** or **npm run build**
+- Translate TypeScript to JavaScript: run *Build Task* in Visual Studio Code (**CTRL + SHIFT + B**)
+- Bundle JavasScript source files: **npm run develop** or **npm run build**
 - Deploy */dist* content on a web server excluding */dist/.tmp* folder.
