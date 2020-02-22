@@ -65,6 +65,12 @@
                 width: 75px;
             }
 
+            #displayDissemination {
+                background-color: #b09090;
+                height: 30px;
+                width: 150px;
+            }
+
             @-webkit-keyframes spin {
                 0% { -webkit-transform: rotate(0deg); }
                 100% { -webkit-transform: rotate(360deg); }
@@ -109,6 +115,32 @@
             
             #footer {
                 text-align: center;
+            }
+
+            #dissemination {
+                text-align: center;
+                padding: 5px;
+            }
+
+            #disseminationBody { 
+                max-height: 0;
+                overflow: hidden; 
+                /* You should prefix the following: */
+                transition: max-height 500ms;
+                text-align: left;
+                padding: 5px;
+            }
+            #disseminationBody.active {
+                /* Depending on this value, your animatiom will seem faster or shorter */
+                max-height: 1000px;
+            }
+            .hidden { 
+                max-height: 0;
+                overflow: hidden; 
+                transition: max-height 500ms;
+            }
+            .hidden.active {
+                max-height: 1000px;
             }
         </style>
         <meta name="viewport" content="user-scalable=no">
@@ -188,10 +220,39 @@
         </table>
 
         <hr/>
+
+        <div id="dissemination">
+            <button class="noSelect" id="displayDissemination">Display Dissemination</button>
+
+            <div id="disseminationBody" class="hidden">
+                <!-- show/hide each subsection (?)  -->
+                <h2>Research Questions</h2> 
+                <ol>
+                    <li>Can an industry-strength path tracer run on a website? <i>Is WebGL suitable for such a task?</i></li>
+                    <li>How does the performance of a real-world medium-scale rendering application implemented in WebGL compare to native performance?</li>
+                </ol>
+
+                <h2>Performance Evaluation</h2>
+                <img src="assets/charts/fps-lighthouse-vs-webgl.svg" title="CUDA vs. WebGL Path Tracer (GPU: GeForce GTX 1050)">
+
+                <h2>Conclusions</h2>
+                <p>
+                    In this master thesis, we addressed the problem that path-tracing software is typically implemented as a native application, which limits the accessibility of this type of programs. Two research questions were formulated to investigate if a web-based implementation is feasible. We conducted literature research to establish state-of-the-art in path-tracing and web technologies for GPU software development. To answer the research questions, we performed a case study by porting CUDA path tracer (LightHouse) to WebGL.
+                    <br/><br/>
+                    To prove that an industry-strength path tracer can run on a website, we successfully implemented a WebGL path tracer, which is functionally comparable to LightHouse. Our application is capable of rendering complex scenes in a real-time. This answers the first research question: a path tracer can indeed be implemented as a web application. However, WebGL suitability for such a task can be questionable. We investigated how the WebGL path tracer performs on multiple platforms. From this analysis, we observe that the WebGL path tracer performs worse on complex scenes and low-end devices. Besides, one of the most popular browsers (Apple Safari) does not fully support WebGL 2.0. This creates an obstacle that our application cannot be accessed for a significant number of users.
+                    <br/><br/>
+                    In order to answer how the performance of a real-world medium-scale rendering application implemented in WebGL compares to native performance, we examined LightHouse versus the web path tracer. The path tracer implemented with WebGL can run with a sufficient frame-rate on scenes with low to medium complexity (such as Avocados and Pica Room). Even though rendering complex scenes like Sponza on WebGL is feasible, the web path tracer cannot compete with a native CUDA path tracer when considering more complicated textured scenes.
+                    <br/><br/>
+                    Concluding, we can state that WebGL is a viable option for a web-based path tracer implementation when rendering low-to-medium complexity scenes. However, it remains a challenging task to achieve decent performance on complex scenes.
+                </p> 
+            </div>
+        </div>
+
+        <hr/>
         
         <div id="footer">
-            <a href="./debug">/debug</a>
-            | <a href="./history">/history</a>
+            <!-- <a href="./debug">/debug</a> -->
+            <a href="./history">/history</a>
             | <a href="https://github.com/driule/webgl-path-tracer" target="blank">GitHub</a>
             | <a class="settingsButton" href="assets/images/nvidia-settings.png" target="blank">NVIDIA settings</a>
         </div>

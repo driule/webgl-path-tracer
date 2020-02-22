@@ -208,6 +208,18 @@ async function onButtonDown(event: MouseEvent) {
             removeLoadingScreen();
         } if (element.id == "evaluate") {
             gauge.isEvaluationRequested = true;
+        } if (element.id == "displayDissemination") {
+            let displayDisseminationButton = (<HTMLButtonElement>document.getElementById("displayDissemination"));
+            let disseminationBody = document.getElementById("disseminationBody");
+            displayDisseminationButton.style.display = "none";
+
+            if (disseminationBody.className === "hidden") {
+                disseminationBody.className = "hidden  active";
+                displayDisseminationButton.className = "hidden  active";
+            } else {
+                disseminationBody.className = "hidden";
+                displayDisseminationButton.className = "hidden";
+            }
         }
     }
 }
@@ -363,6 +375,11 @@ function addEventListeners(): void {
     (<HTMLButtonElement>document.getElementById("evaluate")).addEventListener("mouseup", onButtonUp, false);
     (<HTMLButtonElement>document.getElementById("evaluate")).addEventListener("touchstart", onButtonDown, false);
     (<HTMLButtonElement>document.getElementById("evaluate")).addEventListener("touchend", onButtonUp, false);
+
+    (<HTMLButtonElement>document.getElementById("displayDissemination")).addEventListener("mousedown", onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById("displayDissemination")).addEventListener("mouseup", onButtonUp, false);
+    (<HTMLButtonElement>document.getElementById("displayDissemination")).addEventListener("touchstart", onButtonDown, false);
+    (<HTMLButtonElement>document.getElementById("displayDissemination")).addEventListener("touchend", onButtonUp, false);
 
     preventDefaultControls();
 }
