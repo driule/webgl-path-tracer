@@ -4,6 +4,6 @@
 # compiled typescript files in src/
 # /src/*.js
 
+# /dist/js/pathTracer.js
 /dist/.tmp
-/dist/js/pathTracer.js
 /node_modules
