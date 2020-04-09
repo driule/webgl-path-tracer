@@ -1,6 +1,6 @@
 # WebGL Path Tracer
 
-Demo: [`students.science.uu.nl/~6070981`](http://www.students.science.uu.nl/~6070981)
+Demo: [`webgl-path-tracer`](https://driule.github.io/webgl-path-tracer/dist/)
 
 Report: [`Master_Thesis_Report.pdf`](https://github.com/driule/webgl-path-tracer/blob/master/Master_Thesis_Report.pdf)
 
