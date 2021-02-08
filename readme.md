@@ -6,9 +6,9 @@ Report: [`Master_Thesis_Report.pdf`](https://github.com/driule/webgl-path-tracer
 
 ### Rendered Scenes
 
-![Sponza](http://www.students.science.uu.nl/~6070981/assets/images/scenes/gl-sponza.png)
-![Pica Room](http://www.students.science.uu.nl/~6070981/assets/images/scenes/gl-pica-room.png)
-![Avocados](http://www.students.science.uu.nl/~6070981/assets/images/scenes/gl-avocados.png)
+![Sponza](https://driule.github.io/webgl-path-tracer/dist/assets/images/scenes/gl-sponza.png)
+![Pica Room](https://driule.github.io/webgl-path-tracer/dist/assets/images/scenes/gl-pica-room.png)
+![Avocados](https://driule.github.io/webgl-path-tracer/dist/assets/images/scenes/gl-avocados.png)
 
 ### Progress
 - [+] Next Event Estimation and Multiple Importance Sampling ported from [LightHouse2](https://github.com/jbikker/lighthouse2)
@@ -25,10 +25,16 @@ Report: [`Master_Thesis_Report.pdf`](https://github.com/driule/webgl-path-tracer
 - [+] BVH acceleration structure implemented. Built on JavaScript side and then passed to the fragment shader via GL texture. Traversed using stack on the shader side.
 - [+] Randomize light based on seed {time, pixel coordinates, loop iteration}
 - [+] Pass scene triangles and lights to the shader via texture
-- [+] Initiated *npm* project, all dependencies and typings controlled via *npm* package manager
 
-### How to run?
-- Install all dependencies listed in *package.json*: `npm install`
+### Setup
+
+- Install dependencies listed in *package.json*, and then bundle JavasScript source files
+```bash
+npm install
+
+npm run develop
+npm run build
+```
+
 - Translate TypeScript to JavaScript: run *Build Task* in Visual Studio Code (`CTRL + SHIFT + B`)
-- Bundle JavasScript source files: `npm run develop` or `npm run build`
 - Deploy `/dist` content on a web server excluding `/dist/.tmp` folder.
