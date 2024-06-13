@@ -15,8 +15,8 @@
     "gltf-loader-ts": "^0.3.1",
     "ts-loader": "^6.0.0",
     "typescript": "^3.4.5",
-    "webpack": "^4.31.0",
-    "webpack-cli": "^3.3.2",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
     "webpack-glsl-loader": "^1.0.1"
   },
   "scripts": {
